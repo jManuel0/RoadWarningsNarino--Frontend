@@ -58,6 +58,7 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 /* Dark mode styles */
