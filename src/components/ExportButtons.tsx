@@ -11,9 +11,9 @@ export default function ExportButtons({ alerts }: ExportButtonsProps) {
   const handleExportPDF = () => {
     try {
       exportUtils.exportToPDF(alerts);
-      toast.success('Reporte generado', 'El PDF se ha descargado correctamente');
+      toast.success('El PDF se ha descargado correctamente');
     } catch (error) {
-      toast.error('Error', 'No se pudo generar el PDF');
+      toast.error('No se pudo generar el PDF');
       console.error(error);
     }
   };
@@ -21,9 +21,9 @@ export default function ExportButtons({ alerts }: ExportButtonsProps) {
   const handleExportExcel = () => {
     try {
       exportUtils.exportToExcel(alerts);
-      toast.success('Reporte generado', 'El Excel se ha descargado correctamente');
+      toast.success('El Excel se ha descargado correctamente');
     } catch (error) {
-      toast.error('Error', 'No se pudo generar el Excel');
+      toast.error('No se pudo generar el Excel');
       console.error(error);
     }
   };
@@ -31,9 +31,9 @@ export default function ExportButtons({ alerts }: ExportButtonsProps) {
   const handleExportStats = () => {
     try {
       exportUtils.exportStatsToPDF(alerts);
-      toast.success('Estadísticas generadas', 'El PDF se ha descargado correctamente');
+      toast.success('Las estadísticas se han descargado correctamente');
     } catch (error) {
-      toast.error('Error', 'No se pudo generar el PDF');
+      toast.error('No se pudo generar el PDF de estadísticas');
       console.error(error);
     }
   };
