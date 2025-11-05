@@ -1,0 +1,13 @@
+{
+  "alerts": [
+    {
+      "id": "1",
+      "title": "Derrumbe en vía Panamericana",
+      "description": "Cierre total sentido sur-norte",
+      "latitude": 1.2136,
+      "longitude": -77.2811,
+      "severity": "high",
+      "timestamp": "2025-11-04T22:00:00Z"
+    }
+  ]
+}
