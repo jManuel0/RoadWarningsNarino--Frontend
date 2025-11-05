@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAlertStore } from '@/stores/alertStore';
-import { useObserver } from '@/hooks/useObserver';
+import { useObserver } from '@/hooks/UseObserver';
 import { alertApi } from '@/api/alertApi';
 import MapView from '@/components/MapView';
 import NotificationBell from '@/components/NotificationBell';
@@ -15,7 +15,6 @@ export default function Home() {
     loading, 
     error, 
     setAlerts, 
-    addAlert, 
     updateAlert,
     setLoading, 
     setError,
@@ -24,7 +23,7 @@ export default function Home() {
     alertSubject 
   } = useAlertStore();
 
-  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const [, setSelectedAlert] = useState<Alert | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Solicitar permisos de notificación al montar
