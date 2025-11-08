@@ -24,7 +24,7 @@ const TYPE_COLORS = {
   [AlertType.MANTENIMIENTO]: '#10b981',
 };
 
-export default function Dashboard({ alerts }: DashboardProps) {
+export default function Dashboard({ alerts }: Readonly<DashboardProps>) {
   // Estadísticas generales
   const stats = useMemo(() => {
     const active = alerts.filter(a => a.status === AlertStatus.ACTIVE).length;
@@ -254,7 +254,7 @@ interface StatCardProps {
   highlight?: boolean;
 }
 
-function StatCard({ title, value, icon, bgColor, trend, highlight }: StatCardProps) {
+function StatCard({ title, value, icon, bgColor, trend, highlight }: Readonly<StatCardProps>) {
   return (
     <div className={`${bgColor} rounded-lg shadow p-6 ${highlight ? 'ring-2 ring-red-500 animate-pulse' : ''}`}>
       <div className="flex items-center justify-between">
@@ -289,7 +289,7 @@ function StatCard({ title, value, icon, bgColor, trend, highlight }: StatCardPro
 }
 
 // Top vías afectadas
-function TopAffectedRoads({ alerts }: { alerts: Alert[] }) {
+function TopAffectedRoads({ alerts }: Readonly<{ alerts: Alert[] }>) {
   const roadCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     alerts.forEach(alert => {

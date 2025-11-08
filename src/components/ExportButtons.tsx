@@ -7,7 +7,7 @@ interface ExportButtonsProps {
   alerts: Alert[];
 }
 
-export default function ExportButtons({ alerts }: ExportButtonsProps) {
+export default function ExportButtons({ alerts }: Readonly<ExportButtonsProps>) {
   const handleExportPDF = () => {
     try {
       exportUtils.exportToPDF(alerts);

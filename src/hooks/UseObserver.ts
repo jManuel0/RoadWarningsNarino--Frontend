@@ -11,7 +11,7 @@ export interface Subject<T> {
 }
 
 export class ObserverSubject<T> implements Subject<T> {
-  private observers: Observer<T>[] = [];
+  private readonly observers: Observer<T>[] = [];
 
   attach(observer: Observer<T>): void {
     this.observers.push(observer);
