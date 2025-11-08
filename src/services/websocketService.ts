@@ -10,7 +10,7 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private readonly maxReconnectAttempts = 5;
   private readonly reconnectDelay = 3000;
-  private reconnectTimer: NodeJS.Timeout | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.connect();
@@ -88,23 +88,23 @@ class WebSocketService {
   }
 
   private notifyCallbacks(alert: Alert) {
-    this.callbacks.forEach(callback => {
+    for (const callback of this.callbacks) {
       try {
         callback(alert);
       } catch (error) {
         console.error('Error en callback de WebSocket:', error);
       }
-    });
+    }
   }
 
   private notifyStatus(status: 'connected' | 'disconnected' | 'error') {
-    this.statusCallbacks.forEach(callback => {
+    for (const callback of this.statusCallbacks) {
       try {
         callback(status);
       } catch (error) {
         console.error('Error en callback de estado:', error);
       }
-    });
+    }
   }
 
   disconnect() {
