@@ -27,7 +27,7 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-3 rounded-full transition-colors ${
           hasCritical 
-            ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' 
+            ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
             : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
         }`}
       >

@@ -170,17 +170,17 @@ export default function Dashboard({ alerts }: Readonly<DashboardProps>) {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="alertas" 
-                stroke="#3b82f6" 
+              <Line
+                type="monotone"
+                dataKey="alertas"
+                stroke="#3b82f6"
                 strokeWidth={2}
                 name="Total Alertas"
               />
-              <Line 
-                type="monotone" 
-                dataKey="criticas" 
-                stroke="#dc2626" 
+              <Line
+                type="monotone"
+                dataKey="criticas"
+                stroke="#dc2626"
                 strokeWidth={2}
                 name="Críticas"
               />

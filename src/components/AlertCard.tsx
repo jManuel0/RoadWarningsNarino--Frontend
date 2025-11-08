@@ -43,7 +43,7 @@ const statusLabels = {
   [AlertStatus.RESOLVED]: 'Resuelta',
 };
 
-export default function AlertCard({ alert, onStatusChange, onDelete }: AlertCardProps) {
+export default function AlertCard({ alert, onStatusChange, onDelete }: Readonly<AlertCardProps>) {
   const priorityColor = priorityColors[alert.priority];
   const statusColor = statusColors[alert.status];
 

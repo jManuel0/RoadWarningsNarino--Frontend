@@ -126,8 +126,8 @@ export default function MapView({
   }, [alerts, onAlertClick]);
 
   return (
-    <div 
-      ref={mapContainerRef} 
+    <div
+      ref={mapContainerRef}
       className="w-full h-full rounded-lg shadow-lg"
       style={{ minHeight: '400px' }}
     />

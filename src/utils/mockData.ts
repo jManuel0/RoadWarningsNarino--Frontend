@@ -21,8 +21,8 @@ export const mockAlerts: Alert[] = [
     type: AlertType.ACCIDENTE,
     priority: AlertPriority.ALTA,
     location: {
-      lat: 1.2200,
-      lng: -77.2750,
+      lat: 1.22,
+      lng: -77.275,
       address: 'Calle 18 con Carrera 25',
     },
     affectedRoads: ['Calle 18', 'Carrera 25'],
@@ -36,8 +36,8 @@ export const mockAlerts: Alert[] = [
     type: AlertType.INUNDACION,
     priority: AlertPriority.ALTA,
     location: {
-      lat: 1.2050,
-      lng: -77.2900,
+      lat: 1.205,
+      lng: -77.29,
       address: 'Avenida de los Estudiantes',
     },
     affectedRoads: ['Av. de los Estudiantes'],
@@ -51,8 +51,8 @@ export const mockAlerts: Alert[] = [
     type: AlertType.CIERRE_VIAL,
     priority: AlertPriority.MEDIA,
     location: {
-      lat: 1.2180,
-      lng: -77.2820,
+      lat: 1.218,
+      lng: -77.282,
       address: 'Carrera 27 entre Calles 13 y 14',
     },
     affectedRoads: ['Carrera 27'],
@@ -66,8 +66,8 @@ export const mockAlerts: Alert[] = [
     type: AlertType.MANTENIMIENTO,
     priority: AlertPriority.BAJA,
     location: {
-      lat: 1.2100,
-      lng: -77.2700,
+      lat: 1.21,
+      lng: -77.27,
       address: 'Calle 20 con Carrera 30',
     },
     affectedRoads: ['Calle 20'],
