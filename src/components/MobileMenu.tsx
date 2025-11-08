@@ -28,9 +28,11 @@ export default function MobileMenu() {
 
       {/* Overlay */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+        <button
+          type="button"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden cursor-default"
           onClick={() => setIsOpen(false)}
+          aria-label="Cerrar menú"
         />
       )}
 
