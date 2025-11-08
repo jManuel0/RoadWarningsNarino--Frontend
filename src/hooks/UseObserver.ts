@@ -25,7 +25,9 @@ export class ObserverSubject<T> implements Subject<T> {
   }
 
   notify(data: T): void {
-    this.observers.forEach((observer) => observer.update(data));
+    for (const observer of this.observers) {
+      observer.update(data);
+    }
   }
 }
 
