@@ -10,6 +10,7 @@ import { Alert, AlertStatus } from '@/types/Alert';
 import { MapPin, AlertTriangle, RefreshCw, X } from 'lucide-react';
 import { notificationService } from '@/utils/notifications';
 
+
 export default function Home() {
   const {
     alerts,
@@ -24,6 +25,8 @@ export default function Home() {
     alertSubject
   } = useAlertStore();
 
+
+  
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);

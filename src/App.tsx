@@ -6,6 +6,7 @@ import Statistics from '@/pages/Statistics';
 import ThemeToggle from '@/components/ThemeToggle';
 import { Home as HomeIcon, AlertTriangle, BarChart3 } from 'lucide-react';
 
+
 function Navigation() {
   const location = useLocation();
 
