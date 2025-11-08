@@ -62,15 +62,17 @@ export default function MapView({
     if (!mapRef.current) return;
 
     // Limpiar marcadores anteriores
-    markersRef.current.forEach(marker => marker.remove());
+    for (const marker of markersRef.current) {
+      marker.remove();
+    }
     markersRef.current = [];
 
     // Agregar nuevos marcadores
-    alerts.forEach(alert => {
+    for (const alert of alerts) {
       if (!mapRef.current) return;
 
       const color = priorityColors[alert.priority];
-      
+
       // Crear icono personalizado
       const icon = L.divIcon({
         className: 'custom-marker',
@@ -100,7 +102,7 @@ export default function MapView({
       });
 
       const marker = L.marker([alert.location.lat, alert.location.lng], { icon })
-        .addTo(mapRef.current!)
+        .addTo(mapRef.current)
         .bindPopup(`
           <div style="min-width: 200px;">
             <h3 style="font-weight: bold; margin-bottom: 8px;">${alert.type}</h3>
@@ -114,7 +116,7 @@ export default function MapView({
       }
 
       markersRef.current.push(marker);
-    });
+    }
 
     // Ajustar vista si hay alertas
     if (alerts.length > 0) {
