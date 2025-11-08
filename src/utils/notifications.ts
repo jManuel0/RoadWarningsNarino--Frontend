@@ -58,7 +58,7 @@ export const notificationService = {
 
   // Solicitar permisos de notificaciones del navegador
   requestPermission: async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
+    if ('Notification' in globalThis && Notification.permission === 'default') {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         toast.success('Notificaciones activadas', {
@@ -70,7 +70,7 @@ export const notificationService = {
 
   // Notificación del navegador
   browserNotification: (alert: Alert) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
+    if ('Notification' in globalThis && Notification.permission === 'granted') {
       new Notification(`🚨 ${alert.type}`, {
         body: alert.description,
         icon: '/alert-icon.png',

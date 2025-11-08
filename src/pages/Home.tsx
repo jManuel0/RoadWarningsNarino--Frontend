@@ -7,7 +7,7 @@ import NotificationBell from '@/components/NotificationBell';
 import AlertCard from '@/components/AlertCard';
 import MapSearchBar from '@/components/MapSearchBar';
 import { Alert, AlertStatus } from '@/types/Alert';
-import { MapPin, AlertTriangle, RefreshCw } from 'lucide-react';
+import { MapPin, AlertTriangle, RefreshCw, X } from 'lucide-react';
 import { notificationService } from '@/utils/notifications';
 
 export default function Home() {
@@ -96,9 +96,27 @@ export default function Home() {
     setIsFiltered(false);
   };
 
+  const handleCloseModal = () => {
+    setSelectedAlert(null);
+  };
+
+  const handleModalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      handleCloseModal();
+    }
+  };
+
   const activeAlerts = getActiveAlerts();
   const criticalAlerts = getCriticalAlerts();
   const displayAlerts = isFiltered ? filteredAlerts : activeAlerts;
+
+  // Función para obtener el mensaje de estado de alertas
+  const getEmptyAlertsMessage = () => {
+    if (isFiltered) {
+      return 'No se encontraron alertas con los filtros aplicados';
+    }
+    return 'No hay alertas activas';
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -124,6 +142,7 @@ export default function Home() {
                 disabled={isRefreshing}
                 className="p-3 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                 title="Actualizar alertas"
+                aria-label="Actualizar alertas"
               >
                 <RefreshCw 
                   size={20} 
@@ -246,10 +265,7 @@ export default function Home() {
               <div className="space-y-4 max-h-[600px] overflow-y-auto">
                 {displayAlerts.length === 0 ? (
                   <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-                    {isFiltered 
-                      ? 'No se encontraron alertas con los filtros aplicados'
-                      : 'No hay alertas activas'
-                    }
+                    {getEmptyAlertsMessage()}
                   </p>
                 ) : (
                   displayAlerts.map(alert => (
@@ -266,25 +282,36 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Modal de alerta seleccionada (opcional) */}
+      {/* Modal de alerta seleccionada */}
       {selectedAlert && (
         <div 
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedAlert(null)}
+          onClick={handleCloseModal}
+          onKeyDown={handleModalKeyDown}
+          tabIndex={-1}
         >
           <div 
+            role="document"
             className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-4">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 
+                id="modal-title"
+                className="text-2xl font-bold text-gray-900 dark:text-white"
+              >
                 {selectedAlert.type.replace('_', ' ')}
               </h3>
               <button
-                onClick={() => setSelectedAlert(null)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                onClick={handleCloseModal}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Cerrar modal"
               >
-                ✕
+                <X size={24} />
               </button>
             </div>
             
