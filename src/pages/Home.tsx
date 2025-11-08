@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAlertStore } from '@/stores/alertStore';
 import { useObserver } from '@/hooks/UseObserver';
 import { alertApi } from '@/api/alertApi';
@@ -11,17 +11,17 @@ import { MapPin, AlertTriangle, RefreshCw, X } from 'lucide-react';
 import { notificationService } from '@/utils/notifications';
 
 export default function Home() {
-  const { 
-    alerts, 
-    loading, 
-    error, 
-    setAlerts, 
+  const {
+    alerts,
+    loading,
+    error,
+    setAlerts,
     updateAlert,
-    setLoading, 
+    setLoading,
     setError,
     getActiveAlerts,
     getCriticalAlerts,
-    alertSubject 
+    alertSubject
   } = useAlertStore();
 
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -29,20 +29,7 @@ export default function Home() {
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
 
-  // Solicitar permisos de notificación al montar
-  useEffect(() => {
-    notificationService.requestPermission();
-  }, []);
-
-  // Cargar alertas al montar
-  useEffect(() => {
-    loadAlerts();
-    // Polling cada 30 segundos
-    const interval = setInterval(loadAlerts, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadAlerts = async (showNotification = false) => {
+  const loadAlerts = useCallback(async (showNotification = false) => {
     try {
       setLoading(true);
       const data = await alertApi.getAlerts();
@@ -59,7 +46,20 @@ export default function Home() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [setLoading, setAlerts, setError]);
+
+  // Solicitar permisos de notificación al montar
+  useEffect(() => {
+    notificationService.requestPermission();
+  }, []);
+
+  // Cargar alertas al montar
+  useEffect(() => {
+    loadAlerts();
+    // Polling cada 30 segundos
+    const interval = setInterval(() => loadAlerts(), 30000);
+    return () => clearInterval(interval);
+  }, [loadAlerts]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);

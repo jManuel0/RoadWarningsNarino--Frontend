@@ -117,7 +117,7 @@ class WebSocketService {
     }
   }
 
-  send(data: any) {
+  send(data: unknown) {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(data));
     } else {

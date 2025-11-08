@@ -89,7 +89,11 @@ export default function Dashboard({ alerts }: Readonly<DashboardProps>) {
       value: alerts.filter(a => a.type === type).length,
       color: TYPE_COLORS[type],
     }));
-    return distribution.filter(d => d.value > 0);
+    const total = distribution.reduce((sum, d) => sum + d.value, 0);
+    return distribution.filter(d => d.value > 0).map(d => ({
+      ...d,
+      percent: total > 0 ? d.value / total : 0,
+    }));
   }, [alerts]);
 
   // Datos para gráfico de prioridades
@@ -196,7 +200,7 @@ export default function Dashboard({ alerts }: Readonly<DashboardProps>) {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={(entry: any) => 
+                label={(entry: { name: string; percent: number }) =>
                   `${entry.name} ${(Number(entry.percent) * 100).toFixed(0)}%`
                 }
                 outerRadius={80}

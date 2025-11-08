@@ -10,6 +10,7 @@ interface MapViewProps {
 }
 
 // Fix para los iconos de Leaflet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -29,7 +30,7 @@ export default function MapView({
   center = [1.2136, -77.2811], // Pasto, Nariño
   zoom = 13,
   onAlertClick 
-}: MapViewProps) {
+}: Readonly<MapViewProps>) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.Marker[]>([]);

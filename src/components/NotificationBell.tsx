@@ -9,7 +9,7 @@ interface NotificationBellProps {
   onAlertClick?: (alert: Alert) => void;
 }
 
-export default function NotificationBell({ alerts, onAlertClick }: NotificationBellProps) {
+export default function NotificationBell({ alerts, onAlertClick }: Readonly<NotificationBellProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 

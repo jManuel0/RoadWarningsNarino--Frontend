@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAlertStore } from '@/stores/alertStore';
 import { alertApi } from '@/api/alertApi';
 import AlertCard from '@/components/AlertCard';
@@ -6,16 +6,16 @@ import { AlertStatus, AlertType, AlertPriority, CreateAlertDTO } from '@/types/A
 import { Plus, Filter, Search, X } from 'lucide-react';
 
 export default function Alerts() {
-  const { 
-    alerts, 
-    loading, 
-    error, 
-    setAlerts, 
-    addAlert, 
+  const {
+    alerts,
+    loading,
+    error,
+    setAlerts,
+    addAlert,
     updateAlert,
     removeAlert,
-    setLoading, 
-    setError 
+    setLoading,
+    setError
   } = useAlertStore();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,11 +23,7 @@ export default function Alerts() {
   const [filterPriority, setFilterPriority] = useState<AlertPriority | 'ALL'>('ALL');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  useEffect(() => {
-    loadAlerts();
-  }, []);
-
-  const loadAlerts = async () => {
+  const loadAlerts = useCallback(async () => {
     try {
       setLoading(true);
       const data = await alertApi.getAlerts();
@@ -39,7 +35,11 @@ export default function Alerts() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading, setAlerts, setError]);
+
+  useEffect(() => {
+    loadAlerts();
+  }, [loadAlerts]);
 
   const handleStatusChange = async (id: string, status: AlertStatus) => {
     try {

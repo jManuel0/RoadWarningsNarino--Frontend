@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useAlertStore } from '@/stores/alertStore';
 import { alertApi } from '@/api/alertApi';
 import Dashboard from '@/components/Dashboard';
@@ -8,11 +8,7 @@ import { BarChart3 } from 'lucide-react';
 export default function Statistics() {
   const { alerts, loading, error, setAlerts, setLoading, setError } = useAlertStore();
 
-  useEffect(() => {
-    loadAlerts();
-  }, []);
-
-  const loadAlerts = async () => {
+  const loadAlerts = useCallback(async () => {
     try {
       setLoading(true);
       const data = await alertApi.getAlerts();
@@ -24,7 +20,11 @@ export default function Statistics() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading, setAlerts, setError]);
+
+  useEffect(() => {
+    loadAlerts();
+  }, [loadAlerts]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

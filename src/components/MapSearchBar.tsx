@@ -8,7 +8,7 @@ interface MapSearchBarProps {
   onReset: () => void;
 }
 
-export default function MapSearchBar({ alerts, onSearch, onReset }: MapSearchBarProps) {
+export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<MapSearchBarProps>) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<AlertType | 'ALL'>('ALL');
   const [selectedPriority, setSelectedPriority] = useState<AlertPriority | 'ALL'>('ALL');
