@@ -20,13 +20,21 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
   const criticalAlerts = alerts.filter(a => a.priority === AlertPriority.CRITICA);
   const hasCritical = criticalAlerts.length > 0;
 
+  const getPriorityColor = (priority: AlertPriority): string => {
+    if (priority === AlertPriority.CRITICA) return 'bg-red-500 animate-pulse';
+    if (priority === AlertPriority.ALTA) return 'bg-orange-500';
+    if (priority === AlertPriority.MEDIA) return 'bg-yellow-500';
+    return 'bg-blue-500';
+  };
+
   return (
     <div className="relative">
       {/* Botón de notificación */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-3 rounded-full transition-colors ${
-          hasCritical 
+          hasCritical
             ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
             : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
         }`}
@@ -45,9 +53,11 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
       {isOpen && (
         <>
           {/* Overlay */}
-          <div 
-            className="fixed inset-0 z-40" 
+          <button
+            type="button"
+            className="fixed inset-0 z-40 cursor-default"
             onClick={() => setIsOpen(false)}
+            aria-label="Cerrar notificaciones"
           />
           
           {/* Panel */}
@@ -59,6 +69,7 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
                 <p className="text-sm text-gray-600">{alerts.length} notificaciones</p>
               </div>
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -76,24 +87,20 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
               ) : (
                 <div className="divide-y divide-gray-200">
                   {alerts.map(alert => (
-                    <div
+                    <button
                       key={alert.id}
+                      type="button"
                       onClick={() => {
                         onAlertClick?.(alert);
                         setIsOpen(false);
                       }}
-                      className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                      className={`w-full p-4 hover:bg-gray-50 text-left transition-colors ${
                         alert.priority === AlertPriority.CRITICA ? 'bg-red-50' : ''
                       }`}
                     >
                       <div className="flex items-start gap-3">
                         {/* Indicador de prioridad */}
-                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                          alert.priority === AlertPriority.CRITICA ? 'bg-red-500 animate-pulse' :
-                          alert.priority === AlertPriority.ALTA ? 'bg-orange-500' :
-                          alert.priority === AlertPriority.MEDIA ? 'bg-yellow-500' :
-                          'bg-blue-500'
-                        }`} />
+                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${getPriorityColor(alert.priority)}`} />
                         
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-sm text-gray-900 truncate">
@@ -110,7 +117,7 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
                           </p>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -120,6 +127,7 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
             {alerts.length > 0 && (
               <div className="p-3 border-t border-gray-200 bg-gray-50">
                 <button
+                  type="button"
                   onClick={() => {
                     setUnreadCount(0);
                     setIsOpen(false);
