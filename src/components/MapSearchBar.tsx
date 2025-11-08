@@ -16,6 +16,13 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
   const [centerPoint, setCenterPoint] = useState<{ lat: number; lng: number } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
+  const getPriorityName = (priority: AlertPriority): string => {
+    if (priority === AlertPriority.CRITICA) return 'Crítica';
+    if (priority === AlertPriority.ALTA) return 'Alta';
+    if (priority === AlertPriority.MEDIA) return 'Media';
+    return 'Baja';
+  };
+
   const handleSearch = () => {
     let filtered = [...alerts];
 
@@ -93,7 +100,11 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
             placeholder="Buscar por ubicación, descripción o vía..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
           />
         </div>
@@ -133,10 +144,11 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           {/* Filtro por tipo */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="filter-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Tipo de Alerta
             </label>
             <select
+              id="filter-type"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as AlertType | 'ALL')}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
@@ -152,10 +164,11 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
 
           {/* Filtro por prioridad */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="filter-priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Prioridad
             </label>
             <select
+              id="filter-priority"
               value={selectedPriority}
               onChange={(e) => setSelectedPriority(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value) as AlertPriority)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
@@ -170,10 +183,11 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
 
           {/* Radio de búsqueda */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="filter-radius" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Radio de Búsqueda
             </label>
             <select
+              id="filter-radius"
               value={radius}
               onChange={(e) => setRadius(Number(e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
@@ -188,9 +202,9 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
 
           {/* Botón de ubicación actual */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <span className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Ubicación Centro
-            </label>
+            </span>
             <button
               onClick={handleGetCurrentLocation}
               className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
@@ -217,9 +231,7 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
           )}
           {selectedPriority !== 'ALL' && (
             <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 rounded-full text-sm">
-              Prioridad: {selectedPriority === AlertPriority.CRITICA ? 'Crítica' : 
-                         selectedPriority === AlertPriority.ALTA ? 'Alta' :
-                         selectedPriority === AlertPriority.MEDIA ? 'Media' : 'Baja'}
+              Prioridad: {getPriorityName(selectedPriority)}
             </span>
           )}
           {centerPoint && (
