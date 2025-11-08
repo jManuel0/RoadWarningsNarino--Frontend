@@ -18,9 +18,9 @@ export default function ExportButtons({ alerts }: Readonly<ExportButtonsProps>) 
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     try {
-      exportUtils.exportToExcel(alerts);
+      await exportUtils.exportToExcel(alerts);
       toast.success('El Excel se ha descargado correctamente');
     } catch (error) {
       toast.error('No se pudo generar el Excel');

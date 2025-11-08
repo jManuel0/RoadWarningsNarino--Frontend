@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { Alert, AlertType, AlertPriority, AlertStatus } from '@/types/Alert';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -88,62 +88,83 @@ export const exportUtils = {
   },
 
   // Exportar a Excel
-  exportToExcel: (alerts: Alert[], filename = 'reporte-alertas.xlsx') => {
-    const data = alerts.map(alert => ({
-      'Tipo': typeNames[alert.type],
-      'Prioridad': priorityNames[alert.priority],
-      'Estado': statusNames[alert.status],
-      'Descripción': alert.description,
-      'Ubicación': alert.location.address,
-      'Latitud': alert.location.lat,
-      'Longitud': alert.location.lng,
-      'Vías Afectadas': alert.affectedRoads.join(', '),
-      'Fecha y Hora': format(new Date(alert.timestamp), 'dd/MM/yyyy HH:mm'),
-      'Duración Estimada (min)': alert.estimatedDuration || 'N/A',
-    }));
-    
-    const ws = XLSX.utils.json_to_sheet(data);
-    
-    // Ajustar ancho de columnas
-    const columnWidths = [
-      { wch: 15 }, // Tipo
-      { wch: 12 }, // Prioridad
-      { wch: 12 }, // Estado
-      { wch: 40 }, // Descripción
-      { wch: 35 }, // Ubicación
-      { wch: 10 }, // Latitud
-      { wch: 10 }, // Longitud
-      { wch: 30 }, // Vías Afectadas
-      { wch: 18 }, // Fecha y Hora
-      { wch: 20 }, // Duración
+  exportToExcel: async (alerts: Alert[], filename = 'reporte-alertas.xlsx') => {
+    const workbook = new ExcelJS.Workbook();
+
+    // Hoja de Alertas
+    const worksheet = workbook.addWorksheet('Alertas');
+
+    // Definir columnas
+    worksheet.columns = [
+      { header: 'Tipo', key: 'tipo', width: 15 },
+      { header: 'Prioridad', key: 'prioridad', width: 12 },
+      { header: 'Estado', key: 'estado', width: 12 },
+      { header: 'Descripción', key: 'descripcion', width: 40 },
+      { header: 'Ubicación', key: 'ubicacion', width: 35 },
+      { header: 'Latitud', key: 'latitud', width: 10 },
+      { header: 'Longitud', key: 'longitud', width: 10 },
+      { header: 'Vías Afectadas', key: 'vias', width: 30 },
+      { header: 'Fecha y Hora', key: 'fecha', width: 18 },
+      { header: 'Duración Estimada (min)', key: 'duracion', width: 20 },
     ];
-    ws['!cols'] = columnWidths;
-    
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Alertas');
-    
-    // Agregar hoja de estadísticas
-    const stats = [
-      ['Estadísticas Generales'],
-      [''],
-      ['Total de Alertas', alerts.length],
-      ['Alertas Activas', alerts.filter(a => a.status === AlertStatus.ACTIVE).length],
-      ['Alertas Críticas', alerts.filter(a => a.priority === AlertPriority.CRITICA).length],
-      ['Alertas Resueltas', alerts.filter(a => a.status === AlertStatus.RESOLVED).length],
-      [''],
-      ['Por Tipo'],
-      ['Derrumbes', alerts.filter(a => a.type === AlertType.DERRUMBE).length],
-      ['Accidentes', alerts.filter(a => a.type === AlertType.ACCIDENTE).length],
-      ['Inundaciones', alerts.filter(a => a.type === AlertType.INUNDACION).length],
-      ['Cierres Viales', alerts.filter(a => a.type === AlertType.CIERRE_VIAL).length],
-      ['Mantenimiento', alerts.filter(a => a.type === AlertType.MANTENIMIENTO).length],
+
+    // Estilo del encabezado
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF2563EB' },
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    // Agregar datos
+    alerts.forEach(alert => {
+      worksheet.addRow({
+        tipo: typeNames[alert.type],
+        prioridad: priorityNames[alert.priority],
+        estado: statusNames[alert.status],
+        descripcion: alert.description,
+        ubicacion: alert.location.address,
+        latitud: alert.location.lat,
+        longitud: alert.location.lng,
+        vias: alert.affectedRoads.join(', '),
+        fecha: format(new Date(alert.timestamp), 'dd/MM/yyyy HH:mm'),
+        duracion: alert.estimatedDuration || 'N/A',
+      });
+    });
+
+    // Hoja de Estadísticas
+    const statsWorksheet = workbook.addWorksheet('Estadísticas');
+
+    statsWorksheet.columns = [
+      { width: 30 },
+      { width: 15 },
     ];
-    
-    const wsStats = XLSX.utils.aoa_to_sheet(stats);
-    XLSX.utils.book_append_sheet(wb, wsStats, 'Estadísticas');
-    
-    // Guardar Excel
-    XLSX.writeFile(wb, filename);
+
+    // Agregar estadísticas
+    statsWorksheet.addRow(['Estadísticas Generales']).font = { bold: true, size: 14 };
+    statsWorksheet.addRow([]);
+    statsWorksheet.addRow(['Total de Alertas', alerts.length]);
+    statsWorksheet.addRow(['Alertas Activas', alerts.filter(a => a.status === AlertStatus.ACTIVE).length]);
+    statsWorksheet.addRow(['Alertas Críticas', alerts.filter(a => a.priority === AlertPriority.CRITICA).length]);
+    statsWorksheet.addRow(['Alertas Resueltas', alerts.filter(a => a.status === AlertStatus.RESOLVED).length]);
+    statsWorksheet.addRow([]);
+    statsWorksheet.addRow(['Por Tipo']).font = { bold: true, size: 12 };
+    statsWorksheet.addRow(['Derrumbes', alerts.filter(a => a.type === AlertType.DERRUMBE).length]);
+    statsWorksheet.addRow(['Accidentes', alerts.filter(a => a.type === AlertType.ACCIDENTE).length]);
+    statsWorksheet.addRow(['Inundaciones', alerts.filter(a => a.type === AlertType.INUNDACION).length]);
+    statsWorksheet.addRow(['Cierres Viales', alerts.filter(a => a.type === AlertType.CIERRE_VIAL).length]);
+    statsWorksheet.addRow(['Mantenimiento', alerts.filter(a => a.type === AlertType.MANTENIMIENTO).length]);
+
+    // Guardar archivo
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
   },
 
   // Exportar resumen estadístico a PDF
