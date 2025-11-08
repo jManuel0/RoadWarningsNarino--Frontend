@@ -118,7 +118,7 @@ export const exportUtils = {
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
 
     // Agregar datos
-    alerts.forEach(alert => {
+    for (const alert of alerts) {
       worksheet.addRow({
         tipo: typeNames[alert.type],
         prioridad: priorityNames[alert.priority],
@@ -131,7 +131,7 @@ export const exportUtils = {
         fecha: format(new Date(alert.timestamp), 'dd/MM/yyyy HH:mm'),
         duracion: alert.estimatedDuration || 'N/A',
       });
-    });
+    }
 
     // Hoja de Estadísticas
     const statsWorksheet = workbook.addWorksheet('Estadísticas');
@@ -164,7 +164,7 @@ export const exportUtils = {
     anchor.href = url;
     anchor.download = filename;
     anchor.click();
-    window.URL.revokeObjectURL(url);
+    globalThis.URL.revokeObjectURL(url);
   },
 
   // Exportar resumen estadístico a PDF
@@ -199,11 +199,11 @@ export const exportUtils = {
       ['Críticas:', alerts.filter(a => a.priority === AlertPriority.CRITICA).length.toString()],
     ];
     
-    stats.forEach(([label, value]) => {
+    for (const [label, value] of stats) {
       doc.text(label, 14, yPosition);
       doc.text(value, 100, yPosition);
       yPosition += 7;
-    });
+    }
     
     yPosition += 10;
     
@@ -213,12 +213,12 @@ export const exportUtils = {
     yPosition += 10;
     
     doc.setFontSize(11);
-    Object.entries(typeNames).forEach(([type, name]) => {
+    for (const [type, name] of Object.entries(typeNames)) {
       const count = alerts.filter(a => a.type === type).length;
       doc.text(name + ':', 14, yPosition);
       doc.text(count.toString(), 100, yPosition);
       yPosition += 7;
-    });
+    }
     
     // Guardar
     doc.save(filename);

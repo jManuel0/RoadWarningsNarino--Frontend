@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAlertStore } from '@/stores/alertStore';
 import { useObserver } from '@/hooks/UseObserver';
 import { alertApi } from '@/api/alertApi';
@@ -28,6 +28,7 @@ export default function Home() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const loadAlerts = useCallback(async (showNotification = false) => {
     try {
@@ -60,6 +61,36 @@ export default function Home() {
     const interval = setInterval(() => loadAlerts(), 30000);
     return () => clearInterval(interval);
   }, [loadAlerts]);
+
+  // Manejar apertura/cierre del modal dialog
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const rect = dialog.getBoundingClientRect();
+      const isInDialog = (
+        rect.top <= e.clientY &&
+        e.clientY <= rect.top + rect.height &&
+        rect.left <= e.clientX &&
+        e.clientX <= rect.left + rect.width
+      );
+      if (!isInDialog) {
+        handleCloseModal();
+      }
+    };
+
+    if (selectedAlert) {
+      dialog.showModal();
+      dialog.addEventListener('click', handleClickOutside);
+    } else {
+      dialog.close();
+    }
+
+    return () => {
+      dialog.removeEventListener('click', handleClickOutside);
+    };
+  }, [selectedAlert]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -98,12 +129,6 @@ export default function Home() {
 
   const handleCloseModal = () => {
     setSelectedAlert(null);
-  };
-
-  const handleModalKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      handleCloseModal();
-    }
   };
 
   const activeAlerts = getActiveAlerts();
@@ -231,20 +256,30 @@ export default function Home() {
                 )}
               </div>
               
-              {loading ? (
-                <div className="flex items-center justify-center h-96">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                </div>
-              ) : error ? (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-400">
-                  {error}
-                </div>
-              ) : (
-                <MapView 
-                  alerts={displayAlerts}
-                  onAlertClick={setSelectedAlert}
-                />
-              )}
+              {(() => {
+                if (loading) {
+                  return (
+                    <div className="flex items-center justify-center h-96">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    </div>
+                  );
+                }
+
+                if (error) {
+                  return (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-400">
+                      {error}
+                    </div>
+                  );
+                }
+
+                return (
+                  <MapView
+                    alerts={displayAlerts}
+                    onAlertClick={setSelectedAlert}
+                  />
+                );
+              })()}
             </div>
           </div>
 
@@ -283,30 +318,22 @@ export default function Home() {
       </div>
 
       {/* Modal de alerta seleccionada */}
-      {selectedAlert && (
-        <div 
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={handleCloseModal}
-          onKeyDown={handleModalKeyDown}
-          tabIndex={-1}
-        >
-          <div 
-            role="document"
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
+      <dialog
+        ref={dialogRef}
+        aria-labelledby="modal-title"
+        className="backdrop:bg-black backdrop:bg-opacity-50 bg-transparent p-4 max-w-2xl w-full rounded-lg open:flex open:flex-col"
+      >
+        {selectedAlert && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6">
             <div className="flex items-start justify-between mb-4">
-              <h3 
+              <h3
                 id="modal-title"
                 className="text-2xl font-bold text-gray-900 dark:text-white"
               >
                 {selectedAlert.type.replace('_', ' ')}
               </h3>
               <button
+                type="button"
                 onClick={handleCloseModal}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 aria-label="Cerrar modal"
@@ -314,14 +341,14 @@ export default function Home() {
                 <X size={24} />
               </button>
             </div>
-            
+
             <AlertCard
               alert={selectedAlert}
               onStatusChange={handleStatusChange}
             />
           </div>
-        </div>
-      )}
+        )}
+      </dialog>
     </div>
   );
 }
