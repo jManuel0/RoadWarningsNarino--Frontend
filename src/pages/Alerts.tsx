@@ -63,16 +63,56 @@ export default function Alerts() {
 
   // Filtrar alertas
   const filteredAlerts = alerts.filter(alert => {
-    const matchesSearch = 
+    const matchesSearch =
       alert.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       alert.location.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
       alert.type.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = filterStatus === 'ALL' || alert.status === filterStatus;
     const matchesPriority = filterPriority === 'ALL' || alert.priority === filterPriority;
 
     return matchesSearch && matchesStatus && matchesPriority;
   });
+
+  const renderAlertsList = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {error}
+        </div>
+      );
+    }
+
+    if (filteredAlerts.length === 0) {
+      return (
+        <div className="bg-white rounded-lg shadow p-12 text-center">
+          <Filter size={48} className="mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-600">No se encontraron alertas con los filtros seleccionados</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredAlerts.map(alert => (
+          <AlertCard
+            key={alert.id}
+            alert={alert}
+            onStatusChange={handleStatusChange}
+            onDelete={handleDelete}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -158,31 +198,7 @@ export default function Alerts() {
         </div>
 
         {/* Lista de alertas */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-            {error}
-          </div>
-        ) : filteredAlerts.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <Filter size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600">No se encontraron alertas con los filtros seleccionados</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAlerts.map(alert => (
-              <AlertCard
-                key={alert.id}
-                alert={alert}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
-        )}
+        {renderAlertsList()}
       </div>
 
       {/* Modal de crear alerta */}
@@ -211,7 +227,7 @@ interface CreateAlertModalProps {
   onSubmit: (alert: CreateAlertDTO) => void;
 }
 
-function CreateAlertModal({ onClose, onSubmit }: CreateAlertModalProps) {
+function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>) {
   const [formData, setFormData] = useState<CreateAlertDTO>({
     type: AlertType.CIERRE_VIAL,
     priority: AlertPriority.MEDIA,
@@ -267,10 +283,11 @@ function CreateAlertModal({ onClose, onSubmit }: CreateAlertModalProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Tipo de alerta */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="alert-type" className="block text-sm font-medium text-gray-700 mb-2">
                 Tipo de Alerta *
               </label>
               <select
+                id="alert-type"
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as AlertType })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -285,10 +302,11 @@ function CreateAlertModal({ onClose, onSubmit }: CreateAlertModalProps) {
 
             {/* Prioridad */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="alert-priority" className="block text-sm font-medium text-gray-700 mb-2">
                 Prioridad *
               </label>
               <select
+                id="alert-priority"
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: Number(e.target.value) as AlertPriority })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -302,10 +320,11 @@ function CreateAlertModal({ onClose, onSubmit }: CreateAlertModalProps) {
 
             {/* Descripción */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="alert-description" className="block text-sm font-medium text-gray-700 mb-2">
                 Descripción *
               </label>
               <textarea
+                id="alert-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
@@ -316,10 +335,11 @@ function CreateAlertModal({ onClose, onSubmit }: CreateAlertModalProps) {
 
             {/* Dirección */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="alert-address" className="block text-sm font-medium text-gray-700 mb-2">
                 Dirección *
               </label>
               <input
+                id="alert-address"
                 type="text"
                 value={formData.location.address}
                 onChange={(e) => setFormData({
@@ -334,31 +354,33 @@ function CreateAlertModal({ onClose, onSubmit }: CreateAlertModalProps) {
             {/* Coordenadas */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="alert-lat" className="block text-sm font-medium text-gray-700 mb-2">
                   Latitud
                 </label>
                 <input
+                  id="alert-lat"
                   type="number"
                   step="0.000001"
                   value={formData.location.lat}
                   onChange={(e) => setFormData({
                     ...formData,
-                    location: { ...formData.location, lat: parseFloat(e.target.value) }
+                    location: { ...formData.location, lat: Number.parseFloat(e.target.value) }
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="alert-lng" className="block text-sm font-medium text-gray-700 mb-2">
                   Longitud
                 </label>
                 <input
+                  id="alert-lng"
                   type="number"
                   step="0.000001"
                   value={formData.location.lng}
                   onChange={(e) => setFormData({
                     ...formData,
-                    location: { ...formData.location, lng: parseFloat(e.target.value) }
+                    location: { ...formData.location, lng: Number.parseFloat(e.target.value) }
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -367,15 +389,21 @@ function CreateAlertModal({ onClose, onSubmit }: CreateAlertModalProps) {
 
             {/* Vías afectadas */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="road-input" className="block text-sm font-medium text-gray-700 mb-2">
                 Vías Afectadas
               </label>
               <div className="flex gap-2 mb-2">
                 <input
+                  id="road-input"
                   type="text"
                   value={roadInput}
                   onChange={(e) => setRoadInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRoad())}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addRoad();
+                    }
+                  }}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Nombre de la vía"
                 />
@@ -390,7 +418,7 @@ function CreateAlertModal({ onClose, onSubmit }: CreateAlertModalProps) {
               <div className="flex flex-wrap gap-2">
                 {formData.affectedRoads.map((road, index) => (
                   <span
-                    key={index}
+                    key={`road-${index}-${road}`}
                     className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-2"
                   >
                     {road}
@@ -408,15 +436,16 @@ function CreateAlertModal({ onClose, onSubmit }: CreateAlertModalProps) {
 
             {/* Duración estimada */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="alert-duration" className="block text-sm font-medium text-gray-700 mb-2">
                 Duración Estimada (minutos)
               </label>
               <input
+                id="alert-duration"
                 type="number"
                 value={formData.estimatedDuration || ''}
                 onChange={(e) => setFormData({
                   ...formData,
-                  estimatedDuration: e.target.value ? parseInt(e.target.value) : undefined
+                  estimatedDuration: e.target.value ? Number.parseInt(e.target.value, 10) : undefined
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Opcional"

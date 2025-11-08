@@ -88,7 +88,7 @@ export default function AlertCard({ alert, onStatusChange, onDelete }: Readonly<
           <div className="flex flex-wrap gap-1">
             {alert.affectedRoads.map((road, index) => (
               <span
-                key={index}
+                key={`${alert.id}-road-${index}-${road}`}
                 className="text-xs px-2 py-1 bg-white rounded-full"
               >
                 {road}

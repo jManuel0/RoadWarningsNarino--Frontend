@@ -200,15 +200,19 @@ export default function Dashboard({ alerts }: Readonly<DashboardProps>) {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={(entry: { name: string; percent: number }) =>
-                  `${entry.name} ${(Number(entry.percent) * 100).toFixed(0)}%`
-                }
+                label={(props) => {
+                  const entry = typeDistribution[props.index];
+                  if (entry) {
+                    return `${entry.name} ${(entry.percent * 100).toFixed(0)}%`;
+                  }
+                  return '';
+                }}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
               >
-                {typeDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                {typeDistribution.map((entry) => (
+                  <Cell key={`type-${entry.name}`} fill={entry.color} />
                 ))}
               </Pie>
               <Tooltip />
@@ -228,8 +232,8 @@ export default function Dashboard({ alerts }: Readonly<DashboardProps>) {
               <YAxis />
               <Tooltip />
               <Bar dataKey="value" name="Alertas">
-                {priorityDistribution.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                {priorityDistribution.map((entry) => (
+                  <Cell key={`priority-${entry.name}`} fill={entry.color} />
                 ))}
               </Bar>
             </BarChart>
@@ -259,6 +263,30 @@ interface StatCardProps {
 }
 
 function StatCard({ title, value, icon, bgColor, trend, highlight }: Readonly<StatCardProps>) {
+  const getTrendDisplay = () => {
+    if (trend === undefined) return null;
+
+    if (trend > 0) {
+      return (
+        <>
+          <TrendingUp size={16} className="text-red-600" />
+          <span className="text-sm text-red-600">+{trend}%</span>
+        </>
+      );
+    }
+
+    if (trend < 0) {
+      return (
+        <>
+          <TrendingDown size={16} className="text-green-600" />
+          <span className="text-sm text-green-600">{trend}%</span>
+        </>
+      );
+    }
+
+    return <span className="text-sm text-gray-600">Sin cambios</span>;
+  };
+
   return (
     <div className={`${bgColor} rounded-lg shadow p-6 ${highlight ? 'ring-2 ring-red-500 animate-pulse' : ''}`}>
       <div className="flex items-center justify-between">
@@ -267,19 +295,7 @@ function StatCard({ title, value, icon, bgColor, trend, highlight }: Readonly<St
           <p className="text-3xl font-bold text-gray-900">{value}</p>
           {trend !== undefined && (
             <div className="flex items-center gap-1 mt-2">
-              {trend > 0 ? (
-                <>
-                  <TrendingUp size={16} className="text-red-600" />
-                  <span className="text-sm text-red-600">+{trend}%</span>
-                </>
-              ) : trend < 0 ? (
-                <>
-                  <TrendingDown size={16} className="text-green-600" />
-                  <span className="text-sm text-green-600">{trend}%</span>
-                </>
-              ) : (
-                <span className="text-sm text-gray-600">Sin cambios</span>
-              )}
+              {getTrendDisplay()}
               <span className="text-xs text-gray-500 ml-1">vs semana anterior</span>
             </div>
           )}
@@ -296,11 +312,11 @@ function StatCard({ title, value, icon, bgColor, trend, highlight }: Readonly<St
 function TopAffectedRoads({ alerts }: Readonly<{ alerts: Alert[] }>) {
   const roadCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    alerts.forEach(alert => {
-      alert.affectedRoads.forEach(road => {
+    for (const alert of alerts) {
+      for (const road of alert.affectedRoads) {
         counts[road] = (counts[road] || 0) + 1;
-      });
-    });
+      }
+    }
 
     return Object.entries(counts)
       .sort(([, a], [, b]) => b - a)
