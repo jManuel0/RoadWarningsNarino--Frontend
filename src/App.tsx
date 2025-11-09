@@ -9,8 +9,6 @@ import { Home as HomeIcon, AlertTriangle, BarChart3 } from 'lucide-react';
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 
-
-
 function Navigation() {
   const location = useLocation();
 
@@ -19,7 +17,6 @@ function Navigation() {
   return (
     <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Route path="/gps" element={<GpsPage />} />
         <div className="flex justify-between">
           <div className="flex gap-8">
             <Link
@@ -57,6 +54,17 @@ function Navigation() {
               <BarChart3 size={20} />
               <span className="font-medium">Estadísticas</span>
             </Link>
+
+            <Link
+              to="/gps"
+              className={`flex items-center gap-2 py-4 px-2 border-b-2 transition-colors ${
+                isActive('/gps')
+                  ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              🧭 <span className="font-medium">GPS</span>
+            </Link>
           </div>
 
           <div className="flex items-center">
@@ -78,22 +86,11 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/statistics" element={<Statistics />} />
+          <Route path="/gps" element={<GpsPage />} /> {/* ✅ Ruta GPS agregada */}
         </Routes>
       </div>
     </BrowserRouter>
   );
 }
-
-
-
-  return (
-    <div>
-      <h1>🧭 RoadWarnings GPS</h1>
-      <MapWithGps />
-    </div>
-  );
-
-
-
 
 export default App;
