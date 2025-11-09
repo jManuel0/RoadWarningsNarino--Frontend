@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Alert, CreateAlertDTO, AlertStatus } from '@/types/Alert';
 import { mockAlerts } from '@/utils/mockData';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
