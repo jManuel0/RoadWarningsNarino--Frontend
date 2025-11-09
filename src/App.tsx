@@ -6,6 +6,9 @@ import Alerts from '@/pages/Alerts';
 import Statistics from '@/pages/Statistics';
 import ThemeToggle from '@/components/ThemeToggle';
 import { Home as HomeIcon, AlertTriangle, BarChart3 } from 'lucide-react';
+import "leaflet/dist/leaflet.css";
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+
 
 
 function Navigation() {
@@ -80,5 +83,17 @@ function App() {
     </BrowserRouter>
   );
 }
+
+
+
+  return (
+    <div>
+      <h1>🧭 RoadWarnings GPS</h1>
+      <MapWithGps />
+    </div>
+  );
+
+
+
 
 export default App;

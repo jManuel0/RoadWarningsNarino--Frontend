@@ -26,6 +26,10 @@ export interface Location {
 }
 
 export interface Alert {
+  title: any;
+  longitude: number;
+  latitude: number;
+  severity: string;
   id: string;
   type: AlertType;
   priority: AlertPriority;

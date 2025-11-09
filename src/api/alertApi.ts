@@ -62,6 +62,10 @@ export const alertApi = {
         id: `mock-${Date.now()}`,
         timestamp: new Date(),
         status: AlertStatus.ACTIVE,
+        title: undefined,
+        longitude: 0,
+        latitude: 0,
+        severity: ''
       };
       mockAlerts.unshift(newAlert);
       return newAlert;
