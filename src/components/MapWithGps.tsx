@@ -6,16 +6,16 @@ import "leaflet-routing-machine";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 
 interface Props {
-  destination: { lat: number; lng: number }; // Punto al que quieres ir
+  destination: { lat: number; lng: number };
 }
 
 const MapWithGPS: React.FC<Props> = ({ destination }) => {
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<L.Map>(null!);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    const map = mapRef.current;
+    if (!map) return;
 
-    // Obtener ubicación actual del usuario
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const userLatLng = L.latLng(
@@ -23,16 +23,14 @@ const MapWithGPS: React.FC<Props> = ({ destination }) => {
           position.coords.longitude
         );
 
-        const map = mapRef.current!;
         map.setView(userLatLng, 13);
 
-        // Agregar marcador del usuario
         L.marker(userLatLng)
           .addTo(map)
           .bindPopup("Tu ubicación actual")
           .openPopup();
 
-        // Agregar ruta entre usuario y destino
+        // ✅ L.Routing.control reconocido gracias al .d.ts
         L.Routing.control({
           waypoints: [userLatLng, L.latLng(destination.lat, destination.lng)],
           routeWhileDragging: true,
@@ -40,9 +38,7 @@ const MapWithGPS: React.FC<Props> = ({ destination }) => {
           lineOptions: {
             styles: [{ color: "blue", opacity: 0.8, weight: 5 }],
           },
-          createMarker: (_i: any, wp: { latLng: L.LatLngExpression; }) => {
-            return L.marker(wp.latLng);
-          },
+          createMarker: (_i: any, wp: { latLng: L.LatLngExpression; }) => L.marker(wp.latLng),
         }).addTo(map);
       },
       (error) => {
@@ -54,13 +50,13 @@ const MapWithGPS: React.FC<Props> = ({ destination }) => {
 
   return (
     <MapContainer
-      center={[1.2136, -77.2811]} // Por defecto, Pasto
+      center={[1.2136, -77.2811]}
       zoom={12}
       style={{ height: "100vh", width: "100%" }}
-      whenReady={(mapInstance: L.Map | null) => mapRef.current = mapInstance}
+      ref={mapRef}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+        attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <Marker position={[destination.lat, destination.lng]}>
@@ -71,3 +67,4 @@ const MapWithGPS: React.FC<Props> = ({ destination }) => {
 };
 
 export default MapWithGPS;
+
