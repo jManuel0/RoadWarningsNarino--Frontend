@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import GpsPage from './pages/GpsPage';
 import Home from '@/pages/Home';
 import Alerts from '@/pages/Alerts';
 import Statistics from '@/pages/Statistics';
@@ -15,6 +16,7 @@ function Navigation() {
   return (
     <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <Route path="/gps" element={<GpsPage />} />
         <div className="flex justify-between">
           <div className="flex gap-8">
             <Link
