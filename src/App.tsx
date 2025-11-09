@@ -1,11 +1,12 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Toaster } from 'sonner';
-import GpsPage from './pages/GpsPage';
-import Home from '@/pages/Home';
-import Alerts from '@/pages/Alerts';
-import Statistics from '@/pages/Statistics';
-import ThemeToggle from '@/components/ThemeToggle';
-import { Home as HomeIcon, AlertTriangle, BarChart3 } from 'lucide-react';
+// src/App.tsx
+import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import { Toaster } from "sonner";
+import GpsPage from "./pages/GpsPage";
+import Home from "./pages/Home";
+import Alerts from "./pages/Alerts";
+import Statistics from "./pages/Statistics";
+import ThemeToggle from "./components/ThemeToggle";
+import { Home as HomeIcon, AlertTriangle, BarChart3 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 
@@ -22,9 +23,8 @@ function Navigation() {
             <Link
               to="/"
               className={`flex items-center gap-2 py-4 px-2 border-b-2 transition-colors ${
-                isActive('/')
-                  ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                isActive("/") ? "border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400" :
+                "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               <HomeIcon size={20} />
@@ -34,9 +34,8 @@ function Navigation() {
             <Link
               to="/alerts"
               className={`flex items-center gap-2 py-4 px-2 border-b-2 transition-colors ${
-                isActive('/alerts')
-                  ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                isActive("/alerts") ? "border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400" :
+                "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               <AlertTriangle size={20} />
@@ -46,9 +45,8 @@ function Navigation() {
             <Link
               to="/statistics"
               className={`flex items-center gap-2 py-4 px-2 border-b-2 transition-colors ${
-                isActive('/statistics')
-                  ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                isActive("/statistics") ? "border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400" :
+                "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               <BarChart3 size={20} />
@@ -58,12 +56,12 @@ function Navigation() {
             <Link
               to="/gps"
               className={`flex items-center gap-2 py-4 px-2 border-b-2 transition-colors ${
-                isActive('/gps')
-                  ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                isActive("/gps") ? "border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400" :
+                "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
-              🧭 <span className="font-medium">GPS</span>
+              🧭
+              <span className="font-medium">GPS</span>
             </Link>
           </div>
 
@@ -86,7 +84,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/statistics" element={<Statistics />} />
-          <Route path="/gps" element={<GpsPage />} /> {/* ✅ Ruta GPS agregada */}
+          <Route path="/gps" element={<GpsPage />} />
         </Routes>
       </div>
     </BrowserRouter>
