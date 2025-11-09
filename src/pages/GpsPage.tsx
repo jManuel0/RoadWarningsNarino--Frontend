@@ -6,9 +6,8 @@ import { Alert } from "../types/Alert";
 const GpsPage: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
-  // Aquí puedes traer las alertas desde tu API
   useEffect(() => {
-    fetch("http://localhost:8080/api/alerts") // Cambia la URL según tu backend
+    fetch("http://localhost:8080/api/alerts") // ajusta la URL a tu backend real
       .then((res) => res.json())
       .then((data: Alert[]) => setAlerts(data))
       .catch((err) => console.error("Error fetching alerts:", err));
