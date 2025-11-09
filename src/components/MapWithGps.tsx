@@ -8,17 +8,19 @@ import { Alert } from "../types/Alert";
 import { toast } from "sonner";
 
 interface MapWithGpsProps {
-  alerts?: Alert[]; // alertas que vienen desde el padre
+  alerts?: Alert[]; // alertas que vienen desde el padre (GpsPage)
 }
 
 const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
   const mapRef = useRef<L.Map | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
-  const routingControlRef = useRef<any>(null); // leaflet-routing-machine no tiene buenos tipos
+  const routingControlRef = useRef<any>(null); // leaflet-routing-machine no trae tipos buenos
   const alertMarkersRef = useRef<L.Marker[]>([]);
 
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   // Icono usuario
   const userIcon = L.icon({
@@ -37,7 +39,7 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
   // Inicializar mapa
   useEffect(() => {
     if (!mapRef.current) {
-      const map = L.map("map").setView([1.2136, -77.2811], 13); // centro inicial
+      const map = L.map("map").setView([1.2136, -77.2811], 13);
       mapRef.current = map;
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -88,11 +90,26 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
   useEffect(() => {
     if (!mapRef.current) return;
 
+    console.log("Total alertas recibidas:", alerts.length, alerts);
+
     // Limpiar marcadores previos
     alertMarkersRef.current.forEach((m) => m.remove());
     alertMarkersRef.current = [];
 
-    alerts.forEach((alert) => {
+    // Filtrar alertas con coordenadas válidas
+    const validAlerts = alerts.filter((a) => {
+      const valid =
+        typeof a.latitude === "number" &&
+        typeof a.longitude === "number" &&
+        !Number.isNaN(a.latitude) &&
+        !Number.isNaN(a.longitude);
+      if (!valid) {
+        console.warn("Alerta con coordenadas inválidas, se omite:", a);
+      }
+      return valid;
+    });
+
+    validAlerts.forEach((alert) => {
       const marker = L.marker([alert.latitude, alert.longitude], {
         icon: alertIcon,
       }).addTo(mapRef.current!);
@@ -124,22 +141,27 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
 
       alertMarkersRef.current.push(marker);
     });
+
+    // Ajustar el mapa para mostrar todas las alertas si hay al menos una
+    if (alertMarkersRef.current.length > 0) {
+      const group = L.featureGroup(alertMarkersRef.current);
+      mapRef.current.fitBounds(group.getBounds().pad(0.2));
+    }
   }, [alerts]);
 
-  // Navegar desde la ubicación del usuario a una alerta
+  // Navegar desde la ubicación del usuario a una alerta o destino
   const handleNavigate = (destination: [number, number]) => {
     if (!mapRef.current || !userLocation) {
       toast("Debes activar tu GPS primero.");
       return;
     }
 
-    // eliminar ruta previa si existe
     if (routingControlRef.current) {
       routingControlRef.current.remove();
       routingControlRef.current = null;
     }
 
-    // @ts-ignore: Routing viene de leaflet-routing-machine en runtime
+    // @ts-ignore: Routing se agrega por leaflet-routing-machine en runtime
     routingControlRef.current = L.Routing.control({
       waypoints: [
         L.latLng(userLocation[0], userLocation[1]),
@@ -166,12 +188,76 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
     }
   };
 
+  // Buscar destino por texto y navegar (ej: "Parque Nariño", dirección, etc.)
+  const handleSearchDestination = async () => {
+    if (!searchQuery.trim()) {
+      toast("Escribe un lugar para buscar.");
+      return;
+    }
+
+    if (!userLocation) {
+      toast("Activa el GPS para calcular la ruta desde tu ubicación.");
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        searchQuery.trim()
+      )}`;
+      const res = await fetch(url);
+      const results = await res.json();
+
+      if (!results || results.length === 0) {
+        toast("No se encontró ese lugar. Intenta con otra dirección o nombre.");
+        return;
+      }
+
+      const place = results[0];
+      const lat = parseFloat(place.lat);
+      const lon = parseFloat(place.lon);
+
+      if (Number.isNaN(lat) || Number.isNaN(lon)) {
+        toast("No se pudo interpretar la ubicación encontrada.");
+        return;
+      }
+
+      handleNavigate([lat, lon]);
+      if (mapRef.current) {
+        mapRef.current.flyTo([lat, lon], 15);
+      }
+    } catch (error) {
+      console.error(error);
+      toast("Error al buscar el destino.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <div className="relative">
       <div
         id="map"
         style={{ height: "90vh", width: "100%", borderRadius: "10px" }}
       />
+
+      {/* Buscador de destino */}
+      <div className="absolute top-4 left-4 bg-white px-3 py-2 rounded-lg shadow-md flex gap-2 items-center w-[260px]">
+        <input
+          type="text"
+          placeholder="Buscar destino..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="flex-1 text-sm outline-none"
+        />
+        <button
+          onClick={handleSearchDestination}
+          disabled={isSearching}
+          className="text-sm bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700 disabled:opacity-60"
+        >
+          Ir
+        </button>
+      </div>
 
       {/* Botón centrar en usuario */}
       <button
