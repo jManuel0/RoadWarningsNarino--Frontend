@@ -57,9 +57,7 @@ const MapWithGPS: React.FC<Props> = ({ destination }) => {
       center={[1.2136, -77.2811]} // Por defecto, Pasto
       zoom={12}
       style={{ height: "100vh", width: "100%" }}
-      whenReady={(mapInstance: L.Map | null) => {
-        return mapRef.current = mapInstance;
-      }}
+      whenReady={(mapInstance: L.Map | null) => mapRef.current = mapInstance}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
