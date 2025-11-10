@@ -4,23 +4,21 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
-import { Alert } from "../types/Alert";
-import { toast } from "sonner";
+import { Alert, AlertSeverity } from "@/types/Alert";
 
 interface MapWithGpsProps {
-  alerts?: Alert[]; // alertas que vienen desde el padre (GpsPage)
+  alerts?: Alert[];
 }
 
 const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
   const mapRef = useRef<L.Map | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
-  const routingControlRef = useRef<any>(null); // leaflet-routing-machine no trae tipos buenos
+  const routingControlRef = useRef<any | null>(null);
   const alertMarkersRef = useRef<L.Marker[]>([]);
-
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
 
   // Icono usuario
   const userIcon = L.icon({
@@ -39,12 +37,13 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
   // Inicializar mapa
   useEffect(() => {
     if (!mapRef.current) {
-      const map = L.map("map").setView([1.2136, -77.2811], 13);
-      mapRef.current = map;
+      const map = L.map("map-gps").setView([1.2136, -77.2811], 10);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
       }).addTo(map);
+
+      mapRef.current = map;
     }
   }, []);
 
@@ -86,83 +85,56 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // Pintar marcadores de alertas cuando cambian las props
+  // Pintar alertas en el mapa cuando cambian
   useEffect(() => {
     if (!mapRef.current) return;
 
-    console.log("Total alertas recibidas:", alerts.length, alerts);
-
-    // Limpiar marcadores previos
+    // limpiar marcadores anteriores
     alertMarkersRef.current.forEach((m) => m.remove());
     alertMarkersRef.current = [];
 
-    // Filtrar alertas con coordenadas válidas
-    const validAlerts = alerts.filter((a) => {
-      const valid =
-        typeof a.latitude === "number" &&
-        typeof a.longitude === "number" &&
-        !Number.isNaN(a.latitude) &&
-        !Number.isNaN(a.longitude);
-      if (!valid) {
-        console.warn("Alerta con coordenadas inválidas, se omite:", a);
+    alerts.forEach((alert) => {
+      if (
+        alert.latitude == null ||
+        alert.longitude == null
+      ) {
+        return;
       }
-      return valid;
-    });
 
-    validAlerts.forEach((alert) => {
-      const marker = L.marker([alert.latitude, alert.longitude], {
-        icon: alertIcon,
-      }).addTo(mapRef.current!);
+      const marker = L.marker(
+        [alert.latitude, alert.longitude],
+        { icon: alertIcon }
+      ).addTo(mapRef.current!);
 
-      marker.bindPopup(`
-        <b>${alert.title}</b><br>
-        ${alert.description}<br>
-        <b>Severidad:</b> ${alert.severity}<br>
-        ${
-          alert.timestamp
-            ? `<b>Fecha:</b> ${new Date(alert.timestamp).toLocaleString()}<br>`
-            : ""
-        }
-        ${
-          alert.estimatedDuration
-            ? `<b>Duración estimada:</b> ${alert.estimatedDuration} min<br>`
-            : ""
-        }
-        <button id="navigate-${alert.id}">➡️ Navegar</button>
-      `);
-
-      marker.on("popupopen", () => {
-        const btn = document.getElementById(`navigate-${alert.id}`);
-        if (btn) {
-          btn.onclick = () =>
-            handleNavigate([alert.latitude, alert.longitude]);
-        }
-      });
+      marker.bindPopup(
+        `
+          <b>${alert.title}</b><br/>
+          ${alert.description || ""}<br/>
+          <b>Ubicación:</b> ${alert.location || ""}<br/>
+          <b>Severidad:</b> ${alert.severity}<br/>
+          <b>Estado:</b> ${alert.status}
+        `
+      );
 
       alertMarkersRef.current.push(marker);
     });
-
-    // Ajustar el mapa para mostrar todas las alertas si hay al menos una
-    if (alertMarkersRef.current.length > 0) {
-      const group = L.featureGroup(alertMarkersRef.current);
-      mapRef.current.fitBounds(group.getBounds().pad(0.2));
-    }
   }, [alerts]);
 
-  // Navegar desde la ubicación del usuario a una alerta o destino
+  // Navegar desde ubicación actual a una alerta
   const handleNavigate = (destination: [number, number]) => {
     if (!mapRef.current || !userLocation) {
-      toast("Debes activar tu GPS primero.");
+      alert("Debes activar tu GPS primero.");
       return;
     }
 
+    // eliminar ruta previa
     if (routingControlRef.current) {
       routingControlRef.current.remove();
       routingControlRef.current = null;
     }
 
-    // @ts-ignore: Routing se agrega por leaflet-routing-machine en runtime
-    routingControlRef.current = L.Routing.control({
+    // crear nueva ruta (usando leaflet-routing-machine)
+    const routingControl = (L as any).Routing.control({
       waypoints: [
         L.latLng(userLocation[0], userLocation[1]),
         L.latLng(destination[0], destination[1]),
@@ -170,94 +142,45 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
       lineOptions: {
         styles: [{ color: "blue", weight: 5, opacity: 0.7 }],
       },
-      createMarker: (i: number, wp: { latLng: L.LatLngExpression }) =>
-        L.marker(wp.latLng, { icon: i === 0 ? userIcon : alertIcon }),
+      createMarker: (i: number, wp: any) =>
+        L.marker(wp.latLng, {
+          icon: i === 0 ? userIcon : alertIcon,
+        }),
       addWaypoints: false,
       draggableWaypoints: false,
       routeWhileDragging: false,
       show: false,
     }).addTo(mapRef.current);
+
+    routingControlRef.current = routingControl;
   };
 
-  // Centrar mapa en usuario
+  // Centrar mapa en el usuario
   const handleCenterMap = () => {
     if (mapRef.current && userLocation) {
       mapRef.current.flyTo(userLocation, 15);
     } else {
-      toast("Esperando señal GPS...");
+      alert("Esperando señal GPS...");
     }
   };
 
-  // Buscar destino por texto y navegar (ej: "Parque Nariño", dirección, etc.)
-  const handleSearchDestination = async () => {
-    if (!searchQuery.trim()) {
-      toast("Escribe un lugar para buscar.");
-      return;
+  // Helper: color según severidad
+  const getSeverityClass = (severity: AlertSeverity) => {
+    if (severity === AlertSeverity.CRITICA || severity === AlertSeverity.ALTA) {
+      return "bg-red-100 hover:bg-red-200";
     }
-
-    if (!userLocation) {
-      toast("Activa el GPS para calcular la ruta desde tu ubicación.");
-      return;
+    if (severity === AlertSeverity.MEDIA) {
+      return "bg-yellow-100 hover:bg-yellow-200";
     }
-
-    try {
-      setIsSearching(true);
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        searchQuery.trim()
-      )}`;
-      const res = await fetch(url);
-      const results = await res.json();
-
-      if (!results || results.length === 0) {
-        toast("No se encontró ese lugar. Intenta con otra dirección o nombre.");
-        return;
-      }
-
-      const place = results[0];
-      const lat = parseFloat(place.lat);
-      const lon = parseFloat(place.lon);
-
-      if (Number.isNaN(lat) || Number.isNaN(lon)) {
-        toast("No se pudo interpretar la ubicación encontrada.");
-        return;
-      }
-
-      handleNavigate([lat, lon]);
-      if (mapRef.current) {
-        mapRef.current.flyTo([lat, lon], 15);
-      }
-    } catch (error) {
-      console.error(error);
-      toast("Error al buscar el destino.");
-    } finally {
-      setIsSearching(false);
-    }
+    return "bg-green-100 hover:bg-green-200";
   };
 
   return (
     <div className="relative">
       <div
-        id="map"
+        id="map-gps"
         style={{ height: "90vh", width: "100%", borderRadius: "10px" }}
       />
-
-      {/* Buscador de destino */}
-      <div className="absolute top-4 left-4 bg-white px-3 py-2 rounded-lg shadow-md flex gap-2 items-center w-[260px]">
-        <input
-          type="text"
-          placeholder="Buscar destino..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 text-sm outline-none"
-        />
-        <button
-          onClick={handleSearchDestination}
-          disabled={isSearching}
-          className="text-sm bg-blue-600 text-white px-2 py-1 rounded-md hover:bg-blue-700 disabled:opacity-60"
-        >
-          Ir
-        </button>
-      </div>
 
       {/* Botón centrar en usuario */}
       <button
@@ -267,27 +190,40 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
         📍 Centrar en mi ubicación
       </button>
 
-      {/* Lista de alertas */}
-      <div className="absolute bottom-4 left-4 bg-white p-3 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+      {/* Lista de alertas para navegar */}
+      <div className="absolute bottom-4 left-4 bg-white p-3 rounded-xl shadow-lg max-h-60 overflow-y-auto w-72">
         <h3 className="font-bold mb-2 text-gray-800">Alertas cercanas</h3>
         {alerts.length > 0 ? (
-          alerts.map((alert) => (
-            <button
-              key={alert.id}
-              onClick={() =>
-                handleNavigate([alert.latitude, alert.longitude])
-              }
-              className={`block w-full text-left px-3 py-2 mb-1 rounded-lg ${
-                alert.severity === "high"
-                  ? "bg-red-100 hover:bg-red-200"
-                  : alert.severity === "medium"
-                  ? "bg-yellow-100 hover:bg-yellow-200"
-                  : "bg-green-100 hover:bg-green-200"
-              }`}
-            >
-              {alert.title} — {alert.severity.toUpperCase()}
-            </button>
-          ))
+          alerts.map((alert) => {
+            if (
+              alert.latitude == null ||
+              alert.longitude == null
+            ) {
+              return null;
+            }
+
+            return (
+              <button
+                key={alert.id}
+                onClick={() =>
+                  handleNavigate([alert.latitude, alert.longitude])
+                }
+                className={`block w-full text-left px-3 py-2 mb-1 rounded-lg text-sm ${getSeverityClass(
+                  alert.severity
+                )}`}
+              >
+                <div className="font-semibold truncate">
+                  {alert.title || "Alerta sin título"}
+                </div>
+                <div className="text-xs text-gray-700 truncate">
+                  {alert.location || "Sin ubicación detallada"}
+                </div>
+                <div className="text-[10px] text-gray-500">
+                  {alert.severity} • {alert.status}
+                </div>
+              </button>
+            );
+          })
         ) : (
           <p className="text-sm text-gray-600">Sin alertas disponibles</p>
         )}
@@ -295,7 +231,7 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
 
       {/* Mensaje de error */}
       {error && (
-        <div className="absolute top-20 left-4 bg-red-600 text-white px-3 py-2 rounded-md shadow-lg">
+        <div className="absolute top-20 left-4 bg-red-600 text-white px-3 py-2 rounded-md shadow-lg text-sm max-w-xs">
           ⚠️ {error}
         </div>
       )}
