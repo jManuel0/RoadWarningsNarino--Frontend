@@ -1,3 +1,5 @@
+// src/types/Alert.ts
+
 export enum AlertType {
   DERRUMBE = "DERRUMBE",
   ACCIDENTE = "ACCIDENTE",
@@ -19,37 +21,29 @@ export enum AlertStatus {
   IN_PROGRESS = "IN_PROGRESS",
 }
 
-/**
- * Lo que devuelve el backend (AlertaResponseDTO)
- */
 export interface Alert {
-  timestamp: string | number | Date;
-  affectedRoads: any;
-  priority: any;
   id: number;
   type: AlertType;
   title: string;
   description: string;
   latitude: number;
   longitude: number;
-  location: string;            // dirección
-  municipality?: string;       // si lo agregas en backend
+  location: string;
+  municipality?: string;
   severity: AlertSeverity;
   status: AlertStatus;
-  username?: string;
-  userId?: number;
+
   imageUrl?: string;
   upvotes?: number;
   downvotes?: number;
-  estimatedDuration?: number;
   createdAt?: string;
   updatedAt?: string;
   expiresAt?: string;
+  username?: string;
+  userId?: number;
+  estimatedDuration?: number;
 }
 
-/**
- * Lo que el frontend le manda al backend (AlertaRequestDTO)
- */
 export interface CreateAlertDTO {
   type: AlertType;
   title: string;
@@ -57,7 +51,7 @@ export interface CreateAlertDTO {
   latitude: number;
   longitude: number;
   location: string;
-  municipality?: string;       // opcional si aún no lo tienes en backend
+  municipality?: string;
   severity: AlertSeverity;
   estimatedDuration?: number;
   imageUrl?: string;
