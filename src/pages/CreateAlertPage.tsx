@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import LocationPickerMap from "../components/LocationPickerMap";
 
 const CreateAlertPage: React.FC = () => {
-  const [priority, setPriority] = useState("Alta");
+  const [priority, setPriority] = useState("ALTA");
+  const [type, setType] = useState("ACCIDENTE"); // ajusta a tus enums
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [municipality, setMunicipality] = useState("Pasto");
@@ -18,113 +20,184 @@ const CreateAlertPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!title.trim()) {
+      alert("El título es obligatorio.");
+      return;
+    }
+
+    if (!location.trim()) {
+      alert("La dirección es obligatoria.");
+      return;
+    }
+
+    if (!municipality.trim()) {
+      alert("El municipio es obligatorio.");
+      return;
+    }
+
     if (latitude == null || longitude == null) {
       alert("Por favor selecciona la ubicación en el mapa.");
       return;
     }
 
     const body = {
-      severity: priority,
+      type,                         // AlertType (enum en backend)
+      title,
       description,
-      location,
-      municipality,
       latitude,
       longitude,
+      location,
+      municipality,
+      severity: priority as any,    // AlertSeverity (ALTA/MEDIA/BAJA)
       estimatedDuration,
+      imageUrl: null,
     };
 
-    await fetch("http://localhost:8080/api/alerts", {
+    const res = await fetch("http://localhost:8080/api/alerts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
-    alert("Alerta creada correctamente.");
+    if (!res.ok) {
+      const msg = await res.text();
+      console.error(msg);
+      alert("Error al crear la alerta");
+      return;
+    }
+
+    alert("Alerta creada correctamente");
+    // aquí puedes limpiar el form o redirigir
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-        maxWidth: "500px",
-        margin: "auto",
-      }}
-    >
-      <h2>Crear Alerta</h2>
+    <div style={{ maxWidth: 600, margin: "20px auto" }}>
+      <h2 style={{ marginBottom: 16 }}>Crear Alerta</h2>
 
-      {/* Prioridad */}
-      <label>Prioridad *</label>
-      <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-        <option value="Alta">Alta</option>
-        <option value="Media">Media</option>
-        <option value="Baja">Baja</option>
-      </select>
-
-      {/* Descripción */}
-      <label>Descripción *</label>
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Ej: Accidente vehicular."
-        required
-      />
-
-      {/* Dirección */}
-      <label>Dirección *</label>
-      <input
-        type="text"
-        value={location}
-        onChange={(e) => setLocation(e.target.value)}
-        placeholder="Ej: Calle 18 con Carrera 25"
-        required
-      />
-
-      {/* Municipio */}
-      <label>Municipio *</label>
-      <select
-        value={municipality}
-        onChange={(e) => setMunicipality(e.target.value)}
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: 10 }}
       >
-        <option value="Pasto">Pasto</option>
-        <option value="Ipiales">Ipiales</option>
-        <option value="Tumaco">Tumaco</option>
-        <option value="Tuquerres">Túquerres</option>
-        <option value="Sandoná">Sandoná</option>
-      </select>
+        {/* Tipo */}
+        <label>
+          Tipo de alerta *
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+          >
+            <option value="ACCIDENTE">Accidente</option>
+            <option value="DERRUMBE">Derrumbe</option>
+            <option value="INUNDACION">Inundación</option>
+            <option value="CIERRE_VIAL">Cierre vial</option>
+            <option value="MANTENIMIENTO">Mantenimiento</option>
+          </select>
+        </label>
 
-      {/* Mapa */}
-      <label>Selecciona la ubicación en el mapa *</label>
-      <LocationPickerMap lat={latitude} lng={longitude} onChange={handleMapSelect} />
+        {/* Prioridad / Severidad */}
+        <label>
+          Severidad *
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+          >
+            <option value="ALTA">Alta</option>
+            <option value="MEDIA">Media</option>
+            <option value="BAJA">Baja</option>
+          </select>
+        </label>
 
-      {/* Coordenadas */}
-      <div style={{ display: "flex", gap: "8px" }}>
-        <div style={{ flex: 1 }}>
-          <label>Latitud</label>
-          <input type="text" value={latitude ?? ""} readOnly />
+        {/* Título */}
+        <label>
+          Título *
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ej: Accidente vehicular"
+            required
+          />
+        </label>
+
+        {/* Descripción */}
+        <label>
+          Descripción
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Detalles de la alerta..."
+            maxLength={1000}
+          />
+        </label>
+
+        {/* Dirección */}
+        <label>
+          Dirección *
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Ej: Calle 18 con Carrera 25"
+            required
+          />
+        </label>
+
+        {/* Municipio */}
+        <label>
+          Municipio *
+          <select
+            value={municipality}
+            onChange={(e) => setMunicipality(e.target.value)}
+          >
+            <option value="Pasto">Pasto</option>
+            <option value="Ipiales">Ipiales</option>
+            <option value="Tumaco">Tumaco</option>
+            <option value="Tuquerres">Túquerres</option>
+            <option value="Sandona">Sandoná</option>
+            {/* agrega más según necesites */}
+          </select>
+        </label>
+
+        {/* Mapa */}
+        <label>Selecciona la ubicación en el mapa *</label>
+        <LocationPickerMap
+          lat={latitude}
+          lng={longitude}
+          onChange={handleMapSelect}
+        />
+
+        {/* Coordenadas (solo lectura) */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <label>Latitud</label>
+            <input type="text" value={latitude ?? ""} readOnly />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label>Longitud</label>
+            <input type="text" value={longitude ?? ""} readOnly />
+          </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <label>Longitud</label>
-          <input type="text" value={longitude ?? ""} readOnly />
-        </div>
-      </div>
 
-      {/* Duración estimada */}
-      <label>Duración Estimada (minutos)</label>
-      <input
-        type="number"
-        min="0"
-        placeholder="Opcional"
-        value={estimatedDuration ?? ""}
-        onChange={(e) => setEstimatedDuration(Number(e.target.value))}
-      />
+        {/* Duración estimada */}
+        <label>
+          Duración estimada (minutos)
+          <input
+            type="number"
+            min={0}
+            value={estimatedDuration ?? ""}
+            onChange={(e) =>
+              setEstimatedDuration(
+                e.target.value ? Number(e.target.value) : undefined
+              )
+            }
+            placeholder="Opcional"
+          />
+        </label>
 
-      <button type="submit" style={{ marginTop: "10px" }}>
-        Crear Alerta
-      </button>
-    </form>
+        <button type="submit" style={{ marginTop: 10 }}>
+          Crear Alerta
+        </button>
+      </form>
+    </div>
   );
 };
 
