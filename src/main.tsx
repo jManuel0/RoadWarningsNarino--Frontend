@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import { ThemeProvider } from "@/components/ThemeContext"; // ajusta la ruta
 
 const rootElement = document.getElementById("root");
 
@@ -11,12 +12,14 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </React.StrictMode>
 );
 
-// 🔹 Importante: NO registrar service workers aquí.
-// 🔹 Si había uno viejo, lo intentamos desregistrar.
+// Limpieza de SW viejos, sin registrar nuevos
+// Limpieza de Service Workers viejos, sin registrar nuevos
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .getRegistrations()
@@ -26,7 +29,8 @@ if ("serviceWorker" in navigator) {
         console.log("🧹 Service Worker desregistrado:", reg);
       });
     })
-    .catch((err) => {
+    .catch((err: unknown) => {
       console.log("No se pudieron obtener los Service Workers:", err);
     });
 }
+
