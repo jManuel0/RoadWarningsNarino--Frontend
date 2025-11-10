@@ -16,6 +16,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 
 // Desregistrar cualquier Service Worker viejo que pueda romper el build
+// Eliminar cualquier Service Worker previo que pueda estar rompiendo la app
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((regs) => {
     regs.forEach((reg) => {
@@ -24,3 +25,4 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
