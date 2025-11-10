@@ -10,6 +10,7 @@ import { Home as HomeIcon, AlertTriangle, BarChart3 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 
+
 function Navigation() {
   const location = useLocation();
 
