@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Bell, X } from 'lucide-react';
-import { Alert, AlertPriority } from '@/types/Alert';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Alert, AlertPriority } from '@/types/Alert';
+
 
 interface NotificationBellProps {
   alerts: Alert[];

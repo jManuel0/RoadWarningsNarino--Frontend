@@ -22,6 +22,8 @@ export enum AlertStatus {
 }
 
 export interface Alert {
+  timestamp: string | number | Date;
+  priority: AlertSeverity;
   id: number;
   type: AlertType;
   title: string;
