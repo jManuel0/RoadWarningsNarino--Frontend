@@ -56,3 +56,6 @@ export interface CreateAlertDTO {
   estimatedDuration?: number;
   imageUrl?: string;
 }
+
+// 👇 Alias para compatibilidad con código que usa AlertPriority
+export type AlertPriority = AlertSeverity;
