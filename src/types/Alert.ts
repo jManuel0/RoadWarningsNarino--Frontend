@@ -1,51 +1,61 @@
 export enum AlertType {
-  DERRUMBE = 'DERRUMBE',
-  ACCIDENTE = 'ACCIDENTE',
-  INUNDACION = 'INUNDACION',
-  CIERRE_VIAL = 'CIERRE_VIAL',
-  MANTENIMIENTO = 'MANTENIMIENTO',
+  DERRUMBE = "DERRUMBE",
+  ACCIDENTE = "ACCIDENTE",
+  INUNDACION = "INUNDACION",
+  CIERRE_VIAL = "CIERRE_VIAL",
+  MANTENIMIENTO = "MANTENIMIENTO",
 }
 
-export enum AlertPriority {
-  CRITICA = 1,
-  ALTA = 2,
-  MEDIA = 3,
-  BAJA = 4,
+export enum AlertSeverity {
+  CRITICA = "CRITICA",
+  ALTA = "ALTA",
+  MEDIA = "MEDIA",
+  BAJA = "BAJA",
 }
 
 export enum AlertStatus {
-  ACTIVE = 'ACTIVE',
-  RESOLVED = 'RESOLVED',
-  IN_PROGRESS = 'IN_PROGRESS',
+  ACTIVE = "ACTIVE",
+  RESOLVED = "RESOLVED",
+  IN_PROGRESS = "IN_PROGRESS",
 }
 
-export interface Location {
-  lat: number;
-  lng: number;
-  address: string;
-}
-
+/**
+ * Lo que devuelve el backend (AlertaResponseDTO)
+ */
 export interface Alert {
-  title: any;
-  longitude: number;
-  latitude: number;
-  severity: string;
-  id: string;
+  id: number;
   type: AlertType;
-  priority: AlertPriority;
-  location: Location;
-  affectedRoads: string[];
+  title: string;
   description: string;
-  timestamp: Date;
-  estimatedDuration?: number; // minutos
+  latitude: number;
+  longitude: number;
+  location: string;            // dirección
+  municipality?: string;       // si lo agregas en backend
+  severity: AlertSeverity;
   status: AlertStatus;
+  username?: string;
+  userId?: number;
+  imageUrl?: string;
+  upvotes?: number;
+  downvotes?: number;
+  estimatedDuration?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  expiresAt?: string;
 }
 
+/**
+ * Lo que el frontend le manda al backend (AlertaRequestDTO)
+ */
 export interface CreateAlertDTO {
   type: AlertType;
-  priority: AlertPriority;
-  location: Location;
-  affectedRoads: string[];
+  title: string;
   description: string;
+  latitude: number;
+  longitude: number;
+  location: string;
+  municipality?: string;       // opcional si aún no lo tienes en backend
+  severity: AlertSeverity;
   estimatedDuration?: number;
+  imageUrl?: string;
 }
