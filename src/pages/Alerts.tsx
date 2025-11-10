@@ -127,7 +127,7 @@ export default function Alerts() {
             key={alert.id}
             alert={alert}
             onStatusChange={handleStatusChange}
-            Delete={handleDelete}
+            onDelete={handleDelete}
           />
         ))}
       </div>

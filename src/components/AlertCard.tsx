@@ -1,146 +1,114 @@
-import { Alert, AlertType, AlertPriority, AlertStatus } from '../types/Alert';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { CheckCircle, Clock, MapPin, X } from 'lucide-react';
+// src/components/AlertCard.tsx
+import { Alert, AlertStatus, AlertSeverity } from "@/types/Alert";
+import { XCircle, CheckCircle2, AlertTriangle, Trash2 } from "lucide-react";
 
 interface AlertCardProps {
   alert: Alert;
-  onStatusChange?: (id: string, status: AlertStatus) => void;
-  onDelete?: (id: string) => void;
+  onStatusChange: (id: number, status: AlertStatus) => void;
+  onDelete: (id: number) => void;
 }
 
-const alertTypeIcons = {
-  [AlertType.DERRUMBE]: '🪨',
-  [AlertType.ACCIDENTE]: '🚗',
-  [AlertType.INUNDACION]: '🌊',
-  [AlertType.CIERRE_VIAL]: '🚧',
-  [AlertType.MANTENIMIENTO]: '🔧',
+const statusLabel: Record<AlertStatus, string> = {
+  [AlertStatus.ACTIVE]: "Activa",
+  [AlertStatus.IN_PROGRESS]: "En progreso",
+  [AlertStatus.RESOLVED]: "Resuelta",
 };
 
-const priorityColors = {
-  [AlertPriority.CRITICA]: 'bg-red-100 border-red-500 text-red-900',
-  [AlertPriority.ALTA]: 'bg-orange-100 border-orange-500 text-orange-900',
-  [AlertPriority.MEDIA]: 'bg-yellow-100 border-yellow-500 text-yellow-900',
-  [AlertPriority.BAJA]: 'bg-blue-100 border-blue-500 text-blue-900',
+const severityColor: Record<AlertSeverity, string> = {
+  [AlertSeverity.CRITICA]: "bg-red-100 text-red-800",
+  [AlertSeverity.ALTA]: "bg-orange-100 text-orange-800",
+  [AlertSeverity.MEDIA]: "bg-yellow-100 text-yellow-800",
+  [AlertSeverity.BAJA]: "bg-green-100 text-green-800",
 };
 
-const priorityLabels = {
-  [AlertPriority.CRITICA]: 'Crítica',
-  [AlertPriority.ALTA]: 'Alta',
-  [AlertPriority.MEDIA]: 'Media',
-  [AlertPriority.BAJA]: 'Baja',
-};
-
-const statusColors = {
-  [AlertStatus.ACTIVE]: 'bg-red-500',
-  [AlertStatus.IN_PROGRESS]: 'bg-yellow-500',
-  [AlertStatus.RESOLVED]: 'bg-green-500',
-};
-
-const statusLabels = {
-  [AlertStatus.ACTIVE]: 'Activa',
-  [AlertStatus.IN_PROGRESS]: 'En Progreso',
-  [AlertStatus.RESOLVED]: 'Resuelta',
-};
-
-export default function AlertCard({ alert, onStatusChange, onDelete }: Readonly<AlertCardProps>) {
-  const priorityColor = priorityColors[alert.priority];
-  const statusColor = statusColors[alert.status];
-
+export default function AlertCard({
+  alert,
+  onStatusChange,
+  onDelete,
+}: Readonly<AlertCardProps>) {
   return (
-    <div className={`border-l-4 rounded-lg p-4 shadow-md ${priorityColor} relative`}>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{alertTypeIcons[alert.type]}</span>
-          <div>
-            <h3 className="font-bold text-lg">{alert.type.replace('_', ' ')}</h3>
-            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-white">
-              Prioridad: {priorityLabels[alert.priority]}
-            </span>
-          </div>
+    <div className="bg-white rounded-lg shadow p-4 flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold text-gray-900">
+            {alert.title || "Alerta sin título"}
+          </h3>
+          <p className="text-sm text-gray-600">
+            {alert.location || "Sin dirección específica"}
+          </p>
+          {alert.municipality && (
+            <p className="text-xs text-gray-500">
+              Municipio: {alert.municipality}
+            </p>
+          )}
         </div>
 
-        {onDelete && (
-          <button
-            onClick={() => onDelete(alert.id)}
-            className="text-gray-500 hover:text-red-600 transition-colors"
-            title="Eliminar alerta"
+        <div className="flex flex-col items-end gap-1">
+          <span
+            className={`px-2 py-1 rounded-full text-[10px] font-semibold ${
+              severityColor[alert.severity]
+            }`}
           >
-            <X size={20} />
-          </button>
-        )}
-      </div>
-
-      {/* Description */}
-      <p className="text-sm mb-3">{alert.description}</p>
-
-      {/* Location */}
-      <div className="flex items-center gap-2 text-sm mb-2">
-        <MapPin size={16} />
-        <span>{alert.location.address}</span>
-      </div>
-
-      {/* Affected Roads */}
-      {alert.affectedRoads.length > 0 && (
-        <div className="mb-3">
-          <p className="text-xs font-semibold mb-1">Vías afectadas:</p>
-          <div className="flex flex-wrap gap-1">
-            {alert.affectedRoads.map((road, index) => (
-              <span
-                key={`${alert.id}-road-${index}-${road}`}
-                className="text-xs px-2 py-1 bg-white rounded-full"
-              >
-                {road}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Time and Duration */}
-      <div className="flex items-center gap-4 text-xs mb-3">
-        <div className="flex items-center gap-1">
-          <Clock size={14} />
-          <span>
-            {formatDistanceToNow(new Date(alert.timestamp), {
-              addSuffix: true,
-              locale: es,
-            })}
+            {alert.severity}
+          </span>
+          <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 text-gray-700">
+            {alert.type}
           </span>
         </div>
-        {alert.estimatedDuration && (
-          <span>Duración estimada: {alert.estimatedDuration} min</span>
-        )}
       </div>
 
-      {/* Status */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={`w-3 h-3 rounded-full ${statusColor}`}></span>
-          <span className="text-sm font-medium">{statusLabels[alert.status]}</span>
-        </div>
+      <p className="text-sm text-gray-700 line-clamp-3">
+        {alert.description || "Sin descripción"}
+      </p>
 
-        {/* Status Actions */}
-        {onStatusChange && alert.status !== AlertStatus.RESOLVED && (
-          <div className="flex gap-2">
-            {alert.status === AlertStatus.ACTIVE && (
-              <button
-                onClick={() => onStatusChange(alert.id, AlertStatus.IN_PROGRESS)}
-                className="text-xs px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
-              >
-                En Progreso
-              </button>
-            )}
-            <button
-              onClick={() => onStatusChange(alert.id, AlertStatus.RESOLVED)}
-              className="text-xs px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors flex items-center gap-1"
-            >
-              <CheckCircle size={14} />
-              Resolver
-            </button>
-          </div>
+      <div className="flex justify-between items-center text-xs text-gray-500">
+        <div>
+          Lat: {alert.latitude?.toFixed(5)} | Lng:{" "}
+          {alert.longitude?.toFixed(5)}
+        </div>
+        <div>{statusLabel[alert.status]}</div>
+      </div>
+
+      <div className="flex gap-2 pt-2">
+        {alert.status !== AlertStatus.ACTIVE && (
+          <button
+            onClick={() =>
+              onStatusChange(alert.id, AlertStatus.ACTIVE)
+            }
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border rounded text-xs hover:bg-gray-50"
+          >
+            <AlertTriangle size={14} />
+            Activar
+          </button>
         )}
+        {alert.status !== AlertStatus.IN_PROGRESS && (
+          <button
+            onClick={() =>
+              onStatusChange(alert.id, AlertStatus.IN_PROGRESS)
+            }
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border rounded text-xs hover:bg-gray-50"
+          >
+            <CheckCircle2 size={14} />
+            En progreso
+          </button>
+        )}
+        {alert.status !== AlertStatus.RESOLVED && (
+          <button
+            onClick={() =>
+              onStatusChange(alert.id, AlertStatus.RESOLVED)
+            }
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border rounded text-xs hover:bg-gray-50"
+          >
+            <XCircle size={14} />
+            Resuelta
+          </button>
+        )}
+        <button
+          onClick={() => onDelete(alert.id)}
+          className="flex items-center justify-center px-2 py-1 text-red-600 hover:bg-red-50 rounded text-xs"
+        >
+          <Trash2 size={14} />
+        </button>
       </div>
     </div>
   );
