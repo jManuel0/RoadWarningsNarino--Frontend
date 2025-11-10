@@ -57,5 +57,7 @@ export interface CreateAlertDTO {
   imageUrl?: string;
 }
 
-// 👇 Alias para compatibilidad con código que usa AlertPriority
-export type AlertPriority = AlertSeverity;
+// 👇 Alias en tiempo de ejecución y a nivel de tipo:
+// Esto hace que AlertPriority exista de verdad como export,
+// apuntando al mismo enum que AlertSeverity.
+export { AlertSeverity as AlertPriority };
