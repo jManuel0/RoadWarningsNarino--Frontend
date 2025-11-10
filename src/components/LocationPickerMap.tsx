@@ -19,7 +19,7 @@ const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   useEffect(() => {
     if (!mapRef.current) {
       const map = L.map("location-picker-map").setView(
-        lat && lng ? [lat, lng] : [1.2136, -77.2811], // centro por defecto (Pasto)
+        lat != null && lng != null ? [lat, lng] : [1.2136, -77.2811], // Pasto por defecto
         12
       );
       mapRef.current = map;
@@ -42,7 +42,6 @@ const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     }
   }, []);
 
-  // Si desde fuera cambian lat/lng, mover marker
   useEffect(() => {
     if (!mapRef.current || lat == null || lng == null) return;
 
@@ -60,7 +59,12 @@ const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   return (
     <div
       id="location-picker-map"
-      style={{ width: "100%", height: "250px", borderRadius: "8px", marginTop: "8px" }}
+      style={{
+        width: "100%",
+        height: "250px",
+        borderRadius: "8px",
+        marginTop: "8px",
+      }}
     />
   );
 };
