@@ -1,119 +1,99 @@
-import axios from 'axios';
-import { Alert, CreateAlertDTO, AlertStatus } from '@/types/Alert';
-import { mockAlerts } from '@/utils/mockData';
+// src/api/alertApi.ts
+import {
+  Alert,
+  AlertStatus,
+  AlertSeverity,
+  CreateAlertDTO,
+} from "@/types/Alert";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const BASE_URL = "http://localhost:8080/api/alerts";
 
-// Interceptor para manejo de errores
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error);
-    return Promise.reject(error);
+async function handleJson<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `Error ${res.status} al llamar ${res.url}: ${text || res.statusText}`
+    );
   }
-);
-
-// Simulación de delay para mock
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  return (await res.json()) as T;
+}
 
 export const alertApi = {
-  // Obtener todas las alertas
-  getAlerts: async (): Promise<Alert[]> => {
-    if (USE_MOCK) {
-      await delay(500);
-      return mockAlerts;
-    }
-    const response = await apiClient.get<Alert[]>('/alerts');
-    return response.data.map(alert => ({
-      ...alert,
-      timestamp: new Date(alert.timestamp)
+  /**
+   * Obtener todas las alertas
+   */
+  async getAlerts(): Promise<Alert[]> {
+    const res = await fetch(BASE_URL);
+    const data = await handleJson<Alert[]>(res);
+
+    // Si el backend ya devuelve el DTO correcto, esto es suficiente.
+    // Si alguna propiedad viene como string/nullable, aquí podrías normalizar.
+    return data.map((a) => ({
+      ...a,
+      id: Number(a.id), // asegurar number
+      title: a.title ?? "",
+      description: a.description ?? "",
+      location: a.location ?? "",
+      severity: (a.severity) ?? AlertSeverity.MEDIA,
+      status: a.status,
+      type: a.type,
     }));
   },
 
-  // Obtener alerta por ID
-  getAlertById: async (id: string): Promise<Alert> => {
-    if (USE_MOCK) {
-      await delay(300);
-      const alert = mockAlerts.find(a => a.id === id);
-      if (!alert) throw new Error('Alert not found');
-      return alert;
-    }
-    const response = await apiClient.get<Alert>(`/alerts/${id}`);
+  /**
+   * Crear una nueva alerta
+   */
+  async createAlert(dto: CreateAlertDTO): Promise<Alert> {
+    const res = await fetch(BASE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dto),
+    });
+
+    const a = await handleJson<Alert>(res);
+
     return {
-      ...response.data,
-      timestamp: new Date(response.data.timestamp)
+      ...a,
+      id: Number(a.id),
+      title: a.title ?? "",
+      description: a.description ?? "",
+      location: a.location ?? "",
+      severity: (a.severity) ?? dto.severity,
+      status: a.status,
+      type: a.type,
     };
   },
 
-  // Crear nueva alerta
-  createAlert: async (alert: CreateAlertDTO): Promise<Alert> => {
-    if (USE_MOCK) {
-      await delay(500);
-      const newAlert: Alert = {
-        ...alert,
-        id: `mock-${Date.now()}`,
-        timestamp: new Date(),
-        status: AlertStatus.ACTIVE,
-        title: undefined,
-        longitude: 0,
-        latitude: 0,
-        severity: ''
-      };
-      mockAlerts.unshift(newAlert);
-      return newAlert;
+  /**
+   * Actualizar el estado de una alerta
+   * (PATCH /api/alerts/{id}/status?status=ACTIVE|IN_PROGRESS|RESOLVED)
+   */
+  async updateAlertStatus(id: number, status: AlertStatus): Promise<void> {
+    const res = await fetch(`${BASE_URL}/${id}/status?status=${status}`, {
+      method: "PATCH",
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(
+        `Error ${res.status} al actualizar estado: ${text || res.statusText}`
+      );
     }
-    const response = await apiClient.post<Alert>('/alerts', alert);
-    return {
-      ...response.data,
-      timestamp: new Date(response.data.timestamp)
-    };
   },
 
-  // Actualizar estado de alerta
-  updateAlertStatus: async (id: string, status: AlertStatus): Promise<Alert> => {
-    if (USE_MOCK) {
-      await delay(300);
-      const alert = mockAlerts.find(a => a.id === id);
-      if (!alert) throw new Error('Alert not found');
-      alert.status = status;
-      return alert;
-    }
-    const response = await apiClient.patch<Alert>(`/alerts/${id}`, { status });
-    return {
-      ...response.data,
-      timestamp: new Date(response.data.timestamp)
-    };
-  },
+  /**
+   * Eliminar una alerta
+   */
+  async deleteAlert(id: number): Promise<void> {
+    const res = await fetch(`${BASE_URL}/${id}`, {
+      method: "DELETE",
+    });
 
-  // Eliminar alerta
-  deleteAlert: async (id: string): Promise<void> => {
-    if (USE_MOCK) {
-      await delay(300);
-      const index = mockAlerts.findIndex(a => a.id === id);
-      if (index !== -1) mockAlerts.splice(index, 1);
-      return;
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(
+        `Error ${res.status} al eliminar alerta: ${text || res.statusText}`
+      );
     }
-    await apiClient.delete(`/alerts/${id}`);
-  },
-
-  // Obtener alertas activas
-  getActiveAlerts: async (): Promise<Alert[]> => {
-    if (USE_MOCK) {
-      await delay(500);
-      return mockAlerts.filter(a => a.status === AlertStatus.ACTIVE);
-    }
-    const response = await apiClient.get<Alert[]>('/alerts?status=ACTIVE');
-    return response.data.map(alert => ({
-      ...alert,
-      timestamp: new Date(alert.timestamp)
-    }));
   },
 };

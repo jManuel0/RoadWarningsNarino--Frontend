@@ -23,6 +23,9 @@ export enum AlertStatus {
  * Lo que devuelve el backend (AlertaResponseDTO)
  */
 export interface Alert {
+  timestamp: string | number | Date;
+  affectedRoads: any;
+  priority: any;
   id: number;
   type: AlertType;
   title: string;

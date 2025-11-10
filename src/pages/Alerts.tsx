@@ -1,272 +1,52 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useAlertStore } from '@/stores/alertStore';
-import { alertApi } from '@/api/alertApi';
-import AlertCard from '@/components/AlertCard';
-import { AlertStatus, AlertType, AlertPriority, CreateAlertDTO } from '@/types/Alert';
-import { Plus, Filter, Search, X } from 'lucide-react';
+import LocationPickerMap from "@/components/LocationPickerMap"; // si ya lo tienes
+import { AlertSeverity, AlertType, CreateAlertDTO } from "@/types/Alert";
+import { X } from "lucide-react";
+import { useState } from "react";
 
-export default function Alerts() {
-  const {
-    alerts,
-    loading,
-    error,
-    setAlerts,
-    addAlert,
-    updateAlert,
-    removeAlert,
-    setLoading,
-    setError
-  } = useAlertStore();
+// ...
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<AlertStatus | 'ALL'>('ALL');
-  const [filterPriority, setFilterPriority] = useState<AlertPriority | 'ALL'>('ALL');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  const loadAlerts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await alertApi.getAlerts();
-      setAlerts(data);
-      setError(null);
-    } catch (err) {
-      setError('Error al cargar alertas');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading, setAlerts, setError]);
-
-  useEffect(() => {
-    loadAlerts();
-  }, [loadAlerts]);
-
-  const handleStatusChange = async (id: string, status: AlertStatus) => {
-    try {
-      await alertApi.updateAlertStatus(id, status);
-      updateAlert(id, { status });
-    } catch (err) {
-      console.error('Error al actualizar alerta:', err);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta alerta?')) return;
-    
-    try {
-      await alertApi.deleteAlert(id);
-      removeAlert(id);
-    } catch (err) {
-      console.error('Error al eliminar alerta:', err);
-    }
-  };
-
-  // Filtrar alertas
-  const filteredAlerts = alerts.filter(alert => {
-    const matchesSearch =
-      alert.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alert.location.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      alert.type.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = filterStatus === 'ALL' || alert.status === filterStatus;
-    const matchesPriority = filterPriority === 'ALL' || alert.priority === filterPriority;
-
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
-
-  const renderAlertsList = () => {
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {error}
-        </div>
-      );
-    }
-
-    if (filteredAlerts.length === 0) {
-      return (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <Filter size={48} className="mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-600">No se encontraron alertas con los filtros seleccionados</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAlerts.map(alert => (
-          <AlertCard
-            key={alert.id}
-            alert={alert}
-            onStatusChange={handleStatusChange}
-            onDelete={handleDelete}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Gestión de Alertas
-              </h1>
-              <p className="text-sm text-gray-600">
-                {filteredAlerts.length} de {alerts.length} alertas
-              </p>
-            </div>
-            
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-            >
-              <Plus size={20} />
-              Nueva Alerta
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Filtros y búsqueda */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Búsqueda */}
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Buscar alertas..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={20} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Filtro por estado */}
-            <div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as AlertStatus | 'ALL')}
-                className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="ALL">Todos los estados</option>
-                <option value={AlertStatus.ACTIVE}>Activas</option>
-                <option value={AlertStatus.IN_PROGRESS}>En Progreso</option>
-                <option value={AlertStatus.RESOLVED}>Resueltas</option>
-              </select>
-            </div>
-
-            {/* Filtro por prioridad */}
-            <div>
-              <select
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value) as AlertPriority)}
-                className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="ALL">Todas las prioridades</option>
-                <option value={AlertPriority.CRITICA}>Crítica</option>
-                <option value={AlertPriority.ALTA}>Alta</option>
-                <option value={AlertPriority.MEDIA}>Media</option>
-                <option value={AlertPriority.BAJA}>Baja</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Lista de alertas */}
-        {renderAlertsList()}
-      </div>
-
-      {/* Modal de crear alerta */}
-      {showCreateModal && (
-        <CreateAlertModal
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={async (alertData) => {
-            try {
-              const newAlert = await alertApi.createAlert(alertData);
-              addAlert(newAlert);
-              setShowCreateModal(false);
-            } catch (err) {
-              console.error('Error al crear alerta:', err);
-              alert('Error al crear la alerta');
-            }
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-// Modal de crear alerta
 interface CreateAlertModalProps {
   onClose: () => void;
-  onSubmit: (alert: CreateAlertDTO) => void;
+  onSubmit: (alert: CreateAlertDTO) => Promise<void> | void;
 }
 
 function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>) {
-  const [formData, setFormData] = useState<CreateAlertDTO>({
-    type: AlertType.CIERRE_VIAL,
-    priority: AlertPriority.MEDIA,
-    location: {
-      lat: 1.2136,
-      lng: -77.2811,
-      address: '',
-    },
-    affectedRoads: [],
-    description: '',
-    estimatedDuration: undefined,
-  });
+  const [type, setType] = useState<AlertType>(AlertType.CIERRE_VIAL);
+  const [severity, setSeverity] = useState<AlertSeverity>(AlertSeverity.MEDIA);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [municipality, setMunicipality] = useState("Pasto");
+  const [latitude, setLatitude] = useState(1.2136);
+  const [longitude, setLongitude] = useState(-77.2811);
+  const [estimatedDuration, setEstimatedDuration] = useState<number | undefined>();
 
-  const [roadInput, setRoadInput] = useState('');
+  const handleMapSelect = (lat: number, lng: number) => {
+    setLatitude(lat);
+    setLongitude(lng);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.description || !formData.location.address) {
-      alert('Por favor completa todos los campos requeridos');
+
+    if (!title.trim() || !description.trim() || !location.trim()) {
+      alert("Por favor completa título, descripción y dirección.");
       return;
     }
-    onSubmit(formData);
-  };
 
-  const addRoad = () => {
-    if (roadInput.trim()) {
-      setFormData({
-        ...formData,
-        affectedRoads: [...formData.affectedRoads, roadInput.trim()],
-      });
-      setRoadInput('');
-    }
-  };
+    const payload: CreateAlertDTO = {
+      type,
+      title,
+      description,
+      latitude,
+      longitude,
+      location,
+      municipality,
+      severity,
+      estimatedDuration,
+    };
 
-  const removeRoad = (index: number) => {
-    setFormData({
-      ...formData,
-      affectedRoads: formData.affectedRoads.filter((_, i) => i !== index),
-    });
+    await onSubmit(payload);
   };
 
   return (
@@ -281,15 +61,14 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Tipo de alerta */}
+            {/* Tipo */}
             <div>
-              <label htmlFor="alert-type" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Tipo de Alerta *
               </label>
               <select
-                id="alert-type"
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as AlertType })}
+                value={type}
+                onChange={(e) => setType(e.target.value as AlertType)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value={AlertType.DERRUMBE}>Derrumbe</option>
@@ -300,153 +79,133 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
               </select>
             </div>
 
-            {/* Prioridad */}
+            {/* Severidad */}
             <div>
-              <label htmlFor="alert-priority" className="block text-sm font-medium text-gray-700 mb-2">
-                Prioridad *
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Severidad *
               </label>
               <select
-                id="alert-priority"
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: Number(e.target.value) as AlertPriority })}
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value as AlertSeverity)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value={AlertPriority.CRITICA}>Crítica</option>
-                <option value={AlertPriority.ALTA}>Alta</option>
-                <option value={AlertPriority.MEDIA}>Media</option>
-                <option value={AlertPriority.BAJA}>Baja</option>
+                <option value={AlertSeverity.CRITICA}>Crítica</option>
+                <option value={AlertSeverity.ALTA}>Alta</option>
+                <option value={AlertSeverity.MEDIA}>Media</option>
+                <option value={AlertSeverity.BAJA}>Baja</option>
               </select>
+            </div>
+
+            {/* Título */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Título *
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ej: Accidente vehicular"
+              />
             </div>
 
             {/* Descripción */}
             <div>
-              <label htmlFor="alert-description" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Descripción *
               </label>
               <textarea
-                id="alert-description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={3}
                 placeholder="Describe la situación..."
               />
             </div>
 
             {/* Dirección */}
             <div>
-              <label htmlFor="alert-address" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Dirección *
               </label>
               <input
-                id="alert-address"
                 type="text"
-                value={formData.location.address}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  location: { ...formData.location, address: e.target.value }
-                })}
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Ej: Calle 18 con Carrera 25"
+              />
+            </div>
+
+            {/* Municipio */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Municipio
+              </label>
+              <select
+                value={municipality}
+                onChange={(e) => setMunicipality(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="Pasto">Pasto</option>
+                <option value="Ipiales">Ipiales</option>
+                <option value="Tumaco">Tumaco</option>
+                {/* agrega más */}
+              </select>
+            </div>
+
+            {/* Mapa */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Selecciona la ubicación en el mapa *
+              </label>
+              <LocationPickerMap
+                lat={latitude}
+                lng={longitude}
+                onChange={handleMapSelect}
               />
             </div>
 
             {/* Coordenadas */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="alert-lat" className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Latitud
                 </label>
                 <input
-                  id="alert-lat"
                   type="number"
-                  step="0.000001"
-                  value={formData.location.lat}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    location: { ...formData.location, lat: Number.parseFloat(e.target.value) }
-                  })}
+                  value={latitude}
+                  onChange={(e) => setLatitude(parseFloat(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label htmlFor="alert-lng" className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Longitud
                 </label>
                 <input
-                  id="alert-lng"
                   type="number"
-                  step="0.000001"
-                  value={formData.location.lng}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    location: { ...formData.location, lng: Number.parseFloat(e.target.value) }
-                  })}
+                  value={longitude}
+                  onChange={(e) => setLongitude(parseFloat(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
-            {/* Vías afectadas */}
+            {/* Duración */}
             <div>
-              <label htmlFor="road-input" className="block text-sm font-medium text-gray-700 mb-2">
-                Vías Afectadas
-              </label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  id="road-input"
-                  type="text"
-                  value={roadInput}
-                  onChange={(e) => setRoadInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addRoad();
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Nombre de la vía"
-                />
-                <button
-                  type="button"
-                  onClick={addRoad}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors"
-                >
-                  <Plus size={20} />
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.affectedRoads.map((road, index) => (
-                  <span
-                    key={`road-${index}-${road}`}
-                    className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center gap-2"
-                  >
-                    {road}
-                    <button
-                      type="button"
-                      onClick={() => removeRoad(index)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      <X size={14} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Duración estimada */}
-            <div>
-              <label htmlFor="alert-duration" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Duración Estimada (minutos)
               </label>
               <input
-                id="alert-duration"
                 type="number"
-                value={formData.estimatedDuration || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  estimatedDuration: e.target.value ? Number.parseInt(e.target.value, 10) : undefined
-                })}
+                value={estimatedDuration ?? ""}
+                onChange={(e) =>
+                  setEstimatedDuration(
+                    e.target.value ? parseInt(e.target.value, 10) : undefined
+                  )
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Opcional"
               />

@@ -245,7 +245,7 @@ export default function MapView({
                   letter-spacing: 0.5px;
                 ">Vías Afectadas</p>
                 <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                  ${alert.affectedRoads.map(road => `
+                  ${alert.affectedRoads.map((road: any) => `
                     <span style="
                       font-size: 12px;
                       background-color: #e5e7eb;
