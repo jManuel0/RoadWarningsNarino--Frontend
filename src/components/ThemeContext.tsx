@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useContext,
   useEffect,
   useState,
   ReactNode,
@@ -9,14 +10,12 @@ import {
 
 export type Theme = "light" | "dark";
 
-export interface ThemeContextValue {
+interface ThemeContextValue {
   theme: Theme;
   toggleTheme: () => void;
 }
 
-export const ThemeContext = createContext<ThemeContextValue | undefined>(
-  undefined
-);
+export const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
@@ -40,4 +39,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </ThemeContext.Provider>
   );
+};
+
+// Hook definido en el mismo archivo -> no da problemas de tipos
+export const useTheme = () => {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) {
+    throw new Error("useTheme must be used within ThemeProvider");
+  }
+  return ctx;
 };

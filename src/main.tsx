@@ -15,7 +15,7 @@ ReactDOM.createRoot(rootElement).render(
   </React.StrictMode>
 );
 
-// Limpieza de SW viejos (sin registrar nuevos)
+// Limpieza de SW viejos (solo esto, sin registrar nada nuevo)
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
     .getRegistrations()
