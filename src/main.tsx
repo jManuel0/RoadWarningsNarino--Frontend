@@ -15,16 +15,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 )
 
 
-// Registrar Service Worker
+// Desregistrar cualquier Service Worker viejo que pueda romper el build
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js')
-      .then((registration) => {
-        console.log('✅ SW registrado:', registration);
-      })
-      .catch((error) => {
-        console.log('❌ SW registro falló:', error);
-      });
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((reg) => {
+      reg.unregister();
+      console.log('🧹 Service Worker desregistrado:', reg);
+    });
   });
 }
