@@ -11,8 +11,16 @@ import { MapPin, AlertTriangle, RefreshCw, X } from "lucide-react";
 import { notificationService } from "@/utils/notifications";
 
 export default function Home() {
-  const { alerts, loading, error, setAlerts, updateAlert, setLoading, setError } =
-    useAlertStore();
+  const {
+    alerts,
+    loading,
+    error,
+    setAlerts,
+    updateAlert,
+    removeAlert,
+    setLoading,
+    setError,
+  } = useAlertStore();
 
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -42,16 +50,19 @@ export default function Home() {
     [setLoading, setAlerts, setError]
   );
 
+  // Permiso de notificaciones
   useEffect(() => {
     notificationService.requestPermission();
   }, []);
 
+  // Cargar alertas al inicio + polling
   useEffect(() => {
     loadAlerts();
     const interval = setInterval(() => loadAlerts(), 30000);
     return () => clearInterval(interval);
   }, [loadAlerts]);
 
+  // Manejo del modal de detalle
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -99,6 +110,23 @@ export default function Home() {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    const ok = window.confirm("¿Estás seguro de eliminar esta alerta?");
+    if (!ok) return;
+
+    try {
+      await alertApi.deleteAlert(id);
+      removeAlert(id);
+      notificationService.success("Alerta eliminada correctamente");
+      if (selectedAlert?.id === id) {
+        setSelectedAlert(null);
+      }
+    } catch (err) {
+      console.error("Error al eliminar alerta:", err);
+      notificationService.error("No se pudo eliminar la alerta");
+    }
+  };
+
   const handleSearch = (filtered: Alert[]) => {
     setFilteredAlerts(filtered);
     setIsFiltered(true);
@@ -111,11 +139,13 @@ export default function Home() {
 
   const handleCloseModal = () => setSelectedAlert(null);
 
-  // Derivados locales (ya NO usamos getActiveAlerts / getCriticalAlerts del store)
+  // Derivados locales
   const activeAlerts = alerts.filter((a) => a.status === AlertStatus.ACTIVE);
 
   const criticalAlerts = alerts.filter(
-    (a) => a.status === AlertStatus.ACTIVE && a.severity === AlertSeverity.CRITICA
+    (a) =>
+      a.status === AlertStatus.ACTIVE &&
+      a.severity === AlertSeverity.CRITICA
   );
 
   const displayAlerts = isFiltered ? filteredAlerts : activeAlerts;
@@ -174,6 +204,7 @@ export default function Home() {
       {/* Stats */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Activas */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -193,6 +224,7 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Críticas */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -212,6 +244,7 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Total */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -294,9 +327,9 @@ export default function Home() {
                     <AlertCard
                       key={alert.id}
                       alert={alert}
-                      onStatusChange={handleStatusChange} onDelete={function (): void {
-                        throw new Error("Function not implemented.");
-                      } }                    />
+                      onStatusChange={handleStatusChange}
+                      onDelete={handleDelete}
+                    />
                   ))
                 )}
               </div>
@@ -332,9 +365,9 @@ export default function Home() {
 
             <AlertCard
               alert={selectedAlert}
-              onStatusChange={handleStatusChange} onDelete={function (): void {
-                throw new Error("Function not implemented.");
-              } }            />
+              onStatusChange={handleStatusChange}
+              onDelete={handleDelete}
+            />
           </div>
         )}
       </dialog>

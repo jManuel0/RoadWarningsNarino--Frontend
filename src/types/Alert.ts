@@ -22,8 +22,6 @@ export enum AlertStatus {
 }
 
 export interface Alert {
-  timestamp: string | number | Date;
-  priority: AlertSeverity;
   id: number;
   type: AlertType;
   title: string;
@@ -38,12 +36,16 @@ export interface Alert {
   imageUrl?: string;
   upvotes?: number;
   downvotes?: number;
+
+  estimatedDuration?: number;
+  affectedRoads?: string[];
+
   createdAt?: string;
   updatedAt?: string;
   expiresAt?: string;
+
   username?: string;
   userId?: number;
-  estimatedDuration?: number;
 }
 
 export interface CreateAlertDTO {
@@ -56,10 +58,9 @@ export interface CreateAlertDTO {
   municipality?: string;
   severity: AlertSeverity;
   estimatedDuration?: number;
+  affectedRoads?: string[];
   imageUrl?: string;
 }
 
-// 👇 Alias en tiempo de ejecución y a nivel de tipo:
-// Esto hace que AlertPriority exista de verdad como export,
-// apuntando al mismo enum que AlertSeverity.
+// 🔄 Alias opcional (mantiene compatibilidad con código antiguo)
 export { AlertSeverity as AlertPriority };
