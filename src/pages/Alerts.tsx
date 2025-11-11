@@ -1,3 +1,5 @@
+// src/pages/Alerts.tsx
+
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Filter, Search, X } from "lucide-react";
 
@@ -32,6 +34,9 @@ export default function Alerts() {
   const [filterSeverity, setFilterSeverity] =
     useState<AlertSeverity | "ALL">("ALL");
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // 👇 Aquí controlamos si el usuario está autenticado
+  const isAuthenticated = !!localStorage.getItem("token");
 
   const loadAlerts = useCallback(async () => {
     try {
@@ -149,13 +154,31 @@ export default function Alerts() {
               </p>
             </div>
 
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-            >
-              <Plus size={20} />
-              Nueva Alerta
-            </button>
+            {/* 🔐 Solo usuarios logueados pueden crear alertas */}
+            {isAuthenticated ? (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <Plus size={20} />
+                Nueva Alerta
+              </button>
+            ) : (
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-gray-500 mb-1">
+                  Inicia sesión para crear alertas
+                </span>
+                <button
+                  onClick={() =>
+                    alert("Debes registrarte o iniciar sesión para crear alertas.")
+                  }
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 cursor-not-allowed"
+                >
+                  <Plus size={20} />
+                  Nueva Alerta
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -238,7 +261,7 @@ export default function Alerts() {
       </div>
 
       {/* Modal de crear alerta */}
-      {showCreateModal && (
+      {showCreateModal && isAuthenticated && (
         <CreateAlertModal
           onClose={() => setShowCreateModal(false)}
           onSubmit={async (alertData) => {
@@ -416,7 +439,7 @@ function CreateAlertModal({
                 <option value="Pasto">Pasto</option>
                 <option value="Ipiales">Ipiales</option>
                 <option value="Tumaco">Tumaco</option>
-                {/* agrega más municipios aquí */}
+                {/* Más municipios aquí */}
               </select>
             </div>
 
