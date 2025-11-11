@@ -1,25 +1,42 @@
-// src/api/alertApi.ts
 import { Alert, AlertStatus, CreateAlertDTO } from "@/types/Alert";
+import { useAuthStore } from "@/stores/authStore";
 
-const API_BASE = "http://localhost:8080/api/alert";
+const API_BASE =
+  import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "http://localhost:8080";
+
+const getToken = () => {
+  try {
+    // acceso directo a zustand persistido
+    const state = useAuthStore.getState();
+    return state.token;
+  } catch {
+    return null;
+  }
+};
 
 export const alertApi = {
   async getAlerts(): Promise<Alert[]> {
-    const res = await fetch(API_BASE);
+    const res = await fetch(`${API_BASE}/api/alert`);
     if (!res.ok) throw new Error("Error al obtener alertas");
     return res.json();
   },
 
   async getActiveAlerts(): Promise<Alert[]> {
-    const res = await fetch(`${API_BASE}/active`);
+    const res = await fetch(`${API_BASE}/api/alert/active`);
     if (!res.ok) throw new Error("Error al obtener alertas activas");
     return res.json();
   },
 
   async createAlert(data: CreateAlertDTO): Promise<Alert> {
-    const res = await fetch(API_BASE, {
+    const token = getToken();
+    if (!token) throw new Error("NO_AUTH");
+
+    const res = await fetch(`${API_BASE}/api/alert`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(data),
     });
 
@@ -33,41 +50,40 @@ export const alertApi = {
   },
 
   async updateAlertStatus(id: number, status: AlertStatus): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/${id}/status?status=${status}`, {
-      method: "PATCH",
-    });
+    const token = getToken();
+    if (!token) throw new Error("NO_AUTH");
+
+    const res = await fetch(
+      `${API_BASE}/api/alert/${id}/status?status=${status}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!res.ok) throw new Error("Error al actualizar estado");
     return res.json();
   },
 
   async deleteAlert(id: number): Promise<void> {
-    const res = await fetch(`${API_BASE}/${id}`, {
+    const token = getToken();
+    if (!token) throw new Error("NO_AUTH");
+
+    const res = await fetch(`${API_BASE}/api/alert/${id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
+
     if (!res.ok) throw new Error("Error al eliminar alerta");
   },
 };
 
-/**
- * Exports con los nombres antiguos para compatibilidad con código existente
- * (Home.tsx, otros componentes).
- * Así no tienes que cambiar imports.
- */
-
-export const getAlerts = (): Promise<Alert[]> =>
-  alertApi.getAlerts();
-
-export const getActiveAlerts = (): Promise<Alert[]> =>
-  alertApi.getActiveAlerts();
-
-export const createAlert = (data: CreateAlertDTO): Promise<Alert> =>
-  alertApi.createAlert(data);
-
-export const updateAlertStatus = (
-  id: number,
-  status: AlertStatus
-): Promise<Alert> => alertApi.updateAlertStatus(id, status);
-
-export const deleteAlert = (id: number): Promise<void> =>
-  alertApi.deleteAlert(id);
+// exports legacy (si alguien los usa)
+export const getAlerts = () => alertApi.getAlerts();
+export const getActiveAlerts = () => alertApi.getActiveAlerts();
+// 👇 Exporta directamente la función para compatibilidad
+export const createAlert = (data: CreateAlertDTO) => alertApi.createAlert(data);

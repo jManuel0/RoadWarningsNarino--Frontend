@@ -1,53 +1,84 @@
 import { useState } from "react";
-import { useAuthStore } from "@/stores/authStore";
-import { useNavigate } from "react-router-dom";
+import { authApi } from "@/api/authApi";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
-  const register = useAuthStore((s) => s.register);
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError(null);
+    setMsg(null);
     try {
-      await register(username, email, password);
-      navigate("/");
-    } catch {
-      setError("No se pudo crear la cuenta");
+      await authApi.register({ username, password });
+      setMsg("Registro exitoso, ahora puedes iniciar sesión");
+      setTimeout(() => navigate("/login"), 1200);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo registrar, intenta con otro usuario");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow w-full max-w-sm space-y-3">
-        <h1 className="text-xl font-bold">Crear cuenta</h1>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <input
-          className="w-full border px-3 py-2 rounded"
-          placeholder="Usuario"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          className="w-full border px-3 py-2 rounded"
-          placeholder="Correo"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          className="w-full border px-3 py-2 rounded"
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button className="w-full bg-green-600 text-white py-2 rounded">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md space-y-4"
+      >
+        <h1 className="text-2xl font-bold text-gray-900 text-center">
+          Crear cuenta
+        </h1>
+
+        {msg && (
+          <div className="bg-green-50 text-green-700 px-3 py-2 rounded text-sm">
+            {msg}
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 text-red-700 px-3 py-2 rounded text-sm">
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm mb-1">Usuario</label>
+          <input
+            className="w-full border rounded px-3 py-2"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm mb-1">Contraseña</label>
+          <input
+            type="password"
+            className="w-full border rounded px-3 py-2"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg"
+        >
           Registrarme
         </button>
+
+        <p className="text-xs text-center text-gray-500">
+          ¿Ya tienes cuenta?{" "}
+          <Link to="/login" className="text-blue-600 hover:underline">
+            Inicia sesión
+          </Link>
+        </p>
       </form>
     </div>
   );
