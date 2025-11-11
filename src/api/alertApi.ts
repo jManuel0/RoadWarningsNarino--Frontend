@@ -1,7 +1,10 @@
 // src/api/alertApi.ts
 import { Alert, AlertStatus, CreateAlertDTO } from "@/types/Alert";
 
-const API_BASE = "http://localhost:8080/api/alert";
+// 🔹 Si existe VITE_API_URL (Vercel), la usa.
+// 🔹 Si no, usa localhost (desarrollo).
+const API_BASE =
+  import.meta.env.VITE_API_URL || "http://localhost:8080/api/alert";
 
 export const alertApi = {
   async getAlerts(): Promise<Alert[]> {
@@ -45,29 +48,20 @@ export const alertApi = {
     const res = await fetch(`${API_BASE}/${id}`, {
       method: "DELETE",
     });
+
     if (!res.ok) throw new Error("Error al eliminar alerta");
   },
 };
 
-/**
- * Exports con los nombres antiguos para compatibilidad con código existente
- * (Home.tsx, otros componentes).
- * Así no tienes que cambiar imports.
- */
-
-export const getAlerts = (): Promise<Alert[]> =>
-  alertApi.getAlerts();
-
+// Compatibilidad con imports antiguos
+export const getAlerts = (): Promise<Alert[]> => alertApi.getAlerts();
 export const getActiveAlerts = (): Promise<Alert[]> =>
   alertApi.getActiveAlerts();
-
 export const createAlert = (data: CreateAlertDTO): Promise<Alert> =>
   alertApi.createAlert(data);
-
 export const updateAlertStatus = (
   id: number,
   status: AlertStatus
 ): Promise<Alert> => alertApi.updateAlertStatus(id, status);
-
 export const deleteAlert = (id: number): Promise<void> =>
   alertApi.deleteAlert(id);
