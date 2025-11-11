@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 export interface Observer<T> {
   update: (data: T) => void;
@@ -32,7 +32,7 @@ export class ObserverSubject<T> implements Subject<T> {
 }
 
 export function useObserver<T>(
-  subject: Subject<T> | undefined,
+  subject: Subject<T>,
   callback: (data: T) => void
 ) {
   const observerRef = useRef<Observer<T>>({
@@ -40,12 +40,11 @@ export function useObserver<T>(
   });
 
   useEffect(() => {
+    // Actualizar la referencia del callback
     observerRef.current.update = callback;
   }, [callback]);
 
   useEffect(() => {
-    if (!subject) return; // 👈 evita subject.attach cuando es undefined
-
     const observer = observerRef.current;
     subject.attach(observer);
 
