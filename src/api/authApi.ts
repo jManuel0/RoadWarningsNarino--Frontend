@@ -1,22 +1,10 @@
-// src/api/authApi.ts
+import { LoginRequest, RegisterRequest, AuthResponse } from "@/types/auth";
 
 const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
-  "http://localhost:8080/api";
-
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
-}
+  import.meta.env.VITE_API_BASE_URL ?? "https://roadwarningsnarino-backend.onrender.com/api";
 
 export const authApi = {
-  async login(data: LoginRequest): Promise<{ token: string }> {
+  async login(data: LoginRequest): Promise<AuthResponse> {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -27,10 +15,10 @@ export const authApi = {
       throw new Error("Error al iniciar sesión");
     }
 
-    return res.json(); 
+    return res.json();
   },
 
-  async register(data: RegisterRequest): Promise<void> {
+  async register(data: RegisterRequest): Promise<AuthResponse> {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -38,12 +26,9 @@ export const authApi = {
     });
 
     if (!res.ok) {
-      const txt = await res.text();
-      console.error("Error registro:", txt);
       throw new Error("Error al registrar usuario");
     }
 
-    // backend devuelve mensaje; no necesitamos leer nada
+    return res.json();
   },
 };
-

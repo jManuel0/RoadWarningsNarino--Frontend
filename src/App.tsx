@@ -1,36 +1,63 @@
-// src/stores/authStore.ts
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
 
-interface AuthState {
-  token: string | null;
-  username: string | null;
-  guestMode: boolean;
-  setAuth: (token: string, username: string) => void;
-  logout: () => void;
-  isAuthenticated: () => boolean;
-  setGuest: (enabled: boolean) => void;
+import Home from "./pages/Home";
+import Alerts from "./pages/Alerts";
+import Statistics from "./pages/Statistics";
+import GpsPage from "./pages/GpsPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import Welcome from "./pages/Welcome";
+import ThemeToggle from "./components/ThemeToggle";
+import Navigation from "./components/Navigation";
+import { useAuthStore } from "./stores/authStore";
+
+function AppRoutes() {
+  const isAuth = useAuthStore((s) => s.isAuthenticated());
+  const guest = useAuthStore((s) => s.guestMode);
+
+  // Si no está logueado ni en modo invitado -> mandar a bienvenida
+  if (!isAuth && !guest) {
+    return (
+      <Routes>
+        <Route path="/welcome" element={<Welcome />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="*" element={<Navigate to="/welcome" replace />} />
+      </Routes>
+    );
+  }
+
+  // Ya autenticado o invitado
+  return (
+    <>
+      <Navigation />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/alerts" element={<Alerts />} />
+        <Route path="/statistics" element={<Statistics />} />
+        <Route path="/gps" element={<GpsPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/welcome" element={<Welcome />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
+  );
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      token: null,
-      username: null,
-      guestMode: false,
+function App() {
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Toaster position="top-right" richColors closeButton />
+        <div className="absolute top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
+        <AppRoutes />
+      </div>
+    </BrowserRouter>
+  );
+}
 
-      setAuth: (token, username) =>
-        set({ token, username, guestMode: false }),
-
-      logout: () =>
-        set({ token: null, username: null, guestMode: false }),
-
-      isAuthenticated: () => !!get().token,
-
-      setGuest: (enabled) => set({ guestMode: enabled }),
-    }),
-    {
-      name: "auth-storage",
-    }
-  )
-);
+export default App;
