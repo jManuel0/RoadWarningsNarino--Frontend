@@ -48,6 +48,44 @@ export interface Alert {
   userId?: number;
 }
 
+// Helper type para compatibilidad con código que use location.address, location.lat, location.lng
+export interface AlertWithLocationObject extends Omit<Alert, 'location'> {
+  location: {
+    address: string;
+    lat: number;
+    lng: number;
+  };
+  timestamp?: string; // Alias para createdAt
+  priority?: AlertSeverity; // Alias para severity
+}
+
+// Función helper para convertir Alert a AlertWithLocationObject
+export function toAlertWithLocationObject(alert: Alert): AlertWithLocationObject {
+  return {
+    ...alert,
+    location: {
+      address: alert.location,
+      lat: alert.latitude,
+      lng: alert.longitude,
+    },
+    timestamp: alert.createdAt,
+    priority: alert.severity,
+  };
+}
+
+// Función helper para convertir AlertWithLocationObject a Alert
+export function fromAlertWithLocationObject(alert: AlertWithLocationObject): Alert {
+  const { location, timestamp, priority, ...rest } = alert;
+  return {
+    ...rest,
+    location: location.address,
+    latitude: location.lat,
+    longitude: location.lng,
+    createdAt: timestamp || rest.createdAt,
+    severity: priority || rest.severity,
+  };
+}
+
 export interface CreateAlertDTO {
   type: AlertType;
   title: string;
