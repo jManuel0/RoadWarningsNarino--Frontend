@@ -1,6 +1,7 @@
 // src/api/alertApi.ts
 import { Alert, AlertStatus, CreateAlertDTO } from "@/types/Alert";
 
+
 // Usa env en producción, localhost en desarrollo
 const API_BASE =
   import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:8080/api/alert";
