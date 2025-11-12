@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 import { Alert, AlertSeverity } from "@/types/Alert";
 
 interface MapWithGpsProps {
@@ -15,35 +16,46 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
   const userMarkerRef = useRef<L.Marker | null>(null);
   const routingControlRef = useRef<any | null>(null);
   const alertMarkersRef = useRef<L.Marker[]>([]);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(
-    null
-  );
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Icono usuario
+  // estado del buscador manual
+  const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+
   const userIcon = L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/64/64113.png",
     iconSize: [40, 40],
     iconAnchor: [20, 40],
   });
 
-  // Icono alerta
   const alertIcon = L.icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
     iconSize: [35, 35],
     iconAnchor: [17, 35],
   });
 
-  // Inicializar mapa
+  // Inicializar mapa + geocoder control
   useEffect(() => {
     if (!mapRef.current) {
-      const map = L.map("map-gps").setView([1.2136, -77.2811], 10);
-
+      const map = L.map("map-gps").setView([1.2136, -77.2811], 13);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
       }).addTo(map);
-
       mapRef.current = map;
+
+      // Control de búsqueda (clic en resultado = trazar ruta)
+      const Geocoder = (L.Control as any).geocoder;
+      Geocoder({ defaultMarkGeocode: false })
+        .on("markgeocode", (e: any) => {
+          const dest: L.LatLng = e.geocode.center;
+          L.marker(dest, { icon: alertIcon })
+            .addTo(map)
+            .bindPopup(e.geocode.name)
+            .openPopup();
+          handleNavigate([dest.lat, dest.lng]);
+        })
+        .addTo(map);
     }
   }, []);
 
@@ -53,7 +65,6 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
       setError("Tu navegador no soporta geolocalización.");
       return;
     }
-
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const coords: [number, number] = [
@@ -62,16 +73,13 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
         ];
         setUserLocation(coords);
         setError(null);
-
         if (mapRef.current) {
-          mapRef.current.flyTo(coords, 15);
-
           if (userMarkerRef.current) {
             userMarkerRef.current.setLatLng(coords);
           } else {
-            userMarkerRef.current = L.marker(coords, {
-              icon: userIcon,
-            }).addTo(mapRef.current);
+            userMarkerRef.current = L.marker(coords, { icon: userIcon })
+              .addTo(mapRef.current)
+              .bindPopup("Estás aquí");
           }
         }
       },
@@ -81,108 +89,131 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
       },
       { enableHighAccuracy: true, maximumAge: 0 }
     );
-
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // Pintar alertas en el mapa cuando cambian
+  // Pintar alertas
   useEffect(() => {
     if (!mapRef.current) return;
-
-    // limpiar marcadores anteriores
     alertMarkersRef.current.forEach((m) => m.remove());
     alertMarkersRef.current = [];
-
-    alerts.forEach((alert) => {
-      if (
-        alert.latitude == null ||
-        alert.longitude == null
-      ) {
-        return;
-      }
-
-      const marker = L.marker(
-        [alert.latitude, alert.longitude],
-        { icon: alertIcon }
-      ).addTo(mapRef.current!);
-
-      marker.bindPopup(
-        `
-          <b>${alert.title}</b><br/>
-          ${alert.description || ""}<br/>
-          <b>Ubicación:</b> ${alert.location || ""}<br/>
-          <b>Severidad:</b> ${alert.severity}<br/>
-          <b>Estado:</b> ${alert.status}
-        `
-      );
-
+    alerts.forEach((a) => {
+      if (a.latitude == null || a.longitude == null) return;
+      const marker = L.marker([a.latitude, a.longitude], { icon: alertIcon }).addTo(mapRef.current!);
+      marker.bindPopup(`
+        <b>${a.title ?? "Alerta"}</b><br/>
+        ${a.description ?? ""}<br/>
+        <b>Ubicación:</b> ${a.location ?? ""}<br/>
+        <b>Severidad:</b> ${a.severity}<br/>
+        <b>Estado:</b> ${a.status}<br/>
+        <button id="go-${a.id}" style="margin-top:6px;padding:6px 10px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer">Ir</button>
+      `);
+      marker.on("popupopen", () => {
+        const btn = document.getElementById(`go-${a.id}`);
+        btn?.addEventListener("click", () => handleNavigate([a.latitude, a.longitude]));
+      });
       alertMarkersRef.current.push(marker);
     });
   }, [alerts]);
 
-  // Navegar desde ubicación actual a una alerta
+  // Trazar ruta
   const handleNavigate = (destination: [number, number]) => {
     if (!mapRef.current || !userLocation) {
-      alert("Debes activar tu GPS primero.");
+      alert("Activa tu GPS primero.");
       return;
     }
-
-    // eliminar ruta previa
     if (routingControlRef.current) {
       routingControlRef.current.remove();
       routingControlRef.current = null;
     }
-
-    // crear nueva ruta (usando leaflet-routing-machine)
-    const routingControl = (L as any).Routing.control({
+    routingControlRef.current = (L as any).Routing.control({
       waypoints: [
         L.latLng(userLocation[0], userLocation[1]),
         L.latLng(destination[0], destination[1]),
       ],
-      lineOptions: {
-        styles: [{ color: "blue", weight: 5, opacity: 0.7 }],
-      },
+      lineOptions: { styles: [{ color: "blue", weight: 5, opacity: 0.7 }] },
       createMarker: (i: number, wp: any) =>
-        L.marker(wp.latLng, {
-          icon: i === 0 ? userIcon : alertIcon,
-        }),
+        L.marker(wp.latLng, { icon: i === 0 ? userIcon : alertIcon }),
       addWaypoints: false,
       draggableWaypoints: false,
       routeWhileDragging: false,
       show: false,
+      language: "es",
     }).addTo(mapRef.current);
-
-    routingControlRef.current = routingControl;
   };
 
-  // Centrar mapa en el usuario
   const handleCenterMap = () => {
-    if (mapRef.current && userLocation) {
-      mapRef.current.flyTo(userLocation, 15);
-    } else {
-      alert("Esperando señal GPS...");
+    if (mapRef.current && userLocation) mapRef.current.flyTo(userLocation, 15);
+    else alert("Esperando señal GPS...");
+  };
+
+  // Buscador manual (Nominatim)
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    try {
+      setSearching(true);
+      // Nominatim (sin API key). Respeta el 'format=json' y 'limit=1'
+      const url = new URL("https://nominatim.openstreetmap.org/search");
+      url.searchParams.set("q", query);
+      url.searchParams.set("format", "json");
+      url.searchParams.set("limit", "1");
+      url.searchParams.set("addressdetails", "0");
+
+      const res = await fetch(url.toString(), {
+        headers: { "Accept-Language": "es" },
+      });
+      const data: Array<{ lat: string; lon: string; display_name: string }> = await res.json();
+      if (!data.length) {
+        alert("No se encontró ese lugar.");
+        return;
+      }
+      const { lat, lon, display_name } = data[0];
+      const dest: [number, number] = [parseFloat(lat), parseFloat(lon)];
+      // marker + ruta
+      if (mapRef.current) {
+        L.marker(dest, { icon: alertIcon }).addTo(mapRef.current).bindPopup(display_name).openPopup();
+      }
+      handleNavigate(dest);
+    } catch (err) {
+      console.error(err);
+      alert("Error buscando la dirección.");
+    } finally {
+      setSearching(false);
     }
   };
 
-  // Helper: color según severidad
   const getSeverityClass = (severity: AlertSeverity) => {
-    if (severity === AlertSeverity.CRITICA || severity === AlertSeverity.ALTA) {
-      return "bg-red-100 hover:bg-red-200";
-    }
-    if (severity === AlertSeverity.MEDIA) {
-      return "bg-yellow-100 hover:bg-yellow-200";
-    }
+    if (severity === AlertSeverity.CRITICA || severity === AlertSeverity.ALTA) return "bg-red-100 hover:bg-red-200";
+    if (severity === AlertSeverity.MEDIA) return "bg-yellow-100 hover:bg-yellow-200";
     return "bg-green-100 hover:bg-green-200";
   };
 
   return (
     <div className="relative">
-      <div
-        id="map-gps"
-        style={{ height: "90vh", width: "100%", borderRadius: "10px" }}
-      />
+      <div id="map-gps" style={{ height: "90vh", width: "100%", borderRadius: "10px" }} />
 
-      {/* Botón centrar en usuario */}
+      {/* Buscador manual arriba-izquierda */}
+      <form
+        onSubmit={handleSearch}
+        className="absolute top-4 left-4 bg-white rounded-xl shadow-md p-2 flex gap-2 items-center w-[340px] max-w-[90vw]"
+      >
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="flex-1 border rounded-lg px-3 py-2 text-sm outline-none"
+          placeholder="Buscar lugar o dirección (ej. Plaza Nariño)"
+        />
+        <button
+          type="submit"
+          disabled={searching}
+          className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-60"
+        >
+          {searching ? "Buscando..." : "Ir"}
+        </button>
+      </form>
+
+      {/* Botón centrar */}
       <button
         onClick={handleCenterMap}
         className="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700"
@@ -190,37 +221,21 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
         📍 Centrar en mi ubicación
       </button>
 
-      {/* Lista de alertas para navegar */}
+      {/* Lista de alertas */}
       <div className="absolute bottom-4 left-4 bg-white p-3 rounded-xl shadow-lg max-h-60 overflow-y-auto w-72">
         <h3 className="font-bold mb-2 text-gray-800">Alertas cercanas</h3>
         {alerts.length > 0 ? (
-          alerts.map((alert) => {
-            if (
-              alert.latitude == null ||
-              alert.longitude == null
-            ) {
-              return null;
-            }
-
+          alerts.map((a) => {
+            if (a.latitude == null || a.longitude == null) return null;
             return (
               <button
-                key={alert.id}
-                onClick={() =>
-                  handleNavigate([alert.latitude, alert.longitude])
-                }
-                className={`block w-full text-left px-3 py-2 mb-1 rounded-lg text-sm ${getSeverityClass(
-                  alert.severity
-                )}`}
+                key={a.id}
+                onClick={() => handleNavigate([a.latitude, a.longitude])}
+                className={`block w-full text-left px-3 py-2 mb-1 rounded-lg text-sm ${getSeverityClass(a.severity)}`}
               >
-                <div className="font-semibold truncate">
-                  {alert.title || "Alerta sin título"}
-                </div>
-                <div className="text-xs text-gray-700 truncate">
-                  {alert.location || "Sin ubicación detallada"}
-                </div>
-                <div className="text-[10px] text-gray-500">
-                  {alert.severity} • {alert.status}
-                </div>
+                <div className="font-semibold truncate">{a.title || "Alerta sin título"}</div>
+                <div className="text-xs text-gray-700 truncate">{a.location || "Sin ubicación detallada"}</div>
+                <div className="text-[10px] text-gray-500">{a.severity} • {a.status}</div>
               </button>
             );
           })
@@ -229,7 +244,6 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
         )}
       </div>
 
-      {/* Mensaje de error */}
       {error && (
         <div className="absolute top-20 left-4 bg-red-600 text-white px-3 py-2 rounded-md shadow-lg text-sm max-w-xs">
           ⚠️ {error}
