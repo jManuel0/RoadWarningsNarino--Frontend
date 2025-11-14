@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "generate:icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "@types/leaflet.markercluster": "^1.5.6",
@@ -59,6 +60,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "jsdom": "^27.2.0",
     "postcss": "^8.4.32",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.3.6",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
