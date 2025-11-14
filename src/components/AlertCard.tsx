@@ -1,9 +1,11 @@
 // src/components/AlertCard.tsx
 import { Alert, AlertStatus, AlertSeverity } from "@/types/Alert";
-import { XCircle, CheckCircle2, AlertTriangle, Trash2 } from "lucide-react";
+import { XCircle, CheckCircle2, AlertTriangle, Trash2, MessageCircle } from "lucide-react";
 import VotingButtons from "./VotingButtons";
 import ShareButtons from "./ShareButtons";
-import { useState } from "react";
+import CommentSection, { Comment } from "./CommentSection";
+import { alertApi } from "@/api/alertApi";
+import { useState, useEffect } from "react";
 
 interface AlertCardProps {
   alert: Alert;
@@ -31,6 +33,50 @@ export default function AlertCard({
 }: Readonly<AlertCardProps>) {
   const [localUpvotes, setLocalUpvotes] = useState(alert.upvotes ?? 0);
   const [localDownvotes, setLocalDownvotes] = useState(alert.downvotes ?? 0);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentCount, setCommentCount] = useState(0);
+  const [loadingComments, setLoadingComments] = useState(false);
+
+  useEffect(() => {
+    if (showComments && comments.length === 0) {
+      loadComments();
+    }
+  }, [showComments]);
+
+  const loadComments = async () => {
+    setLoadingComments(true);
+    try {
+      const data = await alertApi.getComments(alert.id);
+      setComments(data);
+      setCommentCount(data.length);
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleAddComment = async (content: string) => {
+    const newComment = await alertApi.addComment(alert.id, content);
+    setComments([...comments, newComment]);
+    setCommentCount(commentCount + 1);
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    await alertApi.deleteComment(alert.id, commentId);
+    setComments(comments.filter(c => c.id !== commentId));
+    setCommentCount(commentCount - 1);
+  };
+
+  const handleLikeComment = async (commentId: number) => {
+    const updated = await alertApi.likeComment(alert.id, commentId);
+    setComments(comments.map(c => c.id === commentId ? updated : c));
+  };
+
+  const handleReportComment = async (commentId: number) => {
+    await alertApi.reportComment(alert.id, commentId);
+  };
 
   const handleVoteChange = (upvotes: number, downvotes: number) => {
     setLocalUpvotes(upvotes);
@@ -88,16 +134,46 @@ export default function AlertCard({
         <div>{statusLabel[alert.status]}</div>
       </div>
 
-      {/* Voting & Share Buttons */}
+      {/* Voting, Share & Comment Buttons */}
       <div className="flex items-center justify-between gap-3 pt-2 border-t dark:border-gray-700">
-        <VotingButtons
-          alertId={alert.id}
-          upvotes={localUpvotes}
-          downvotes={localDownvotes}
-          onVoteChange={handleVoteChange}
-        />
+        <div className="flex items-center gap-4">
+          <VotingButtons
+            alertId={alert.id}
+            upvotes={localUpvotes}
+            downvotes={localDownvotes}
+            onVoteChange={handleVoteChange}
+          />
+          <button
+            type="button"
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          >
+            <MessageCircle size={18} />
+            <span className="text-sm font-medium">{commentCount}</span>
+          </button>
+        </div>
         <ShareButtons alert={alert} />
       </div>
+
+      {/* Comments Section */}
+      {showComments && (
+        <div className="mt-2">
+          {loadingComments ? (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+            </div>
+          ) : (
+            <CommentSection
+              alertId={alert.id}
+              comments={comments}
+              onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
+              onLikeComment={handleLikeComment}
+              onReportComment={handleReportComment}
+            />
+          )}
+        </div>
+      )}
 
       <div className="flex gap-2">
         {alert.status !== AlertStatus.ACTIVE && (

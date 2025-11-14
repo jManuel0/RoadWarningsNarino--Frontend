@@ -64,7 +64,7 @@ export default function Navigation() {
                 <LogOut size={18} />
                 <span className="text-sm font-medium">Salir</span>
               </button>
-            ) : null}
+            )}
           </div>
         </div>
       </div>

@@ -123,6 +123,69 @@ export const alertApi = {
 
     return res.json();
   },
+
+  // Comment endpoints
+  async getComments(alertId: number): Promise<any[]> {
+    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al obtener comentarios");
+    }
+
+    return res.json();
+  },
+
+  async addComment(alertId: number, content: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments`, {
+      method: "POST",
+      headers: authHeaders(true),
+      body: JSON.stringify({ content }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al agregar comentario");
+    }
+
+    return res.json();
+  },
+
+  async deleteComment(alertId: number, commentId: number): Promise<void> {
+    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments/${commentId}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al eliminar comentario");
+    }
+  },
+
+  async likeComment(alertId: number, commentId: number): Promise<any> {
+    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments/${commentId}/like`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al dar like al comentario");
+    }
+
+    return res.json();
+  },
+
+  async reportComment(alertId: number, commentId: number): Promise<void> {
+    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments/${commentId}/report`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al reportar comentario");
+    }
+  },
 };
 
 /* Exports "legacy" opcionales si alguna parte del código aún los usa */

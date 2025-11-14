@@ -1,16 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Bell, X } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Alert, AlertPriority } from '@/types/Alert';
+// src/components/NotificationBell.tsx
 
+import { useState, useEffect } from "react";
+import { Bell, X } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
+import { Alert, AlertPriority } from "@/types/Alert";
 
 interface NotificationBellProps {
   alerts: Alert[];
   onAlertClick?: (alert: Alert) => void;
 }
 
-export default function NotificationBell({ alerts, onAlertClick }: Readonly<NotificationBellProps>) {
+export default function NotificationBell({
+  alerts,
+  onAlertClick,
+}: Readonly<NotificationBellProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -18,14 +22,21 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
     setUnreadCount(alerts.length);
   }, [alerts]);
 
-  const criticalAlerts = alerts.filter(a => a.priority === AlertPriority.CRITICA);
+  // Siempre devuelve una prioridad válida (porque severity es obligatoria)
+  const getEffectivePriority = (alert: Alert): AlertPriority => {
+    return (alert.priority ?? alert.severity);
+  };
+
+  const criticalAlerts = alerts.filter(
+    (a) => getEffectivePriority(a) === AlertPriority.CRITICA
+  );
   const hasCritical = criticalAlerts.length > 0;
 
   const getPriorityColor = (priority: AlertPriority): string => {
-    if (priority === AlertPriority.CRITICA) return 'bg-red-500 animate-pulse';
-    if (priority === AlertPriority.ALTA) return 'bg-orange-500';
-    if (priority === AlertPriority.MEDIA) return 'bg-yellow-500';
-    return 'bg-blue-500';
+    if (priority === AlertPriority.CRITICA) return "bg-red-500 animate-pulse";
+    if (priority === AlertPriority.ALTA) return "bg-orange-500";
+    if (priority === AlertPriority.MEDIA) return "bg-yellow-500";
+    return "bg-blue-500";
   };
 
   return (
@@ -36,16 +47,16 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
         onClick={() => setIsOpen(!isOpen)}
         className={`relative p-3 rounded-full transition-colors ${
           hasCritical
-            ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
-            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+            ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
+            : "bg-gray-200 hover:bg-gray-300 text-gray-700"
         }`}
       >
         <Bell size={24} />
-        
+
         {/* Badge de contador */}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
@@ -60,14 +71,16 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
             onClick={() => setIsOpen(false)}
             aria-label="Cerrar notificaciones"
           />
-          
+
           {/* Panel */}
           <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-2xl z-50 max-h-[600px] overflow-hidden flex flex-col">
             {/* Header */}
             <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
               <div>
                 <h3 className="font-bold text-lg">Alertas Activas</h3>
-                <p className="text-sm text-gray-600">{alerts.length} notificaciones</p>
+                <p className="text-sm text-gray-600">
+                  {alerts.length} notificaciones
+                </p>
               </div>
               <button
                 type="button"
@@ -87,39 +100,61 @@ export default function NotificationBell({ alerts, onAlertClick }: Readonly<Noti
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200">
-                  {alerts.map(alert => (
-                    <button
-                      key={alert.id}
-                      type="button"
-                      onClick={() => {
-                        onAlertClick?.(alert);
-                        setIsOpen(false);
-                      }}
-                      className={`w-full p-4 hover:bg-gray-50 text-left transition-colors ${
-                        alert.priority === AlertPriority.CRITICA ? 'bg-red-50' : ''
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        {/* Indicador de prioridad */}
-                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${getPriorityColor(alert.priority)}`} />
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-gray-900 truncate">
-                            {alert.type.replace('_', ' ')}
-                          </p>
-                          <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                            {alert.description}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {formatDistanceToNow(new Date(alert.timestamp), {
-                              addSuffix: true,
-                              locale: es,
-                            })}
-                          </p>
+                  {alerts.map((alert) => {
+                    const effectivePriority = getEffectivePriority(alert);
+
+                    // Construimos una fecha segura (sin undefined)
+                    const baseTimestamp =
+                      alert.timestamp ??
+                      alert.createdAt ??
+                      alert.updatedAt ??
+                      new Date().toISOString();
+
+                    const alertDate =
+                      baseTimestamp instanceof Date
+                        ? baseTimestamp
+                        : new Date(baseTimestamp);
+
+                    return (
+                      <button
+                        key={alert.id}
+                        type="button"
+                        onClick={() => {
+                          onAlertClick?.(alert);
+                          setIsOpen(false);
+                        }}
+                        className={`w-full p-4 hover:bg-gray-50 text-left transition-colors ${
+                          effectivePriority === AlertPriority.CRITICA
+                            ? "bg-red-50"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* Indicador de prioridad */}
+                          <div
+                            className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${getPriorityColor(
+                              effectivePriority
+                            )}`}
+                          />
+
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-gray-900 truncate">
+                              {alert.type.replace("_", " ")}
+                            </p>
+                            <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                              {alert.description}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-2">
+                              {formatDistanceToNow(alertDate, {
+                                addSuffix: true,
+                                locale: es,
+                              })}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
