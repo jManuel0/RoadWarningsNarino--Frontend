@@ -8,9 +8,13 @@ import GpsPage from "./pages/GpsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Welcome from "./pages/Welcome";
+import Profile from "./pages/Profile";
 import ThemeToggle from "./components/ThemeToggle";
 import Navigation from "./components/Navigation";
+import InstallPWA from "./components/InstallPWA";
+import OfflineIndicator from "./components/OfflineIndicator";
 import { useAuthStore } from "./stores/authStore";
+import { useServiceWorker } from "./hooks/useServiceWorker";
 
 function AppRoutes() {
   const isAuth = useAuthStore((s) => s.isAuthenticated());
@@ -37,6 +41,7 @@ function AppRoutes() {
         <Route path="/alerts" element={<Alerts />} />
         <Route path="/statistics" element={<Statistics />} />
         <Route path="/gps" element={<GpsPage />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/welcome" element={<Welcome />} />
@@ -47,6 +52,9 @@ function AppRoutes() {
 }
 
 function App() {
+  // Register service worker for PWA functionality
+  useServiceWorker();
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -54,6 +62,8 @@ function App() {
         <div className="absolute top-4 right-4 z-50">
           <ThemeToggle />
         </div>
+        <OfflineIndicator />
+        <InstallPWA />
         <AppRoutes />
       </div>
     </BrowserRouter>

@@ -6,6 +6,7 @@ import MapView from "@/components/MapView";
 import NotificationBell from "@/components/NotificationBell";
 import AlertCard from "@/components/AlertCard";
 import MapSearchBar from "@/components/MapSearchBar";
+import AdvancedFilters from "@/components/AdvancedFilters";
 import { Alert, AlertStatus, AlertSeverity } from "@/types/Alert";
 import { MapPin, AlertTriangle, RefreshCw, X } from "lucide-react";
 import { notificationService } from "@/utils/notifications";
@@ -271,11 +272,20 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Mapa + búsqueda */}
           <div className="lg:col-span-2 space-y-4">
-            <MapSearchBar
-              alerts={activeAlerts}
-              onSearch={handleSearch}
-              onReset={handleResetSearch}
-            />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <MapSearchBar
+                  alerts={activeAlerts}
+                  onSearch={handleSearch}
+                  onReset={handleResetSearch}
+                />
+              </div>
+              <AdvancedFilters
+                alerts={activeAlerts}
+                onFilterChange={handleSearch}
+                onReset={handleResetSearch}
+              />
+            </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
               <div className="flex items-center justify-between mb-4">

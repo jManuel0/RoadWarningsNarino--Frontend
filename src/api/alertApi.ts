@@ -97,6 +97,32 @@ export const alertApi = {
       throw new Error("Error al eliminar alerta");
     }
   },
+
+  async upvoteAlert(id: number): Promise<Alert> {
+    const res = await fetch(`${API_BASE}/api/alert/${id}/upvote`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al votar alerta");
+    }
+
+    return res.json();
+  },
+
+  async downvoteAlert(id: number): Promise<Alert> {
+    const res = await fetch(`${API_BASE}/api/alert/${id}/downvote`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al votar alerta");
+    }
+
+    return res.json();
+  },
 };
 
 /* Exports "legacy" opcionales si alguna parte del código aún los usa */

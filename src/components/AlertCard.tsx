@@ -1,6 +1,9 @@
 // src/components/AlertCard.tsx
 import { Alert, AlertStatus, AlertSeverity } from "@/types/Alert";
 import { XCircle, CheckCircle2, AlertTriangle, Trash2 } from "lucide-react";
+import VotingButtons from "./VotingButtons";
+import ShareButtons from "./ShareButtons";
+import { useState } from "react";
 
 interface AlertCardProps {
   alert: Alert;
@@ -26,18 +29,26 @@ export default function AlertCard({
   onStatusChange,
   onDelete,
 }: Readonly<AlertCardProps>) {
+  const [localUpvotes, setLocalUpvotes] = useState(alert.upvotes ?? 0);
+  const [localDownvotes, setLocalDownvotes] = useState(alert.downvotes ?? 0);
+
+  const handleVoteChange = (upvotes: number, downvotes: number) => {
+    setLocalUpvotes(upvotes);
+    setLocalDownvotes(downvotes);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow p-4 flex flex-col gap-3">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="font-semibold text-gray-900 dark:text-white">
             {alert.title || "Alerta sin título"}
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {alert.location || "Sin dirección específica"}
           </p>
           {alert.municipality && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
               Municipio: {alert.municipality}
             </p>
           )}
@@ -51,17 +62,25 @@ export default function AlertCard({
           >
             {alert.severity}
           </span>
-          <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 text-gray-700">
+          <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
             {alert.type}
           </span>
         </div>
       </div>
 
-      <p className="text-sm text-gray-700 line-clamp-3">
+      <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">
         {alert.description || "Sin descripción"}
       </p>
 
-      <div className="flex justify-between items-center text-xs text-gray-500">
+      {alert.imageUrl && (
+        <img
+          src={alert.imageUrl}
+          alt={alert.title}
+          className="w-full h-48 object-cover rounded-lg"
+        />
+      )}
+
+      <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
         <div>
           Lat: {alert.latitude?.toFixed(5)} | Lng:{" "}
           {alert.longitude?.toFixed(5)}
@@ -69,7 +88,18 @@ export default function AlertCard({
         <div>{statusLabel[alert.status]}</div>
       </div>
 
-      <div className="flex gap-2 pt-2">
+      {/* Voting & Share Buttons */}
+      <div className="flex items-center justify-between gap-3 pt-2 border-t dark:border-gray-700">
+        <VotingButtons
+          alertId={alert.id}
+          upvotes={localUpvotes}
+          downvotes={localDownvotes}
+          onVoteChange={handleVoteChange}
+        />
+        <ShareButtons alert={alert} />
+      </div>
+
+      <div className="flex gap-2">
         {alert.status !== AlertStatus.ACTIVE && (
           <button
             onClick={() =>

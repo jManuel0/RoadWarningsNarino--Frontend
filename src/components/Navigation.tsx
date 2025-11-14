@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, AlertTriangle, BarChart3, Compass, LogOut } from "lucide-react";
+import { Home, AlertTriangle, BarChart3, Compass, LogOut, User } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
 export default function Navigation() {
@@ -43,10 +43,21 @@ export default function Navigation() {
             </NavLink>
           </div>
 
-          {/* Logout o modo invitado */}
+          {/* Profile & Logout */}
           <div className="flex items-center gap-4">
-            {isAuthenticated() || guestMode ? (
+            {isAuthenticated() && (
+              <NavLink
+                to="/profile"
+                icon={<User size={18} />}
+                active={isActive("/profile")}
+              >
+                Perfil
+              </NavLink>
+            )}
+
+            {(isAuthenticated() || guestMode) && (
               <button
+                type="button"
                 onClick={logout}
                 className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors"
               >
