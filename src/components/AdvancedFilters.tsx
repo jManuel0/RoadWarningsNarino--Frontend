@@ -1,15 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Filter, X, Calendar } from 'lucide-react';
 import { Alert, AlertType, AlertSeverity, AlertStatus } from '@/types/Alert';
-
-interface FilterOptions {
-  types: AlertType[];
-  severities: AlertSeverity[];
-  statuses: AlertStatus[];
-  dateFrom: string;
-  dateTo: string;
-  municipality: string;
-}
+import { useFilterStore } from '@/stores/filterStore';
 
 interface AdvancedFiltersProps {
   alerts: Alert[];
@@ -17,45 +9,29 @@ interface AdvancedFiltersProps {
   onReset: () => void;
 }
 
-const initialFilters: FilterOptions = {
-  types: [],
-  severities: [],
-  statuses: [],
-  dateFrom: '',
-  dateTo: '',
-  municipality: '',
-};
-
 export default function AdvancedFilters({
   alerts,
   onFilterChange,
   onReset,
 }: Readonly<AdvancedFiltersProps>) {
   const [isOpen, setIsOpen] = useState(false);
-  const [filters, setFilters] = useState<FilterOptions>(initialFilters);
+  const { filters, setFilters, clearFilters, toggleType, toggleSeverity, toggleStatus } = useFilterStore();
+
+  // Auto-aplicar filtros cuando cambian
+  useEffect(() => {
+    applyFilters();
+  }, [filters]);
 
   const handleTypeToggle = (type: AlertType) => {
-    const newTypes = filters.types.includes(type)
-      ? filters.types.filter((t) => t !== type)
-      : [...filters.types, type];
-
-    setFilters({ ...filters, types: newTypes });
+    toggleType(type);
   };
 
   const handleSeverityToggle = (severity: AlertSeverity) => {
-    const newSeverities = filters.severities.includes(severity)
-      ? filters.severities.filter((s) => s !== severity)
-      : [...filters.severities, severity];
-
-    setFilters({ ...filters, severities: newSeverities });
+    toggleSeverity(severity);
   };
 
   const handleStatusToggle = (status: AlertStatus) => {
-    const newStatuses = filters.statuses.includes(status)
-      ? filters.statuses.filter((s) => s !== status)
-      : [...filters.statuses, status];
-
-    setFilters({ ...filters, statuses: newStatuses });
+    toggleStatus(status);
   };
 
   const applyFilters = () => {
@@ -113,7 +89,7 @@ export default function AdvancedFilters({
   };
 
   const handleReset = () => {
-    setFilters(initialFilters);
+    clearFilters();
     onReset();
     setIsOpen(false);
   };

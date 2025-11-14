@@ -4,16 +4,27 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { useSettingsStore } from "@/stores/settingsStore";
+
+// Inicializar el tema desde el store antes de renderizar
+const savedTheme = localStorage.getItem("settings-storage");
+if (savedTheme) {
+  try {
+    const settings = JSON.parse(savedTheme);
+    if (settings.state?.theme === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+  } catch (error) {
+    console.error("Error loading theme:", error);
+  }
+}
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("No se encontró el elemento #root");
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
+    <App />
   </React.StrictMode>
 );
 

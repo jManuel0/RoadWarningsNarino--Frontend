@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   BarChart3,
   Compass,
+  Navigation as NavigationIcon,
   LogOut,
   User,
 } from "lucide-react";
@@ -48,6 +49,14 @@ export default function Navigation() {
               active={isActive("/gps")}
             >
               GPS
+            </NavLink>
+
+            <NavLink
+              to="/waze"
+              icon={<NavigationIcon size={18} />}
+              active={isActive("/waze")}
+            >
+              Navegación
             </NavLink>
           </div>
 

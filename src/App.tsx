@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Alerts from "./pages/Alerts";
 import Statistics from "./pages/Statistics";
 import GpsPage from "./pages/GpsPage";
+import WazePage from "./pages/WazePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Welcome from "./pages/Welcome";
@@ -13,6 +14,7 @@ import ThemeToggle from "./components/ThemeToggle";
 import Navigation from "./components/Navigation";
 import InstallPWA from "./components/InstallPWA";
 import OfflineIndicator from "./components/OfflineIndicator";
+import FloatingClearFilters from "./components/FloatingClearFilters";
 import { useAuthStore } from "./stores/authStore";
 import { useServiceWorker } from "./hooks/useServiceWorker";
 
@@ -41,6 +43,7 @@ function AppRoutes() {
         <Route path="/alerts" element={<Alerts />} />
         <Route path="/statistics" element={<Statistics />} />
         <Route path="/gps" element={<GpsPage />} />
+        <Route path="/waze" element={<WazePage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -64,6 +67,7 @@ function App() {
         </div>
         <OfflineIndicator />
         <InstallPWA />
+        <FloatingClearFilters />
         <AppRoutes />
       </div>
     </BrowserRouter>

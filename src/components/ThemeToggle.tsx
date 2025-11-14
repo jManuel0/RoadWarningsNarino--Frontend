@@ -1,8 +1,8 @@
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "@/hooks/useTheme";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 export default function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useSettingsStore();
 
   return (
     <button
