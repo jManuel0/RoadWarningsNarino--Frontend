@@ -1,6 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, AlertTriangle, BarChart3, Compass, LogOut, User } from "lucide-react";
+import {
+  Home,
+  AlertTriangle,
+  BarChart3,
+  Compass,
+  LogOut,
+  User,
+} from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import type { ReactNode } from "react";
 
 export default function Navigation() {
   const location = useLocation();
@@ -43,7 +51,7 @@ export default function Navigation() {
             </NavLink>
           </div>
 
-          {/* Profile & Logout */}
+          {/* Perfil y Logout */}
           <div className="flex items-center gap-4">
             {isAuthenticated() && (
               <NavLink
@@ -75,8 +83,8 @@ export default function Navigation() {
 interface NavLinkProps {
   to: string;
   active?: boolean;
-  icon: React.ReactNode;
-  children: React.ReactNode;
+  icon: ReactNode;
+  children: ReactNode;
 }
 
 function NavLink({ to, active, icon, children }: Readonly<NavLinkProps>) {

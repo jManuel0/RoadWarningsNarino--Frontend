@@ -30,7 +30,7 @@ export default function AdvancedFilters({
   alerts,
   onFilterChange,
   onReset,
-}: AdvancedFiltersProps) {
+}: Readonly<AdvancedFiltersProps>) {
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>(initialFilters);
 
