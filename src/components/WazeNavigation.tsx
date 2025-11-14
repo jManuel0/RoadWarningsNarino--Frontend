@@ -17,12 +17,18 @@ import {
   Route as RouteIcon,
   Clock,
   Gauge,
+  Plus,
+  Car,
+  Construction,
+  Waves,
 } from "lucide-react";
 import { useNavigationStore, Route, RoutePoint } from "@/stores/navigationStore";
 import { useAlertStore } from "@/stores/alertStore";
 import { useSettingsStore } from "@/stores/settingsStore";
-import { Alert, AlertSeverity } from "@/types/Alert";
+import { Alert, AlertSeverity, AlertType } from "@/types/Alert";
 import { useMapDarkMode } from "@/hooks/useMapDarkMode";
+import { alertApi } from "@/api/alertApi";
+import QuickAlertModal from "./QuickAlertModal";
 
 // Iconos personalizados
 const userIcon = L.divIcon({
@@ -278,6 +284,8 @@ export default function WazeNavigation() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [searchDestination, setSearchDestination] = useState("");
   const [showRouteSelector, setShowRouteSelector] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [showQuickReports, setShowQuickReports] = useState(false);
 
   const {
     isNavigating,
@@ -298,7 +306,9 @@ export default function WazeNavigation() {
     setCurrentStepIndex,
   } = useNavigationStore();
 
+  const alerts = useAlertStore((state) => state.alerts);
   const { voiceGuidance } = useSettingsStore();
+  const refreshAlerts = useAlertStore((state) => state.setAlerts);
 
   // Aplicar modo oscuro al mapa
   useMapDarkMode(mapRef);
@@ -493,27 +503,74 @@ export default function WazeNavigation() {
               />
             ))}
 
-          {/* Alertas en la ruta */}
-          {alertsNearRoute.map((alert) => (
-            <Marker
-              key={alert.id}
-              position={[alert.latitude, alert.longitude]}
-              icon={L.divIcon({
-                className: "alert-marker",
-                html: `<div style="background: ${
-                  alert.severity === AlertSeverity.CRITICA ? "#ef4444" : "#f59e0b"
-                }; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white;"></div>`,
-                iconSize: [16, 16],
-                iconAnchor: [8, 8],
-              })}
-            >
-              <Popup>
-                <strong>{alert.title}</strong>
-                <br />
-                {alert.description}
-              </Popup>
-            </Marker>
-          ))}
+          {/* Todas las alertas en el mapa */}
+          {alerts.map((alert) => {
+            const getAlertIcon = (type: AlertType, severity: AlertSeverity) => {
+              const colorMap = {
+                [AlertSeverity.CRITICA]: "#ef4444",
+                [AlertSeverity.ALTA]: "#f97316",
+                [AlertSeverity.MEDIA]: "#eab308",
+                [AlertSeverity.BAJA]: "#84cc16",
+              };
+
+              const iconMap = {
+                [AlertType.ACCIDENTE]: "🚗",
+                [AlertType.DERRUMBE]: "🪨",
+                [AlertType.INUNDACION]: "🌊",
+                [AlertType.CIERRE_VIAL]: "🚧",
+                [AlertType.MANTENIMIENTO]: "🔧",
+              };
+
+              return L.divIcon({
+                className: "custom-alert-marker",
+                html: `<div style="
+                  background: ${colorMap[severity]};
+                  width: 32px;
+                  height: 32px;
+                  border-radius: 50%;
+                  border: 3px solid white;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 16px;
+                ">${iconMap[type]}</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+              });
+            };
+
+            return (
+              <Marker
+                key={alert.id}
+                position={[alert.latitude, alert.longitude]}
+                icon={getAlertIcon(alert.type, alert.severity)}
+              >
+                <Popup>
+                  <div className="min-w-[200px]">
+                    <div className="flex items-start gap-2 mb-2">
+                      <span className="text-xl">
+                        {alert.type === AlertType.ACCIDENTE && "🚗"}
+                        {alert.type === AlertType.DERRUMBE && "🪨"}
+                        {alert.type === AlertType.INUNDACION && "🌊"}
+                        {alert.type === AlertType.CIERRE_VIAL && "🚧"}
+                        {alert.type === AlertType.MANTENIMIENTO && "🔧"}
+                      </span>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900">{alert.title}</h3>
+                        <p className="text-xs text-gray-600">{alert.severity}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">{alert.description}</p>
+                    <div className="text-xs text-gray-500">
+                      <p>📍 {alert.location}</p>
+                      <p>👤 {alert.username}</p>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
 
           {destination && <RouteCalculator destination={destination} />}
         </MapContainer>
@@ -664,11 +721,110 @@ export default function WazeNavigation() {
       {/* Botón para mostrar selector de rutas */}
       {routes.length > 1 && isNavigating && (
         <button
+          type="button"
           onClick={() => setShowRouteSelector(!showRouteSelector)}
           className="absolute bottom-4 right-4 z-[1000] bg-white dark:bg-gray-800 p-4 rounded-full shadow-lg hover:shadow-xl transition-shadow"
         >
           <RouteIcon size={24} className="text-gray-700 dark:text-gray-300" />
         </button>
+      )}
+
+      {/* Botón principal de reportes (Waze style) */}
+      {currentLocation && (
+        <button
+          type="button"
+          onClick={() => setShowQuickReports(!showQuickReports)}
+          className="absolute bottom-24 right-4 z-[1000] bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110"
+          title="Reportar alerta"
+        >
+          <Plus size={28} />
+        </button>
+      )}
+
+      {/* Panel de reportes rápidos tipo Waze */}
+      {showQuickReports && currentLocation && (
+        <div className="absolute bottom-44 right-4 z-[1000] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-3 space-y-2 min-w-[200px]">
+          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 px-2 mb-2">
+            REPORTAR
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowAlertModal(true);
+              setShowQuickReports(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
+          >
+            <div className="bg-red-600 p-2 rounded-full">
+              <Car size={20} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900 dark:text-white">Accidente</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">En el camino</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowAlertModal(true);
+              setShowQuickReports(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors text-left"
+          >
+            <div className="bg-yellow-600 p-2 rounded-full">
+              <Construction size={20} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900 dark:text-white">Peligro</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">En la vía</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowAlertModal(true);
+              setShowQuickReports(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
+          >
+            <div className="bg-blue-600 p-2 rounded-full">
+              <Waves size={20} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900 dark:text-white">Otros</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Reportar problema</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowQuickReports(false)}
+            className="w-full px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
+
+      {/* Modal de creación de alerta */}
+      {currentLocation && (
+        <QuickAlertModal
+          isOpen={showAlertModal}
+          onClose={() => setShowAlertModal(false)}
+          location={currentLocation}
+          onAlertCreated={async () => {
+            // Recargar alertas después de crear una nueva
+            try {
+              const newAlerts = await alertApi.getAlerts();
+              refreshAlerts(newAlerts);
+            } catch (error) {
+              console.error("Error refreshing alerts:", error);
+            }
+          }}
+        />
       )}
     </div>
   );
