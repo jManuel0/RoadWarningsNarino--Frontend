@@ -1,11 +1,11 @@
 import { LoginRequest, RegisterRequest, AuthResponse } from "@/types/auth";
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ?? "https://roadwarningsnarino-backend.onrender.com/api";
+  import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 export const authApi = {
   async login(data: LoginRequest): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -19,7 +19,7 @@ export const authApi = {
   },
 
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    const res = await fetch(`${API_BASE}/auth/register`, {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

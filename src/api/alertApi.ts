@@ -4,7 +4,7 @@ import { Alert, AlertStatus, CreateAlertDTO } from "@/types/Alert";
 
 // Usa env en producción, localhost en desarrollo
 const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:8080/api/alert";
+  import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:8080";
 
 // Lee el token desde localStorage (guardado por authStore)
 function getAuthToken(): string | null {
@@ -35,7 +35,7 @@ function authHeaders(json: boolean = false): HeadersInit {
 
 export const alertApi = {
   async getAlerts(): Promise<Alert[]> {
-    const res = await fetch(API_BASE, {
+    const res = await fetch(`${API_BASE}/api/alert`, {
       method: "GET",
       headers: authHeaders(), // sin JSON obligatorio
     });
@@ -47,7 +47,7 @@ export const alertApi = {
   },
 
   async getActiveAlerts(): Promise<Alert[]> {
-    const res = await fetch(`${API_BASE}/active`, {
+    const res = await fetch(`${API_BASE}/api/alert/active`, {
       method: "GET",
       headers: authHeaders(),
     });
@@ -59,7 +59,7 @@ export const alertApi = {
   },
 
   async createAlert(data: CreateAlertDTO): Promise<Alert> {
-    const res = await fetch(API_BASE, {
+    const res = await fetch(`${API_BASE}/api/alert`, {
       method: "POST",
       headers: authHeaders(true),
       body: JSON.stringify(data),
@@ -75,7 +75,7 @@ export const alertApi = {
   },
 
   async updateAlertStatus(id: number, status: AlertStatus): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/${id}/status?status=${status}`, {
+    const res = await fetch(`${API_BASE}/api/alert/${id}/status?status=${status}`, {
       method: "PATCH",
       headers: authHeaders(),
     });
@@ -88,7 +88,7 @@ export const alertApi = {
   },
 
   async deleteAlert(id: number): Promise<void> {
-    const res = await fetch(`${API_BASE}/${id}`, {
+    const res = await fetch(`${API_BASE}/api/alert/${id}`, {
       method: "DELETE",
       headers: authHeaders(),
     });
