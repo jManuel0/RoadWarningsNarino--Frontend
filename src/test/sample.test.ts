@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+// No imports needed - Jest provides globals
 
 describe("Sample test", () => {
   it("should pass basic math", () => {

@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useAlertStore } from "./alertStore";
-import { Alert, AlertSeverity, AlertStatus } from "@/types/Alert";
+import { Alert, AlertType, AlertSeverity, AlertStatus } from "@/types/Alert";
 
 const createMockAlert = (overrides?: Partial<Alert>): Alert => ({
   id: 1,
-  type: "ACCIDENTE",
+  type: AlertType.ACCIDENTE,
+  title: "Test Alert",
   severity: AlertSeverity.MEDIA,
   location: "Test Location",
   description: "Test description",
@@ -56,7 +56,7 @@ describe("alertStore", () => {
   });
 
   it("should notify observers when adding alert", () => {
-    const observer = vi.fn();
+    const observer = jest.fn();
     const newAlert = createMockAlert({ id: 1 });
 
     useAlertStore.getState().alertSubject.attach(observer);
@@ -180,8 +180,8 @@ describe("alertStore", () => {
 
   describe("Observer pattern", () => {
     it("should attach and detach observers", () => {
-      const observer1 = vi.fn();
-      const observer2 = vi.fn();
+      const observer1 = jest.fn();
+      const observer2 = jest.fn();
       const subject = useAlertStore.getState().alertSubject;
 
       subject.attach(observer1);
