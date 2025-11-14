@@ -4,7 +4,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { useSettingsStore } from "@/stores/settingsStore";
 
 // Inicializar el tema desde el store antes de renderizar
 const savedTheme = localStorage.getItem("settings-storage");
