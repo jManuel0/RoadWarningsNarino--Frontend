@@ -15,6 +15,7 @@ import Navigation from "./components/Navigation";
 import InstallPWA from "./components/InstallPWA";
 import OfflineIndicator from "./components/OfflineIndicator";
 import FloatingClearFilters from "./components/FloatingClearFilters";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useAuthStore } from "./stores/authStore";
 import { useServiceWorker } from "./hooks/useServiceWorker";
 
@@ -59,18 +60,20 @@ function App() {
   useServiceWorker();
 
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Toaster position="top-right" richColors closeButton />
-        <div className="absolute top-4 right-4 z-50">
-          <ThemeToggle />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+          <Toaster position="top-right" richColors closeButton />
+          <div className="absolute top-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
+          <OfflineIndicator />
+          <InstallPWA />
+          <FloatingClearFilters />
+          <AppRoutes />
         </div>
-        <OfflineIndicator />
-        <InstallPWA />
-        <FloatingClearFilters />
-        <AppRoutes />
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

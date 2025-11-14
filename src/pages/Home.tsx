@@ -33,14 +33,75 @@ export default function Home() {
     async (showNotification = false) => {
       try {
         setLoading(true);
-        const data = await alertApi.getAlerts();
-        setAlerts(data);
-        setError(null);
+
+        try {
+          const data = await alertApi.getAlerts();
+          setAlerts(data);
+          setError(null);
+        } catch (apiError) {
+          // Si el API falla, usar datos de ejemplo
+          console.warn("Backend no disponible, usando datos de ejemplo:", apiError);
+
+          const mockAlerts: Alert[] = [
+            {
+              id: 1,
+              type: "ACCIDENTE" as any,
+              title: "Accidente de tránsito",
+              description: "Colisión múltiple en vía principal",
+              latitude: 4.6097,
+              longitude: -74.0817,
+              location: "Av. 68 con Calle 80",
+              municipality: "Bogotá",
+              severity: AlertSeverity.CRITICA,
+              status: AlertStatus.ACTIVE,
+              timestamp: new Date().toISOString(),
+              username: "Usuario Demo",
+              upvotes: 15,
+              downvotes: 2,
+            },
+            {
+              id: 2,
+              type: "CIERRE_VIAL" as any,
+              title: "Cierre por manifestación",
+              description: "Vía cerrada temporalmente",
+              latitude: 4.6156,
+              longitude: -74.0771,
+              location: "Carrera 7 con Calle 72",
+              municipality: "Bogotá",
+              severity: AlertSeverity.ALTA,
+              status: AlertStatus.ACTIVE,
+              timestamp: new Date().toISOString(),
+              username: "Usuario Demo",
+              upvotes: 25,
+              downvotes: 1,
+            },
+            {
+              id: 3,
+              type: "INUNDACION" as any,
+              title: "Inundación en vía",
+              description: "Agua acumulada por lluvias",
+              latitude: 4.6042,
+              longitude: -74.0862,
+              location: "Calle 26 con Carrera 50",
+              municipality: "Bogotá",
+              severity: AlertSeverity.MEDIA,
+              status: AlertStatus.ACTIVE,
+              timestamp: new Date().toISOString(),
+              username: "Usuario Demo",
+              upvotes: 8,
+              downvotes: 0,
+            },
+          ];
+
+          setAlerts(mockAlerts);
+          setError("Modo demo - Backend no disponible");
+        }
+
         if (showNotification) {
           notificationService.success("Alertas actualizadas");
         }
       } catch (err) {
-        console.error(err);
+        console.error("Error crítico:", err);
         setError("Error al cargar alertas");
         notificationService.error("No se pudieron cargar las alertas");
       } finally {
