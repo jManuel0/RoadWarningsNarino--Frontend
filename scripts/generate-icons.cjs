@@ -8,8 +8,8 @@
  * 2. Ejecutar: node scripts/generate-icons.js
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 // Verificar si sharp está instalado
 let sharp;
