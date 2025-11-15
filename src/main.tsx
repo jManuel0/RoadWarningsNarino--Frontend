@@ -5,6 +5,11 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
+// Importar CSS de Leaflet (necesario para el sistema de mapas)
+import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+
 // Inicializar el tema desde el store antes de renderizar
 const savedTheme = localStorage.getItem("settings-storage");
 if (savedTheme) {
