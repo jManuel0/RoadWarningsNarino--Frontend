@@ -1,0 +1,240 @@
+/**
+ * Estilos para el componente RoadAlertsMap
+ * Incluye estilos personalizados para Leaflet y componentes del mapa
+ */
+
+/* ============================================================================
+   CONTENEDOR DEL MAPA
+   ============================================================================ */
+
+.leaflet-container {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+}
+
+/* ============================================================================
+   POPUPS PERSONALIZADOS
+   ============================================================================ */
+
+.leaflet-popup-content-wrapper {
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.leaflet-popup-content {
+  margin: 1rem;
+  min-width: 200px;
+}
+
+.leaflet-popup-tip {
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================================
+   CONTROLES DEL MAPA
+   ============================================================================ */
+
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.leaflet-control-zoom a {
+  border: none !important;
+  color: #374151 !important;
+  font-size: 20px !important;
+  line-height: 30px !important;
+  transition: all 0.2s ease;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+/* ============================================================================
+   ATRIBUCIÓN
+   ============================================================================ */
+
+.leaflet-control-attribution {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 11px !important;
+  padding: 2px 8px !important;
+  border-radius: 0.25rem !important;
+}
+
+/* Modo oscuro para atribución */
+.dark .leaflet-control-attribution {
+  background-color: rgba(31, 41, 55, 0.9) !important;
+  color: #e5e7eb !important;
+}
+
+.dark .leaflet-control-attribution a {
+  color: #60a5fa !important;
+}
+
+/* ============================================================================
+   TOOLTIPS
+   ============================================================================ */
+
+.leaflet-tooltip {
+  background-color: rgba(0, 0, 0, 0.8);
+  border: none;
+  border-radius: 0.375rem;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-tooltip-left::before,
+.leaflet-tooltip-right::before {
+  border-left-color: rgba(0, 0, 0, 0.8);
+  border-right-color: rgba(0, 0, 0, 0.8);
+}
+
+/* ============================================================================
+   CLUSTERS DE MARCADORES
+   ============================================================================ */
+
+.marker-cluster {
+  background-clip: padding-box;
+}
+
+.marker-cluster div {
+  width: 30px;
+  height: 30px;
+  margin-left: 5px;
+  margin-top: 5px;
+  text-align: center;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-cluster span {
+  line-height: 30px;
+}
+
+/* Cluster pequeño (menos de 10 alertas) */
+.marker-cluster-small {
+  background-color: rgba(110, 204, 57, 0.4);
+}
+
+.marker-cluster-small div {
+  background-color: rgba(110, 204, 57, 0.6);
+  color: white;
+}
+
+/* Cluster mediano (10-100 alertas) */
+.marker-cluster-medium {
+  background-color: rgba(241, 211, 87, 0.4);
+}
+
+.marker-cluster-medium div {
+  background-color: rgba(241, 211, 87, 0.6);
+  color: white;
+}
+
+/* Cluster grande (más de 100 alertas) */
+.marker-cluster-large {
+  background-color: rgba(253, 156, 115, 0.4);
+}
+
+.marker-cluster-large div {
+  background-color: rgba(253, 156, 115, 0.6);
+  color: white;
+}
+
+/* ============================================================================
+   ANIMACIONES
+   ============================================================================ */
+
+@keyframes pulse-marker {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.marker-pulse {
+  animation: pulse-marker 2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.map-control-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* ============================================================================
+   MODO OSCURO PARA EL MAPA
+   ============================================================================ */
+
+.dark .leaflet-tile {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+/* ============================================================================
+   RESPONSIVIDAD
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .leaflet-control-zoom {
+    margin-left: 8px !important;
+    margin-top: 8px !important;
+  }
+
+  .leaflet-control-attribution {
+    font-size: 10px !important;
+  }
+
+  .leaflet-popup-content {
+    margin: 0.75rem;
+    min-width: 150px;
+  }
+}
+
+/* ============================================================================
+   ACCESIBILIDAD
+   ============================================================================ */
+
+.leaflet-container:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Asegurar que los botones sean accesibles */
+button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   OPTIMIZACIONES DE RENDIMIENTO
+   ============================================================================ */
+
+.leaflet-pane {
+  transform: translate3d(0, 0, 0); /* Habilitar aceleración por hardware */
+}
+
+.leaflet-tile-container {
+  will-change: transform;
+}

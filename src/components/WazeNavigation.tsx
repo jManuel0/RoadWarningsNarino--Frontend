@@ -436,7 +436,7 @@ export default function WazeNavigation() {
 
   const defaultCenter: [number, number] = currentLocation
     ? [currentLocation.lat, currentLocation.lng]
-    : [4.6097, -74.0817]; // Bogotá por defecto
+    : [1.2136, -77.2811]; // Pasto, Nariño por defecto
 
   return (
     <div className="relative h-screen w-full">
