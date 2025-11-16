@@ -129,7 +129,7 @@ export default function Home() {
               title: "Caída de rocas en vía",
               description: "Rocas en la calzada, precaución",
               latitude: 1.6667,
-              longitude: -78.7500,
+              longitude: -78.75,
               location: "Vía Tumaco - Pasto Km 120",
               municipality: "Tumaco",
               severity: AlertSeverity.ALTA,
