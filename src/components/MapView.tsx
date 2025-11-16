@@ -167,8 +167,9 @@ const MapView = ({ alerts, selectedAlertId, onSelectAlert }: MapViewProps) => {
       <div className="h-[500px] w-full rounded-lg shadow">
         <Map
           defaultCenter={DEFAULT_CENTER}
-          defaultZoom={11}
+          defaultZoom={16}
           mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}
+          mapTypeId="hybrid"
           gestureHandling="greedy"
           zoomControl
           style={{ width: "100%", height: "100%", borderRadius: "0.5rem" }}

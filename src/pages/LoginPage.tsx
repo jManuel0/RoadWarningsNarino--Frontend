@@ -17,8 +17,12 @@ export default function LoginPage() {
       const res = await authApi.login({ username, password });
       setAuth(res.token, username);
       navigate("/alerts");
-    } catch {
-      setError("Usuario o contraseña incorrectos");
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Usuario o contraseña incorrectos";
+      setError(message);
     }
   };
 

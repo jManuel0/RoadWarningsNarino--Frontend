@@ -1,7 +1,5 @@
 import { Alert } from "@/types/Alert";
-
-const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:8080";
+import { API_BASE } from "./baseUrl";
 
 function getAuthToken(): string | null {
   try {

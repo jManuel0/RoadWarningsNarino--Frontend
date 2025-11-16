@@ -1,10 +1,6 @@
 // src/api/alertApi.ts
 import { Alert, AlertStatus, CreateAlertDTO } from "@/types/Alert";
-
-
-// Usa env en producción, localhost en desarrollo
-const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:8080";
+import { API_BASE } from "./baseUrl";
 
 // Lee el token desde localStorage (guardado por authStore)
 function getAuthToken(): string | null {
@@ -75,10 +71,13 @@ export const alertApi = {
   },
 
   async updateAlertStatus(id: number, status: AlertStatus): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/api/alert/${id}/status?status=${status}`, {
-      method: "PATCH",
-      headers: authHeaders(),
-    });
+    const res = await fetch(
+      `${API_BASE}/api/alert/${id}/status?status=${status}`,
+      {
+        method: "PATCH",
+        headers: authHeaders(),
+      }
+    );
 
     if (!res.ok) {
       throw new Error("Error al actualizar estado");
@@ -153,10 +152,13 @@ export const alertApi = {
   },
 
   async deleteComment(alertId: number, commentId: number): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments/${commentId}`, {
-      method: "DELETE",
-      headers: authHeaders(),
-    });
+    const res = await fetch(
+      `${API_BASE}/api/alert/${alertId}/comments/${commentId}`,
+      {
+        method: "DELETE",
+        headers: authHeaders(),
+      }
+    );
 
     if (!res.ok) {
       throw new Error("Error al eliminar comentario");
@@ -164,10 +166,13 @@ export const alertApi = {
   },
 
   async likeComment(alertId: number, commentId: number): Promise<any> {
-    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments/${commentId}/like`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
+    const res = await fetch(
+      `${API_BASE}/api/alert/${alertId}/comments/${commentId}/like`,
+      {
+        method: "POST",
+        headers: authHeaders(),
+      }
+    );
 
     if (!res.ok) {
       throw new Error("Error al dar like al comentario");
@@ -177,10 +182,13 @@ export const alertApi = {
   },
 
   async reportComment(alertId: number, commentId: number): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments/${commentId}/report`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
+    const res = await fetch(
+      `${API_BASE}/api/alert/${alertId}/comments/${commentId}/report`,
+      {
+        method: "POST",
+        headers: authHeaders(),
+      }
+    );
 
     if (!res.ok) {
       throw new Error("Error al reportar comentario");

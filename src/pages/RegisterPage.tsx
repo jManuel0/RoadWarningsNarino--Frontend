@@ -18,8 +18,12 @@ export default function RegisterPage() {
       const res = await authApi.register({ username, email, password });
       setAuth(res.token, username);
       navigate("/alerts");
-    } catch {
-      setError("No se pudo registrar. Verifica los datos.");
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "No se pudo registrar. Verifica los datos.";
+      setError(message);
     }
   };
 

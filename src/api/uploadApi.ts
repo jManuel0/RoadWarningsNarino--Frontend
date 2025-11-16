@@ -1,5 +1,4 @@
-const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:8080";
+import { API_BASE } from "./baseUrl";
 
 function getAuthToken(): string | null {
   try {
@@ -26,33 +25,36 @@ function authHeaders(): HeadersInit {
 export const uploadApi = {
   async uploadImage(file: File): Promise<{ url: string }> {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append("image", file);
 
     const res = await fetch(`${API_BASE}/api/upload/image`, {
-      method: 'POST',
+      method: "POST",
       headers: authHeaders(),
       body: formData,
     });
 
     if (!res.ok) {
-      throw new Error('Error al subir la imagen');
+      throw new Error("Error al subir la imagen");
     }
 
     return res.json();
   },
 
-  async uploadAlertImage(alertId: number, file: File): Promise<{ url: string }> {
+  async uploadAlertImage(
+    alertId: number,
+    file: File
+  ): Promise<{ url: string }> {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append("image", file);
 
     const res = await fetch(`${API_BASE}/api/alert/${alertId}/image`, {
-      method: 'POST',
+      method: "POST",
       headers: authHeaders(),
       body: formData,
     });
 
     if (!res.ok) {
-      throw new Error('Error al subir la imagen de la alerta');
+      throw new Error("Error al subir la imagen de la alerta");
     }
 
     return res.json();
