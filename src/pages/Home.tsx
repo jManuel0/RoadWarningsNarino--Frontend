@@ -64,7 +64,7 @@ export default function Home() {
               type: "ACCIDENTE" as any,
               title: "Accidente en Panamericana",
               description: "Colisión entre dos vehículos",
-              latitude: 1.1950,
+              latitude: 1.195,
               longitude: -77.2767,
               location: "Panamericana Sector Catambuco",
               municipality: "Pasto",
