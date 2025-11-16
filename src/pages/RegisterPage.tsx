@@ -8,11 +8,43 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    username?: string;
+    email?: string;
+    password?: string;
+  }>({});
   const setAuth = useAuthStore((s) => s.setAuth);
   const navigate = useNavigate();
 
+  const validate = () => {
+    const errors: typeof fieldErrors = {};
+
+    if (!/^[A-Za-z0-9_-]+$/.test(username)) {
+      errors.username =
+        "Solo letras, números, guiones (-) y guiones bajos (_), sin espacios.";
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      errors.email =
+        "Ingresa un correo con formato válido (ej. usuario@dominio.com).";
+    }
+
+    if (password.length < 8 || password.length > 100) {
+      errors.password = "La contraseña debe tener entre 8 y 100 caracteres.";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validate()) {
+      return;
+    }
+
     setError(null);
     try {
       const res = await authApi.register({ username, email, password });
@@ -51,6 +83,14 @@ export default function RegisterPage() {
             onChange={(e) => setUsername(e.target.value)}
             required
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Solo letras, números, guiones (-) y guiones bajos (_).
+          </p>
+          {fieldErrors.username && (
+            <p className="mt-1 text-xs text-red-600">
+              {fieldErrors.username}
+            </p>
+          )}
         </div>
 
         <div>
@@ -62,6 +102,9 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+          {fieldErrors.email && (
+            <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
+          )}
         </div>
 
         <div>
@@ -73,6 +116,14 @@ export default function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Entre 8 y 100 caracteres.
+          </p>
+          {fieldErrors.password && (
+            <p className="mt-1 text-xs text-red-600">
+              {fieldErrors.password}
+            </p>
+          )}
         </div>
 
         <button
