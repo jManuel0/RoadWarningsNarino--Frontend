@@ -10,6 +10,8 @@ import AdvancedFilters from "@/components/AdvancedFilters";
 import { Alert, AlertStatus, AlertSeverity } from "@/types/Alert";
 import { MapPin, AlertTriangle, RefreshCw, X } from "lucide-react";
 import { notificationService } from "@/utils/notifications";
+import WebSocketStatus from "@/components/WebSocketStatus";
+import { useRealtimeAlerts } from "@/hooks/useWebSocket";
 
 export default function Home() {
   const {
@@ -17,6 +19,7 @@ export default function Home() {
     loading,
     error,
     setAlerts,
+    addAlert,
     updateAlert,
     removeAlert,
     setLoading,
@@ -28,6 +31,18 @@ export default function Home() {
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // Suscripción a alertas en tiempo real vía WebSocket
+  useRealtimeAlerts({
+    onCreated: (alert) => {
+      const exists = alerts.some((a) => a.id === alert.id);
+      if (exists) {
+        updateAlert(alert.id, alert);
+      } else {
+        addAlert(alert);
+      }
+    },
+  });
 
   const loadAlerts = useCallback(
     async (showNotification = false) => {
@@ -249,6 +264,11 @@ export default function Home() {
 
   const handleCloseModal = () => setSelectedAlert(null);
 
+  const handleSelectAlert = (id: number) => {
+    const alert = alerts.find((a) => a.id === id) || null;
+    setSelectedAlert(alert);
+  };
+
   // Derivados locales
   const activeAlerts = alerts.filter((a) => a.status === AlertStatus.ACTIVE);
 
@@ -287,6 +307,7 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-3">
+              <WebSocketStatus />
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
@@ -417,7 +438,11 @@ export default function Home() {
                   {error}
                 </div>
               ) : (
-                <MapView alerts={displayAlerts} />
+                <MapView
+                  alerts={displayAlerts}
+                  selectedAlertId={selectedAlert?.id ?? null}
+                  onSelectAlert={handleSelectAlert}
+                />
               )}
             </div>
           </div>
@@ -448,6 +473,7 @@ export default function Home() {
                       alert={alert}
                       onStatusChange={handleStatusChange}
                       onDelete={handleDelete}
+                      onSelectAlert={handleSelectAlert}
                     />
                   ))
                 )}
@@ -486,6 +512,7 @@ export default function Home() {
               alert={selectedAlert}
               onStatusChange={handleStatusChange}
               onDelete={handleDelete}
+              onSelectAlert={handleSelectAlert}
             />
           </div>
         )}

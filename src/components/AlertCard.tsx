@@ -11,6 +11,7 @@ interface AlertCardProps {
   alert: Alert;
   onStatusChange: (id: number, status: AlertStatus) => void;
   onDelete: (id: number) => void;
+  onSelectAlert?: (id: number) => void;
 }
 
 const statusLabel: Record<AlertStatus, string> = {
@@ -30,6 +31,7 @@ export default function AlertCard({
   alert,
   onStatusChange,
   onDelete,
+  onSelectAlert,
 }: Readonly<AlertCardProps>) {
   const [localUpvotes, setLocalUpvotes] = useState(alert.upvotes ?? 0);
   const [localDownvotes, setLocalDownvotes] = useState(alert.downvotes ?? 0);
@@ -111,6 +113,17 @@ export default function AlertCard({
           <span className="px-2 py-1 rounded-full text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
             {alert.type}
           </span>
+          {alert.latitude != null &&
+            alert.longitude != null &&
+            onSelectAlert && (
+              <button
+                type="button"
+                onClick={() => onSelectAlert(alert.id)}
+                className="mt-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Ver en mapa
+              </button>
+            )}
         </div>
       </div>
 
