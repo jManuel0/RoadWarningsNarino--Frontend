@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { alertApi } from "@/api/alertApi";
 import { Alert, AlertStatus } from "@/types/Alert";
 import GPSNavigation from "@/components/GPSNavigation";
-import { Navigation, MapPin, AlertCircle, X } from "lucide-react";
+import { Navigation, MapPin, AlertCircle } from "lucide-react";
 import { notificationService } from "@/utils/notifications";
 
 const GpsPage: React.FC = () => {

@@ -7,6 +7,7 @@ import {
   Popup,
   Polyline,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -30,6 +31,37 @@ import { useMapDarkMode } from "@/hooks/useMapDarkMode";
 import { alertApi } from "@/api/alertApi";
 import QuickAlertModal from "./QuickAlertModal";
 
+function MapClickHandler({
+  onSelectDestination,
+}: {
+  onSelectDestination: (lat: number, lng: number) => void;
+}) {
+  useMapEvents({
+    click(e) {
+      onSelectDestination(e.latlng.lat, e.latlng.lng);
+    },
+  });
+
+  return null;
+}
+
+function DestinationCenter({
+  destination,
+}: {
+  destination: RoutePoint | null;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!destination) return;
+    const currentZoom = map.getZoom();
+    const targetZoom = Math.max(currentZoom, 15);
+    map.setView([destination.lat, destination.lng], targetZoom);
+  }, [destination, map]);
+
+  return null;
+}
+
 // Iconos personalizados
 const userIcon = L.divIcon({
   className: "custom-user-marker",
@@ -47,7 +79,6 @@ const destinationIcon = L.divIcon({
 
 // Componente para calcular y mostrar rutas
 function RouteCalculator({ destination }: { destination: RoutePoint }) {
-  const map = useMap();
   const {
     currentLocation,
     setRoutes,
@@ -63,6 +94,7 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
     if (!currentLocation || !destination) return;
 
     calculateRoutes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLocation, destination, alerts, avoidCriticalAlerts]);
 
   const calculateRoutes = async () => {
@@ -132,10 +164,13 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
   const calculateDirectRoute = (
     start: RoutePoint,
     end: RoutePoint
-  ): Omit<Route, "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"> => {
+  ): Omit<
+    Route,
+    "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
+  > => {
     const points: RoutePoint[] = [start, end];
     const distance = calculateDistance(start, end);
-    const duration = (distance / 50) * 3600; // Asumiendo 50 km/h promedio
+    const duration = (distance / 50) * 3600; // 50 km/h
 
     const steps = [
       {
@@ -150,11 +185,14 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
   };
 
   const generateAlternativeRoutes = (
-    start: RoutePoint,
-    end: RoutePoint,
-    alerts: Alert[]
-  ): Omit<Route, "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended">[] => {
-    const alternatives: Omit<Route, "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended">[] = [];
+start: RoutePoint, end: RoutePoint, _alerts: Alert[]): Omit<
+    Route,
+    "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
+  >[] => {
+    const alternatives: Omit<
+      Route,
+      "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
+    >[] = [];
 
     // Ruta 1: Desviación hacia el norte
     const northPoint: RoutePoint = {
@@ -177,21 +215,30 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
     start: RoutePoint,
     via: RoutePoint,
     end: RoutePoint
-  ): Omit<Route, "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"> => {
+  ): Omit<
+    Route,
+    "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
+  > => {
     const points: RoutePoint[] = [start, via, end];
     const distance =
       calculateDistance(start, via) + calculateDistance(via, end);
-    const duration = (distance / 45) * 3600; // Velocidad ligeramente menor por desvío
+    const duration = (distance / 45) * 3600; // algo más lento por desvío
 
     const steps = [
       {
-        instruction: `Toma el desvío por ${calculateDistance(start, via).toFixed(1)} km`,
+        instruction: `Toma el desvío por ${calculateDistance(
+          start,
+          via
+        ).toFixed(1)} km`,
         distance: calculateDistance(start, via),
         duration: (calculateDistance(start, via) / 45) * 3600,
         point: via,
       },
       {
-        instruction: `Continúa hacia tu destino por ${calculateDistance(via, end).toFixed(1)} km`,
+        instruction: `Continúa hacia tu destino por ${calculateDistance(
+          via,
+          end
+        ).toFixed(1)} km`,
         distance: calculateDistance(via, end),
         duration: (calculateDistance(via, end) / 45) * 3600,
         point: end,
@@ -202,7 +249,7 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
   };
 
   const calculateDistance = (point1: RoutePoint, point2: RoutePoint): number => {
-    const R = 6371; // Radio de la Tierra en km
+    const R = 6371; // km
     const dLat = ((point2.lat - point1.lat) * Math.PI) / 180;
     const dLng = ((point2.lng - point1.lng) * Math.PI) / 180;
     const a =
@@ -216,7 +263,10 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
   };
 
   const calculateRouteRisk = (
-    route: Omit<Route, "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended">,
+    route: Omit<
+      Route,
+      "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
+    >,
     alerts: Alert[]
   ): number => {
     let risk = 0;
@@ -236,7 +286,8 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
             [AlertSeverity.MEDIA]: 2,
             [AlertSeverity.BAJA]: 1,
           };
-          risk += severityWeight[alert.severity] * (1 - distance / ALERT_INFLUENCE_RADIUS);
+          risk +=
+            severityWeight[alert.severity] * (1 - distance / ALERT_INFLUENCE_RADIUS);
         }
       });
     });
@@ -245,7 +296,10 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
   };
 
   const findAlertsOnRoute = (
-    route: Omit<Route, "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended">,
+    route: Omit<
+      Route,
+      "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
+    >,
     alerts: Alert[]
   ): Alert[] => {
     const ALERT_PROXIMITY_THRESHOLD = 0.5; // km
@@ -260,7 +314,7 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
 
         if (
           distance < ALERT_PROXIMITY_THRESHOLD &&
-          !nearbyAlerts.find((a) => a.id === alert.id)
+          !nearbyAlerts.some((a) => a.id === alert.id)
         ) {
           nearbyAlerts.push(alert);
         }
@@ -283,6 +337,7 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
 export default function WazeNavigation() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [searchDestination, setSearchDestination] = useState("");
+  const [isSearchingDestination, setIsSearchingDestination] = useState(false);
   const [showRouteSelector, setShowRouteSelector] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [showQuickReports, setShowQuickReports] = useState(false);
@@ -328,9 +383,12 @@ export default function WazeNavigation() {
         addToRouteHistory(newLocation);
 
         // Verificar si llegamos al paso siguiente
-        if (selectedRoute && selectedRoute.steps[currentStepIndex]) {
+        if (selectedRoute?.steps[currentStepIndex]) {
           const currentStep = selectedRoute.steps[currentStepIndex];
-          const distanceToStep = calculateDistance(newLocation, currentStep.point);
+          const distanceToStep = calculateDistance(
+            newLocation,
+            currentStep.point
+          );
 
           if (distanceToStep < 0.05) {
             // Menos de 50 metros
@@ -363,7 +421,7 @@ export default function WazeNavigation() {
     return () => {
       navigator.geolocation.clearWatch(watchId);
     };
-  }, [isNavigating, selectedRoute, currentStepIndex, voiceGuidance]);
+  }, [isNavigating, selectedRoute, currentStepIndex, voiceGuidance, setCurrentLocation, addToRouteHistory, setCurrentStepIndex, stopNavigation]);
 
   const calculateDistance = (point1: RoutePoint, point2: RoutePoint): number => {
     const R = 6371;
@@ -387,9 +445,53 @@ export default function WazeNavigation() {
     }
   };
 
+  const handleSearchDestination = async () => {
+    const query = searchDestination.trim();
+    if (!query) {
+      alert("Escribe una dirección o lugar para buscar.");
+      return;
+    }
+
+    if (isSearchingDestination) return;
+
+    setIsSearchingDestination(true);
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          query
+        )}&limit=1`
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al buscar destino");
+      }
+
+      const results: any[] = await response.json();
+
+      if (!results.length) {
+        alert("No se encontró el lugar. Intenta con otra dirección.");
+        return;
+      }
+
+      const best = results[0];
+      const lat = parseFloat(best.lat);
+      const lng = parseFloat(best.lon);
+
+      setDestination({ lat, lng });
+    } catch (error) {
+      console.error("Error buscando destino:", error);
+      alert("No se pudo buscar el destino. Intenta de nuevo.");
+    } finally {
+      setIsSearchingDestination(false);
+    }
+  };
+
   const handleStartNavigation = () => {
     if (!destination) {
-      alert("Por favor, selecciona un destino primero");
+      alert(
+        "Por favor, selecciona un destino primero (haz clic en el mapa o busca una dirección)."
+      );
       return;
     }
 
@@ -421,6 +523,7 @@ export default function WazeNavigation() {
   const handleSelectDestination = (lat: number, lng: number) => {
     setDestination({ lat, lng });
     setShowRouteSelector(false);
+    setSearchDestination(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
   };
 
   const handleRouteSelection = (route: Route) => {
@@ -455,7 +558,10 @@ export default function WazeNavigation() {
 
           {/* Marcador de ubicación actual */}
           {currentLocation && (
-            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={userIcon}>
+            <Marker
+              position={[currentLocation.lat, currentLocation.lng]}
+              icon={userIcon}
+            >
               <Popup>Tu ubicación actual</Popup>
             </Marker>
           )}
@@ -505,63 +611,63 @@ export default function WazeNavigation() {
 
           {/* Todas las alertas en el mapa */}
           {alerts.map((alert) => {
-            const getAlertIcon = (type: AlertType, severity: AlertSeverity) => {
-              const colorMap = {
-                [AlertSeverity.CRITICA]: "#ef4444",
-                [AlertSeverity.ALTA]: "#f97316",
-                [AlertSeverity.MEDIA]: "#eab308",
-                [AlertSeverity.BAJA]: "#84cc16",
-              };
-
-              const iconMap = {
-                [AlertType.ACCIDENTE]: "🚗",
-                [AlertType.DERRUMBE]: "🪨",
-                [AlertType.INUNDACION]: "🌊",
-                [AlertType.CIERRE_VIAL]: "🚧",
-                [AlertType.MANTENIMIENTO]: "🔧",
-              };
-
-              return L.divIcon({
-                className: "custom-alert-marker",
-                html: `<div style="
-                  background: ${colorMap[severity]};
-                  width: 32px;
-                  height: 32px;
-                  border-radius: 50%;
-                  border: 3px solid white;
-                  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 16px;
-                ">${iconMap[type]}</div>`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16],
-              });
+            const colorMap: Record<AlertSeverity, string> = {
+              [AlertSeverity.CRITICA]: "#ef4444",
+              [AlertSeverity.ALTA]: "#f97316",
+              [AlertSeverity.MEDIA]: "#eab308",
+              [AlertSeverity.BAJA]: "#84cc16",
             };
+
+            const iconMap: Record<AlertType, string> = {
+              [AlertType.ACCIDENTE]: "🚗",
+              [AlertType.DERRUMBE]: "🪨",
+              [AlertType.INUNDACION]: "🌊",
+              [AlertType.CIERRE_VIAL]: "🚧",
+              [AlertType.MANTENIMIENTO]: "🔧",
+            };
+
+            const icon = L.divIcon({
+              className: "custom-alert-marker",
+              html: `<div style="
+                background: ${colorMap[alert.severity]};
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                border: 3px solid white;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+              ">${iconMap[alert.type]}</div>`,
+              iconSize: [32, 32],
+              iconAnchor: [16, 16],
+            });
 
             return (
               <Marker
                 key={alert.id}
                 position={[alert.latitude, alert.longitude]}
-                icon={getAlertIcon(alert.type, alert.severity)}
+                icon={icon}
               >
                 <Popup>
                   <div className="min-w-[200px]">
                     <div className="flex items-start gap-2 mb-2">
                       <span className="text-xl">
-                        {alert.type === AlertType.ACCIDENTE && "🚗"}
-                        {alert.type === AlertType.DERRUMBE && "🪨"}
-                        {alert.type === AlertType.INUNDACION && "🌊"}
-                        {alert.type === AlertType.CIERRE_VIAL && "🚧"}
-                        {alert.type === AlertType.MANTENIMIENTO && "🔧"}
+                        {iconMap[alert.type] ?? "⚠️"}
                       </span>
                       <div className="flex-1">
-                        <h3 className="font-bold text-gray-900">{alert.title}</h3>
-                        <p className="text-xs text-gray-600">{alert.severity}</p>
+                        <h3 className="font-bold text-gray-900">
+                          {alert.title}
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                          {alert.severity}
+                        </p>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700 mb-2">{alert.description}</p>
+                    <p className="text-sm text-gray-700 mb-2">
+                      {alert.description}
+                    </p>
                     <div className="text-xs text-gray-500">
                       <p>📍 {alert.location}</p>
                       <p>👤 {alert.username}</p>
@@ -572,6 +678,9 @@ export default function WazeNavigation() {
             );
           })}
 
+          <MapClickHandler onSelectDestination={handleSelectDestination} />
+          <DestinationCenter destination={destination} />
+
           {destination && <RouteCalculator destination={destination} />}
         </MapContainer>
       </div>
@@ -580,21 +689,18 @@ export default function WazeNavigation() {
       <div className="absolute top-4 left-4 right-4 z-[1000] flex gap-2">
         <input
           type="text"
-          placeholder="¿A dónde quieres ir?"
+          placeholder="¿A dónde quieres ir? (escribe y presiona Enter)"
           value={searchDestination}
           onChange={(e) => setSearchDestination(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSearchDestination();
+            }
+          }}
           className="flex-1 px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border-0 focus:ring-2 focus:ring-blue-500"
         />
-        {!isNavigating ? (
-          <button
-            onClick={handleStartNavigation}
-            disabled={!destination}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium flex items-center gap-2"
-          >
-            <NavigationIcon size={20} />
-            Iniciar
-          </button>
-        ) : (
+        {isNavigating ? (
           <button
             onClick={stopNavigation}
             className="px-6 py-3 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 font-medium flex items-center gap-2"
@@ -602,36 +708,51 @@ export default function WazeNavigation() {
             <X size={20} />
             Detener
           </button>
+        ) : (
+          <button
+            onClick={handleStartNavigation}
+            disabled={!destination || isSearchingDestination}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+          >
+            <NavigationIcon size={20} />
+            {isSearchingDestination ? "Buscando..." : "Iniciar"}
+          </button>
         )}
       </div>
 
       {/* Panel de instrucciones de navegación */}
-      {isNavigating && selectedRoute && selectedRoute.steps[currentStepIndex] && (
-        <div className="absolute top-20 left-4 right-4 z-[1000]">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-blue-600 p-3 rounded-full">
-                <NavigationIcon size={24} className="text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                  {selectedRoute.steps[currentStepIndex].instruction}
-                </p>
-                <div className="flex gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  <span className="flex items-center gap-1">
-                    <RouteIcon size={16} />
-                    {selectedRoute.steps[currentStepIndex].distance.toFixed(1)} km
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock size={16} />
-                    {formatDuration(selectedRoute.steps[currentStepIndex].duration)}
-                  </span>
+      {isNavigating &&
+        selectedRoute?.steps[currentStepIndex] && (
+          <div className="absolute top-20 left-4 right-4 z-[1000]">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-blue-600 p-3 rounded-full">
+                  <NavigationIcon size={24} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    {selectedRoute.steps[currentStepIndex].instruction}
+                  </p>
+                  <div className="flex gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <RouteIcon size={16} />
+                      {selectedRoute.steps[
+                        currentStepIndex
+                      ].distance.toFixed(1)}{" "}
+                      km
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock size={16} />
+                      {formatDuration(
+                        selectedRoute.steps[currentStepIndex].duration
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Selector de rutas */}
       {showRouteSelector && routes.length > 0 && (
@@ -685,8 +806,8 @@ export default function WazeNavigation() {
                           route.riskScore < 5
                             ? "text-green-600"
                             : route.riskScore < 15
-                              ? "text-amber-600"
-                              : "text-red-600"
+                            ? "text-amber-600"
+                            : "text-red-600"
                         }
                       />
                     </div>
@@ -760,8 +881,12 @@ export default function WazeNavigation() {
               <Car size={20} className="text-white" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-gray-900 dark:text-white">Accidente</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">En el camino</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
+                Accidente
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                En el camino
+              </p>
             </div>
           </button>
 
@@ -777,8 +902,12 @@ export default function WazeNavigation() {
               <Construction size={20} className="text-white" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-gray-900 dark:text-white">Peligro</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">En la vía</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
+                Peligro
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                En la vía
+              </p>
             </div>
           </button>
 
@@ -794,8 +923,12 @@ export default function WazeNavigation() {
               <Waves size={20} className="text-white" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-gray-900 dark:text-white">Otros</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Reportar problema</p>
+              <p className="font-semibold text-gray-900 dark:text-white">
+                Otros
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Reportar problema
+              </p>
             </div>
           </button>
 

@@ -54,7 +54,7 @@ export default function Home() {
           setAlerts(data);
           setError(null);
         } catch (apiError) {
-          // Si el API falla, usar datos de ejemplo
+          // Si el API falla, usar datos de ejemplo en desarrollo
           console.warn("Backend no disponible, usando datos de ejemplo:", apiError);
 
           const mockAlerts: Alert[] = [
@@ -156,8 +156,14 @@ export default function Home() {
             },
           ];
 
-          setAlerts(mockAlerts);
-          setError("Modo demo - Backend no disponible");
+          if (import.meta.env.DEV) {
+            setAlerts(mockAlerts);
+            setError("Modo demo - Backend no disponible");
+          } else {
+            // Producción: no mostramos alertas falsas si el backend no responde
+            setAlerts([]);
+            setError("No se pudieron cargar las alertas (backend no disponible)");
+          }
         }
 
         if (showNotification) {
