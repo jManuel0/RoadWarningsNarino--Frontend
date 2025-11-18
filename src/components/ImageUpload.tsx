@@ -14,7 +14,7 @@ export default function ImageUpload({
   onImageRemove,
   preview,
   maxSizeMB = 5
-}: ImageUploadProps) {
+}: Readonly<ImageUploadProps>) {
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 

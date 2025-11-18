@@ -8,9 +8,9 @@ interface VoiceCommand {
 type VoiceCommandCallback = (command: string, data?: any) => void;
 
 class VoiceCommandService {
-  private recognition: any = null;
+  private readonly recognition: any = null;
   private isListening = false;
-  private commands: VoiceCommand[] = [];
+  private readonly commands: VoiceCommand[] = [];
   private onCommandCallback: VoiceCommandCallback | null = null;
   private onStatusChange: ((status: 'listening' | 'stopped' | 'error') => void) | null = null;
 
@@ -170,7 +170,7 @@ class VoiceCommandService {
 
   private processCommand(transcript: string) {
     for (const command of this.commands) {
-      const matches = transcript.match(command.pattern);
+      const matches = RegExp(command.pattern).exec(transcript);
       if (matches) {
         console.log('✅ Command matched:', command.description);
         command.action(matches);
@@ -219,8 +219,8 @@ class VoiceCommandService {
   speak(text: string) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'es-ES';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.rate = 1;
+    utterance.pitch = 1;
     window.speechSynthesis.speak(utterance);
   }
 

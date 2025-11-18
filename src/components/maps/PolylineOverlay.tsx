@@ -24,9 +24,7 @@ const PolylineOverlay = ({ path, options }: PolylineOverlayProps) => {
   useEffect(() => {
     if (!map || normalizedPath.length < 2) return;
 
-    if (!polylineRef.current) {
-      polylineRef.current = new google.maps.Polyline();
-    }
+    polylineRef.current ??= new google.maps.Polyline();
 
     polylineRef.current.setOptions({
       map,

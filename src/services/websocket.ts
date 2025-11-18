@@ -17,19 +17,18 @@ type EventListener = (data: any) => void;
 
 class WebSocketService {
   private ws: WebSocket | null = null;
-  private listeners: Map<WebSocketEventType, Set<EventListener>> = new Map();
+  private readonly listeners: Map<WebSocketEventType, Set<EventListener>> = new Map();
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 3000;
+  private readonly maxReconnectAttempts = 5;
+  private readonly reconnectDelay = 3000;
   private heartbeatInterval: number | null = null;
   private isConnecting = false;
-  private url: string;
+  private readonly url: string;
 
   constructor() {
     // Use wss:// in production, ws:// in development
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = import.meta.env.VITE_WS_URL ||
-                 import.meta.env.VITE_API_URL?.replace(/^https?:\/\//, '') ||
+    const host =  import.meta.env.VITE_API_URL?.replace(/^https?:\/\//, '') ||
                  'localhost:8080';
     this.url = `${protocol}//${host}/ws`;
   }
@@ -66,7 +65,7 @@ class WebSocketService {
         this.ws.onerror = (error) => {
           console.error('❌ WebSocket error:', error);
           this.isConnecting = false;
-          reject(error);
+          reject(new Error('Network timeout'));
         };
 
         this.ws.onclose = () => {

@@ -22,7 +22,7 @@ function MapClickHandler({ onLocationChange }: { onLocationChange: (latlng: LatL
 }
 
 // Componente para centrar el mapa en la ubicación del usuario
-function RecenterButton({ position }: { position: [number, number] }) {
+function RecenterButton({ position }: Readonly<{ position: [number, number] }>) {
   const map = useMap();
 
   const handleRecenter = () => {
@@ -65,7 +65,7 @@ export default function InteractiveLocationPicker({
   onClose,
   initialLat = 1.2136,
   initialLng = -77.2811,
-}: InteractiveLocationPickerProps) {
+}: Readonly<InteractiveLocationPickerProps>) {
   const [selectedPosition, setSelectedPosition] = useState<[number, number]>([initialLat, initialLng]);
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [address, setAddress] = useState('Selecciona una ubicación en el mapa');

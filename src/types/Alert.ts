@@ -22,6 +22,7 @@ export enum AlertStatus {
   ACTIVE = "ACTIVE",
   RESOLVED = "RESOLVED",
   IN_PROGRESS = "IN_PROGRESS",
+  EXPIRED = "EXPIRED",
 }
 
 export interface Alert {
@@ -123,4 +124,44 @@ export interface CreateAlertDTO {
   estimatedDuration?: number;
   affectedRoads?: string[];
   imageUrl?: string;
+}
+
+// Filtros avanzados enviados al backend
+export interface AlertFilterDTO {
+  types?: AlertType[];
+  severities?: AlertSeverity[];
+  statuses?: AlertStatus[];
+  dateFrom?: string; // ISO date (yyyy-MM-dd)
+  dateTo?: string; // ISO date (yyyy-MM-dd)
+  municipality?: string;
+}
+
+// Búsqueda avanzada (texto + ubicación)
+export interface AlertSearchDTO {
+  query?: string;
+  types?: AlertType[];
+  severities?: AlertSeverity[];
+  statuses?: AlertStatus[];
+  latitude?: number;
+  longitude?: number;
+  radius?: number; // metros
+  municipality?: string;
+}
+
+// Parámetros comunes de paginación/orden
+export interface AlertPaginationParams
+  extends Record<string, string | number | boolean | null | undefined> {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc" | "ASC" | "DESC";
+}
+
+// Respuesta paginada típica (p.ej. Spring Data)
+export interface PaginatedAlertsResponse {
+  content: Alert[];
+  totalElements?: number;
+  totalPages?: number;
+  pageNumber?: number;
+  pageSize?: number;
 }

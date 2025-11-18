@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
-import { Icon, LatLng } from 'leaflet';
+import { Icon } from 'leaflet';
 import { Navigation, MapPin, X, AlertTriangle, Clock, TrendingUp, Zap } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
@@ -39,7 +39,7 @@ function DarkModeLayer({ isDark }: { isDark: boolean }) {
   return null;
 }
 
-export default function GPSNavigation({ destination, onClose }: GPSNavigationProps) {
+export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavigationProps>) {
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [heading, setHeading] = useState<number>(0);
   const [speed, setSpeed] = useState<number>(0);

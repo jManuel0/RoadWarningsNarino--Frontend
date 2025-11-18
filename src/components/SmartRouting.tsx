@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
-import { Navigation, Route, Zap, AlertTriangle, TrendingUp } from 'lucide-react';
-import L from 'leaflet';
+import { Navigation, Route, Zap, TrendingUp } from 'lucide-react';
 import { Alert, AlertSeverity } from '@/types/Alert';
 
 interface SmartRoutingProps {
@@ -25,7 +23,7 @@ export default function SmartRouting({
   end,
   alerts,
   onRouteCalculated,
-}: SmartRoutingProps) {
+}: Readonly<SmartRoutingProps>) {
   const [routes, setRoutes] = useState<RouteInfo[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<number>(0);
   const [calculating, setCalculating] = useState(false);

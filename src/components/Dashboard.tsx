@@ -1,5 +1,11 @@
-import { useMemo } from 'react';
-import { Alert, AlertType, AlertPriority, AlertStatus } from '@/types/Alert';
+import { useMemo } from "react";
+import {
+  Alert,
+  AlertType,
+  AlertPriority,
+  AlertStatus,
+} from "@/types/Alert";
+import type { AnalyticsDashboard } from "@/types/Analytics";
 import { BarChart, Bar, PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { format, subDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -7,24 +13,27 @@ import { TrendingUp, TrendingDown, Activity, Clock, CheckCircle, AlertTriangle }
 
 interface DashboardProps {
   alerts: Alert[];
+  analyticsDashboard?: AnalyticsDashboard | null;
 }
 
 const COLORS = {
-  [AlertPriority.CRITICA]: '#dc2626',
-  [AlertPriority.ALTA]: '#ea580c',
-  [AlertPriority.MEDIA]: '#facc15',
-  [AlertPriority.BAJA]: '#3b82f6',
+  [AlertPriority.CRITICA]: "#dc2626",
+  [AlertPriority.ALTA]: "#ea580c",
+  [AlertPriority.MEDIA]: "#facc15",
+  [AlertPriority.BAJA]: "#3b82f6",
 };
 
 const TYPE_COLORS = {
-  [AlertType.DERRUMBE]: '#8b5cf6',
-  [AlertType.ACCIDENTE]: '#ef4444',
-  [AlertType.INUNDACION]: '#3b82f6',
-  [AlertType.CIERRE_VIAL]: '#f59e0b',
-  [AlertType.MANTENIMIENTO]: '#10b981',
+  [AlertType.DERRUMBE]: "#8b5cf6",
+  [AlertType.ACCIDENTE]: "#ef4444",
+  [AlertType.INUNDACION]: "#3b82f6",
+  [AlertType.CIERRE_VIAL]: "#f59e0b",
+  [AlertType.MANTENIMIENTO]: "#10b981",
 };
 
-export default function Dashboard({ alerts }: Readonly<DashboardProps>) {
+export default function Dashboard({
+  alerts,
+}: Readonly<DashboardProps>) {
   // Estadísticas generales
   const stats = useMemo(() => {
     const active = alerts.filter(a => a.status === AlertStatus.ACTIVE).length;

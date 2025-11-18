@@ -1,5 +1,13 @@
 // src/api/alertApi.ts
-import { Alert, AlertStatus, CreateAlertDTO } from "@/types/Alert";
+import {
+  Alert,
+  AlertStatus,
+  CreateAlertDTO,
+  AlertFilterDTO,
+  AlertSearchDTO,
+  AlertPaginationParams,
+  PaginatedAlertsResponse,
+} from "@/types/Alert";
 import { API_BASE } from "./baseUrl";
 
 // Lee el token desde localStorage (guardado por authStore)
@@ -29,6 +37,21 @@ function authHeaders(json: boolean = false): HeadersInit {
   return headers;
 }
 
+// Helper genérico para construir query strings
+function buildQuery(
+  params: Record<string, string | number | boolean | undefined | null>
+): string {
+  const search = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "") continue;
+    search.append(key, String(value));
+  }
+
+  const query = search.toString();
+  return query ? `?${query}` : "";
+}
+
 export const alertApi = {
   async getAlerts(): Promise<Alert[]> {
     const res = await fetch(`${API_BASE}/api/alert`, {
@@ -39,6 +62,25 @@ export const alertApi = {
     if (!res.ok) {
       throw new Error(`Error al obtener alertas: ${res.status}`);
     }
+    return res.json();
+  },
+
+  async getAlertsPaginated(
+    params: AlertPaginationParams = {}
+  ): Promise<PaginatedAlertsResponse> {
+    const query = buildQuery(params);
+
+    const res = await fetch(`${API_BASE}/api/alert/paginated${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Error al obtener alertas paginadas: ${res.status}`
+      );
+    }
+
     return res.json();
   },
 
@@ -54,6 +96,28 @@ export const alertApi = {
     return res.json();
   },
 
+  async getActiveAlertsPaginated(
+    params: AlertPaginationParams = {}
+  ): Promise<PaginatedAlertsResponse> {
+    const query = buildQuery(params);
+
+    const res = await fetch(
+      `${API_BASE}/api/alert/active/paginated${query}`,
+      {
+        method: "GET",
+        headers: authHeaders(),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `Error al obtener alertas activas paginadas: ${res.status}`
+      );
+    }
+
+    return res.json();
+  },
+
   async createAlert(data: CreateAlertDTO): Promise<Alert> {
     const res = await fetch(`${API_BASE}/api/alert`, {
       method: "POST",
@@ -65,6 +129,62 @@ export const alertApi = {
       const text = await res.text();
       console.error("Error backend crear alerta:", text);
       throw new Error("Error al crear alerta");
+    }
+
+    return res.json();
+  },
+
+  async getAlertById(id: number): Promise<Alert> {
+    const res = await fetch(`${API_BASE}/api/alert/${id}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al obtener detalle de la alerta");
+    }
+
+    return res.json();
+  },
+
+  async getNearbyAlerts(params: {
+    latitude: number;
+    longitude: number;
+    radius: number;
+  }): Promise<Alert[]> {
+    const query = buildQuery({
+      latitude: params.latitude,
+      longitude: params.longitude,
+      radius: params.radius,
+    });
+
+    const res = await fetch(
+      `${API_BASE}/api/alert/nearby${query}`,
+      {
+        method: "GET",
+        headers: authHeaders(),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Error al obtener alertas cercanas");
+    }
+
+    return res.json();
+  },
+
+  async updateAlert(
+    id: number,
+    data: CreateAlertDTO
+  ): Promise<Alert> {
+    const res = await fetch(`${API_BASE}/api/alert/${id}`, {
+      method: "PUT",
+      headers: authHeaders(true),
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al actualizar alerta");
     }
 
     return res.json();
@@ -118,6 +238,129 @@ export const alertApi = {
 
     if (!res.ok) {
       throw new Error("Error al votar alerta");
+    }
+
+    return res.json();
+  },
+
+  async getMyAlerts(
+    params: AlertPaginationParams = {}
+  ): Promise<PaginatedAlertsResponse> {
+    const query = buildQuery(params);
+
+    const res = await fetch(
+      `${API_BASE}/api/alert/my-alerts${query}`,
+      {
+        method: "GET",
+        headers: authHeaders(),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Error al obtener mis alertas");
+    }
+
+    return res.json();
+  },
+
+  async filterAlerts(
+    filters: AlertFilterDTO,
+    params: AlertPaginationParams = {}
+  ): Promise<PaginatedAlertsResponse> {
+    const query = buildQuery(params);
+
+    const res = await fetch(
+      `${API_BASE}/api/alert/filter${query}`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify(filters),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Error al filtrar alertas");
+    }
+
+    return res.json();
+  },
+
+  async getUserAlerts(
+    userId: number,
+    params: AlertPaginationParams = {}
+  ): Promise<PaginatedAlertsResponse> {
+    const query = buildQuery(params);
+
+    const res = await fetch(
+      `${API_BASE}/api/alert/user/${userId}${query}`,
+      {
+        method: "GET",
+        headers: authHeaders(),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Error al obtener alertas del usuario");
+    }
+
+    return res.json();
+  },
+
+  async expireAlert(id: number): Promise<Alert> {
+    const res = await fetch(`${API_BASE}/api/alert/${id}/expire`, {
+      method: "PATCH",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al expirar alerta");
+    }
+
+    return res.json();
+  },
+
+  async uploadAlertMedia(
+    alertId: number,
+    files: File[]
+  ): Promise<any> {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append("files", file);
+    }
+
+    const res = await fetch(
+      `${API_BASE}/api/alert/${alertId}/media`,
+      {
+        method: "POST",
+        headers: authHeaders(),
+        body: formData,
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Error al subir archivos de la alerta");
+    }
+
+    return res.json();
+  },
+
+  async searchAlerts(
+    criteria: AlertSearchDTO,
+    params: AlertPaginationParams = {}
+  ): Promise<PaginatedAlertsResponse> {
+    const query = buildQuery(params);
+
+    const res = await fetch(
+      `${API_BASE}/api/alert/search${query}`,
+      {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify(criteria),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Error en la b��squeda de alertas");
     }
 
     return res.json();

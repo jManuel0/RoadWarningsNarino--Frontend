@@ -8,7 +8,7 @@ interface ShareButtonsProps {
   alert: Alert;
 }
 
-export default function ShareButtons({ alert }: ShareButtonsProps) {
+export default function ShareButtons({ alert }: Readonly<ShareButtonsProps>) {
   const [copied, setCopied] = useState(false);
 
   const shareUrl = `${window.location.origin}/alerts?id=${alert.id}`;
@@ -61,7 +61,7 @@ export default function ShareButtons({ alert }: ShareButtonsProps) {
   return (
     <div className="flex items-center gap-2">
       {/* Native Share (Mobile) */}
-      {navigator.share && (
+      {typeof navigator.share === 'function' && (
         <button
           onClick={handleNativeShare}
           className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"

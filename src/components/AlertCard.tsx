@@ -3,8 +3,9 @@ import { Alert, AlertStatus, AlertSeverity } from "@/types/Alert";
 import { XCircle, CheckCircle2, AlertTriangle, Trash2, MessageCircle } from "lucide-react";
 import VotingButtons from "./VotingButtons";
 import ShareButtons from "./ShareButtons";
-import CommentSection, { Comment } from "./CommentSection";
-import { alertApi } from "@/api/alertApi";
+import CommentSection from "./CommentSection";
+import { commentApi } from "@/api/commentApi";
+import { Comment } from "@/types/Comment";
 import { useState, useEffect } from "react";
 
 interface AlertCardProps {
@@ -49,7 +50,7 @@ export default function AlertCard({
   const loadComments = async () => {
     setLoadingComments(true);
     try {
-      const data = await alertApi.getComments(alert.id);
+      const data = await commentApi.getCommentsByAlert(alert.id);
       setComments(data);
       setCommentCount(data.length);
     } catch (error) {
@@ -60,24 +61,28 @@ export default function AlertCard({
   };
 
   const handleAddComment = async (content: string) => {
-    const newComment = await alertApi.addComment(alert.id, content);
+    const newComment = await commentApi.createComment({
+      alertId: alert.id,
+      content,
+    });
     setComments([...comments, newComment]);
     setCommentCount(commentCount + 1);
   };
 
   const handleDeleteComment = async (commentId: number) => {
-    await alertApi.deleteComment(alert.id, commentId);
+    await commentApi.deleteComment(commentId);
     setComments(comments.filter(c => c.id !== commentId));
     setCommentCount(commentCount - 1);
   };
 
   const handleLikeComment = async (commentId: number) => {
-    const updated = await alertApi.likeComment(alert.id, commentId);
+    const updated = await commentApi.markHelpful(commentId);
     setComments(comments.map(c => c.id === commentId ? updated : c));
   };
 
   const handleReportComment = async (commentId: number) => {
-    await alertApi.reportComment(alert.id, commentId);
+    // TODO: implementar endpoint de reporte en backend si está disponible
+    console.warn("Report comment not implemented for commentId", commentId);
   };
 
   const handleVoteChange = (upvotes: number, downvotes: number) => {

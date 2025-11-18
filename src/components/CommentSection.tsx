@@ -3,17 +3,7 @@ import { MessageCircle, Send, Trash2, Flag, ThumbsUp, User } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuthStore } from '@/stores/authStore';
-
-export interface Comment {
-  id: number;
-  alertId: number;
-  userId: number;
-  username: string;
-  content: string;
-  likes: number;
-  createdAt: string;
-  isEdited?: boolean;
-}
+import { Comment } from '@/types/Comment';
 
 interface CommentSectionProps {
   alertId: number;
@@ -25,14 +15,14 @@ interface CommentSectionProps {
 }
 
 export default function CommentSection({
-  alertId,
   comments: initialComments,
   onAddComment,
   onDeleteComment,
   onLikeComment,
   onReportComment,
 }: Readonly<CommentSectionProps>) {
-  const { user } = useAuthStore();
+  const username = useAuthStore((s) => s.username);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,12 +93,12 @@ export default function CommentSection({
       </div>
 
       {/* Comment Form */}
-      {user ? (
+      {isAuthenticated ? (
         <form onSubmit={handleSubmit} className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex gap-3">
             <div className="flex-shrink-0">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                {user.username?.charAt(0).toUpperCase() || 'U'}
+                {username?.charAt(0).toUpperCase() || 'U'}
               </div>
             </div>
             <div className="flex-1">
@@ -186,7 +176,7 @@ export default function CommentSection({
                       </div>
 
                       {/* Actions */}
-                      {user && user.id === comment.userId && (
+                      {isAuthenticated && username === comment.username && (
                         <button
                           onClick={() => handleDelete(comment.id)}
                           className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
@@ -205,7 +195,7 @@ export default function CommentSection({
                     <div className="flex items-center gap-4 mt-3">
                       <button
                         onClick={() => handleLike(comment.id)}
-                        disabled={!user || likedComments.has(comment.id)}
+                        disabled={!isAuthenticated || likedComments.has(comment.id)}
                         className={`flex items-center gap-1 text-sm transition-colors ${
                           likedComments.has(comment.id)
                             ? 'text-blue-600 dark:text-blue-400'
@@ -216,7 +206,7 @@ export default function CommentSection({
                         <span>{comment.likes}</span>
                       </button>
 
-                      {user && user.id !== comment.userId && (
+                      {isAuthenticated && username !== comment.username && (
                         <button
                           onClick={() => handleReport(comment.id)}
                           className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"

@@ -15,7 +15,7 @@ export default function VotingButtons({
   upvotes = 0,
   downvotes = 0,
   onVoteChange
-}: VotingButtonsProps) {
+}: Readonly<VotingButtonsProps>) {
   const [voting, setVoting] = useState(false);
   const [hasVoted, setHasVoted] = useState<'up' | 'down' | null>(null);
 

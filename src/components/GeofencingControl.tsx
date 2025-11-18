@@ -7,7 +7,7 @@ interface GeofencingControlProps {
   alerts: Alert[];
 }
 
-export default function GeofencingControl({ alerts }: GeofencingControlProps) {
+export default function GeofencingControl({ alerts }: Readonly<GeofencingControlProps>) {
   const [isActive, setIsActive] = useState(false);
   const [enteredZones, setEnteredZones] = useState<Alert[]>([]);
   const [nearbyAlerts, setNearbyAlerts] = useState<Array<Alert & { distance: number }>>([]);

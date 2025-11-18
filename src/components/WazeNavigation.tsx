@@ -33,6 +33,14 @@ import { useAuthStore } from "@/stores/authStore";
 import { alertApi } from "@/api/alertApi";
 import QuickAlertModal from "./QuickAlertModal";
 
+type PlaceResult = {
+  id: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+};
+
 function MapClickHandler({
   onSelectDestination,
 }: {
@@ -340,6 +348,9 @@ export default function WazeNavigation() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [searchDestination, setSearchDestination] = useState("");
   const [isSearchingDestination, setIsSearchingDestination] = useState(false);
+  const [] = useState<string | null>(null);
+  const [] = useState<PlaceResult[]>([]);
+  const [] = useState(false);
   const [showRouteSelector, setShowRouteSelector] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [showQuickReports, setShowQuickReports] = useState(false);

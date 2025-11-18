@@ -19,7 +19,7 @@ class GeofencingService {
   private isMonitoring = false;
   private currentPosition: { lat: number; lng: number } | null = null;
   private callbacks: GeofenceCallback[] = [];
-  private enteredZones: Set<number> = new Set();
+  private readonly enteredZones: Set<number> = new Set();
 
   // Default radius based on severity (in meters)
   private readonly radiusBySeverity = {
@@ -158,8 +158,13 @@ class GeofencingService {
         badge: '/icons/icon-72x72.png',
         tag: `geofence-${zone.id}`,
         requireInteraction: config.requireInteraction,
-        vibrate: zone.alert.severity === AlertSeverity.CRITICA ? [200, 100, 200] : [200],
       });
+
+      if ('vibrate' in navigator) {
+        const pattern =
+          zone.alert.severity === AlertSeverity.CRITICA ? [200, 100, 200] : [200];
+        navigator.vibrate(pattern);
+      }
     }
 
     // Toast notification
@@ -209,9 +214,9 @@ class GeofencingService {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'es-ES';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      utterance.volume = 1;
       window.speechSynthesis.speak(utterance);
     }
   }
@@ -242,8 +247,14 @@ class GeofencingService {
           altitudeAccuracy: null,
           heading: null,
           speed: null,
+          toJSON: function () {
+            throw new Error('Function not implemented.');
+          }
         },
         timestamp: Date.now(),
+        toJSON: function () {
+          throw new Error('Function not implemented.');
+        }
       };
       this.onPositionUpdate(fakePosition);
     }

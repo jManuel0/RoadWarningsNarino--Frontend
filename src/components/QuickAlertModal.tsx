@@ -1,6 +1,6 @@
 // src/components/QuickAlertModal.tsx
 import { useState } from "react";
-import { X, AlertTriangle, Camera, MapPin } from "lucide-react";
+import { X, AlertTriangle, MapPin } from "lucide-react";
 import { AlertType, AlertSeverity, AlertStatus } from "@/types/Alert";
 import { useAuthStore } from "@/stores/authStore";
 import { alertApi } from "@/api/alertApi";
@@ -34,7 +34,7 @@ export default function QuickAlertModal({
   onClose,
   location,
   onAlertCreated,
-}: QuickAlertModalProps) {
+}: Readonly<QuickAlertModalProps>) {
   const [selectedType, setSelectedType] = useState<AlertType | null>(null);
   const [selectedSeverity, setSelectedSeverity] = useState<AlertSeverity>(
     AlertSeverity.MEDIA

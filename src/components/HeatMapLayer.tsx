@@ -29,7 +29,7 @@ export default function HeatMapLayer({ alerts, enabled }: HeatMapLayerProps) {
       .map(alert => {
         // Calculate intensity based on severity
         const intensity = {
-          [AlertSeverity.CRITICA]: 1.0,
+          [AlertSeverity.CRITICA]: 1,
           [AlertSeverity.ALTA]: 0.7,
           [AlertSeverity.MEDIA]: 0.4,
           [AlertSeverity.BAJA]: 0.2,
@@ -45,13 +45,13 @@ export default function HeatMapLayer({ alerts, enabled }: HeatMapLayerProps) {
       radius: 35,
       blur: 25,
       maxZoom: 17,
-      max: 1.0,
+      max: 1,
       gradient: {
-        0.0: '#00ff00',  // Green (safe)
+        0: '#00ff00',  // Green (safe)
         0.3: '#ffff00',  // Yellow (low risk)
         0.5: '#ffa500',  // Orange (medium risk)
         0.7: '#ff6600',  // Dark orange (high risk)
-        1.0: '#ff0000',  // Red (critical)
+        1: '#ff0000',  // Red (critical)
       },
     });
 

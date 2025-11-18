@@ -7,10 +7,10 @@ interface DrivingModeProps {
   onClose: () => void;
 }
 
-export default function DrivingMode({ onCommand, onClose }: DrivingModeProps) {
+export default function DrivingMode({ onCommand, onClose }: Readonly<DrivingModeProps>) {
   const [isListening, setIsListening] = useState(false);
   const [status, setStatus] = useState<'listening' | 'stopped' | 'error'>('stopped');
-  const [lastCommand, setLastCommand] = useState<string>('');
+  const [, setLastCommand] = useState<string>('');
   const [showHelp, setShowHelp] = useState(false);
   const [transcript, setTranscript] = useState<string>('Esperando comando...');
   const [isSupported, setIsSupported] = useState(true);
@@ -26,7 +26,9 @@ export default function DrivingMode({ onCommand, onClose }: DrivingModeProps) {
 
       // Show transcript
       const commandText = voiceCommandService.getAvailableCommands()
-        .find(c => c.toLowerCase().includes(command.replace(/_/g, ' '))) || command;
+        .find((c) =>
+          c.toLowerCase().includes(command.replace(/_/g, ' '))
+        ) || command;
       setTranscript(`✓ ${commandText}`);
 
       // Reset after 3 seconds

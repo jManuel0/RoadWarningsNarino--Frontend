@@ -1,37 +1,52 @@
-import { useEffect, useCallback } from 'react';
-import { useAlertStore } from '@/stores/alertStore';
-import { alertApi } from '@/api/alertApi';
-import Dashboard from '@/components/Dashboard';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { BarChart3 } from 'lucide-react';
+import { useEffect, useCallback, useState } from "react";
+import { useAlertStore } from "@/stores/alertStore";
+import { alertApi } from "@/api/alertApi";
+import { analyticsApi } from "@/api/analyticsApi";
+import type { AnalyticsDashboard } from "@/types/Analytics";
+import Dashboard from "@/components/Dashboard";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { BarChart3 } from "lucide-react";
 
 export default function Statistics() {
-  const { alerts, loading, error, setAlerts, setLoading, setError } = useAlertStore();
+  const { alerts, loading, error, setAlerts, setLoading, setError } =
+    useAlertStore();
+  const [dashboardData, setDashboardData] = useState<AnalyticsDashboard | null>(
+    null
+  );
 
-  const loadAlerts = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await alertApi.getAlerts();
-      setAlerts(data);
       setError(null);
+
+      const [alertsData, dashboard] = await Promise.all([
+        alertApi.getAlerts(),
+        analyticsApi.getDashboard(),
+      ]);
+
+      setAlerts(alertsData);
+      setDashboardData(dashboard);
     } catch (err) {
-      setError('Error al cargar estadísticas');
       console.error(err);
+      setError("Error al cargar estadísticas");
     } finally {
       setLoading(false);
     }
   }, [setLoading, setAlerts, setError]);
 
   useEffect(() => {
-    loadAlerts();
-  }, [loadAlerts]);
+    loadData();
+  }, [loadData]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-3">
-            <BarChart3 className="text-blue-600 dark:text-blue-400" size={32} />
+            <BarChart3
+              className="text-blue-600 dark:text-blue-400"
+              size={32}
+            />
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Estadísticas y Reportes
@@ -62,7 +77,9 @@ export default function Statistics() {
             );
           }
 
-          return <Dashboard alerts={alerts} />;
+          return (
+            <Dashboard alerts={alerts} analyticsDashboard={dashboardData} />
+          );
         })()}
       </div>
     </div>

@@ -62,7 +62,7 @@ describe("AlertCard", () => {
 
   it("should display severity badge with correct color", () => {
     const alert = createMockAlert({ severity: AlertSeverity.CRITICA });
-    const { container } = render(<AlertCard alert={alert} onStatusChange={jest.fn()} onDelete={jest.fn()} />);
+    render(<AlertCard alert={alert} onStatusChange={jest.fn()} onDelete={jest.fn()} />);
 
     const severityBadge = screen.getByText(AlertSeverity.CRITICA);
     expect(severityBadge).toHaveClass("bg-red-100", "text-red-800");
