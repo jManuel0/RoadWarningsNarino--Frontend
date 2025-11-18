@@ -1,12 +1,12 @@
+﻿// src/pages/Alerts.tsx
+
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Filter, Search, X } from "lucide-react";
 
 import { useAlertStore } from "@/stores/alertStore";
-import { useAuthStore } from "@/stores/authStore";
 import { alertApi } from "@/api/alertApi";
 import AlertCard from "@/components/AlertCard";
 import LocationPickerMap from "@/components/LocationPickerMap";
-
 
 import {
   Alert,
@@ -35,7 +35,8 @@ export default function Alerts() {
     useState<AlertSeverity | "ALL">("ALL");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  // ðŸ‘‡ AquÃ­ controlamos si el usuario estÃ¡ autenticado
+  const isAuthenticated = !!localStorage.getItem("token");
 
   const loadAlerts = useCallback(async () => {
     try {
@@ -65,7 +66,7 @@ export default function Alerts() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("¿Estás seguro de eliminar esta alerta?")) return;
+    if (!confirm("Â¿EstÃ¡s seguro de eliminar esta alerta?")) return;
 
     try {
       await alertApi.deleteAlert(id);
@@ -146,14 +147,14 @@ export default function Alerts() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Gestión de Alertas
+                GestiÃ³n de Alertas
               </h1>
               <p className="text-sm text-gray-600">
                 {filteredAlerts.length} de {alerts.length} alertas
               </p>
             </div>
 
-            {/* 🔐 Solo usuarios logueados pueden crear alertas */}
+            {/* ðŸ” Solo usuarios logueados pueden crear alertas */}
             {isAuthenticated ? (
               <button
                 onClick={() => setShowCreateModal(true)}
@@ -165,11 +166,11 @@ export default function Alerts() {
             ) : (
               <div className="flex flex-col items-end">
                 <span className="text-xs text-gray-500 mb-1">
-                  Inicia sesión para crear alertas
+                  Inicia sesiÃ³n para crear alertas
                 </span>
                 <button
                   onClick={() =>
-                    alert("Debes registrarte o iniciar sesión para crear alertas.")
+                    alert("Debes registrarte o iniciar sesiÃ³n para crear alertas.")
                   }
                   className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 cursor-not-allowed"
                 >
@@ -184,10 +185,10 @@ export default function Alerts() {
 
       {/* Contenido */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Filtros y búsqueda */}
+        {/* Filtros y bÃºsqueda */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Búsqueda */}
+            {/* BÃºsqueda */}
             <div className="md:col-span-2">
               <div className="relative">
                 <Search
@@ -246,7 +247,7 @@ export default function Alerts() {
                 className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="ALL">Todas las severidades</option>
-                <option value={AlertSeverity.CRITICA}>Crítica</option>
+                <option value={AlertSeverity.CRITICA}>CrÃ­tica</option>
                 <option value={AlertSeverity.ALTA}>Alta</option>
                 <option value={AlertSeverity.MEDIA}>Media</option>
                 <option value={AlertSeverity.BAJA}>Baja</option>
@@ -312,7 +313,7 @@ function CreateAlertModal({
     e.preventDefault();
 
     if (!title.trim() || !description.trim() || !location.trim()) {
-      alert("Por favor completa título, descripción y dirección.");
+      alert("Por favor completa tÃ­tulo, descripciÃ³n y direcciÃ³n.");
       return;
     }
 
@@ -358,7 +359,7 @@ function CreateAlertModal({
               >
                 <option value={AlertType.DERRUMBE}>Derrumbe</option>
                 <option value={AlertType.ACCIDENTE}>Accidente</option>
-                <option value={AlertType.INUNDACION}>Inundación</option>
+                <option value={AlertType.INUNDACION}>InundaciÃ³n</option>
                 <option value={AlertType.CIERRE_VIAL}>Cierre Vial</option>
                 <option value={AlertType.MANTENIMIENTO}>Mantenimiento</option>
               </select>
@@ -376,17 +377,17 @@ function CreateAlertModal({
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value={AlertSeverity.CRITICA}>Crítica</option>
+                <option value={AlertSeverity.CRITICA}>CrÃ­tica</option>
                 <option value={AlertSeverity.ALTA}>Alta</option>
                 <option value={AlertSeverity.MEDIA}>Media</option>
                 <option value={AlertSeverity.BAJA}>Baja</option>
               </select>
             </div>
 
-            {/* Título */}
+            {/* TÃ­tulo */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Título *
+                TÃ­tulo *
               </label>
               <input
                 type="text"
@@ -397,24 +398,24 @@ function CreateAlertModal({
               />
             </div>
 
-            {/* Descripción */}
+            {/* DescripciÃ³n */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Descripción *
+                DescripciÃ³n *
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 rows={3}
-                placeholder="Describe la situación..."
+                placeholder="Describe la situaciÃ³n..."
               />
             </div>
 
-            {/* Dirección */}
+            {/* DirecciÃ³n */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Dirección *
+                DirecciÃ³n *
               </label>
               <input
                 type="text"
@@ -438,14 +439,14 @@ function CreateAlertModal({
                 <option value="Pasto">Pasto</option>
                 <option value="Ipiales">Ipiales</option>
                 <option value="Tumaco">Tumaco</option>
-                {/* Más municipios aquí */}
+                {/* MÃ¡s municipios aquÃ­ */}
               </select>
             </div>
 
             {/* Mapa */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Selecciona la ubicación en el mapa *
+                Selecciona la ubicaciÃ³n en el mapa *
               </label>
               <LocationPickerMap
                 lat={latitude}
@@ -484,10 +485,10 @@ function CreateAlertModal({
               </div>
             </div>
 
-            {/* Duración estimada */}
+            {/* DuraciÃ³n estimada */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Duración Estimada (minutos)
+                DuraciÃ³n Estimada (minutos)
               </label>
               <input
                 type="number"
@@ -526,3 +527,4 @@ function CreateAlertModal({
     </div>
   );
 }
+
