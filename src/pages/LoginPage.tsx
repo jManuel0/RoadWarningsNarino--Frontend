@@ -33,7 +33,7 @@ export default function LoginPage() {
       const message =
         err instanceof Error
           ? err.message
-          : "Usuario o contrasena incorrectos";
+          : "Usuario o contraseña incorrectos";
       setError(message);
     } finally {
       window.clearTimeout(wakeUpTimeout);

@@ -5,7 +5,7 @@
  * con todas sus funcionalidades integradas.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { RoadAlertsMap } from '@/components/map/RoadAlertsMap';
 import { RoadAlert, Route } from '@/types/map.types';
 import { useSettingsStore } from '@/stores/settingsStore';

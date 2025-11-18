@@ -34,7 +34,6 @@ import {
   Marker,
   Popup,
   Polyline,
-  useMap,
   useMapEvents,
 } from 'react-leaflet';
 import L from 'leaflet';
@@ -44,7 +43,11 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 // Importaciones de servicios y utilidades
 import { useGeolocation } from '@/hooks/useGeolocation';
-import { calculateRoute, formatDistance, formatDuration } from '@/services/osrmService';
+import {
+  calculateRoute,
+  formatDistance,
+  formatDuration,
+} from '@/services/osrmService';
 import {
   createAlertIcon,
   createUserLocationIcon,
@@ -57,17 +60,25 @@ import {
   calculateDistance,
   fitMapToPoints,
   toLatLngExpression,
-  filterAlertsInRadius,
 } from '@/utils/mapHelpers';
 
-// Importaciones de tipos
+// Importaciones de tipos (mapa)
 import {
   Coordinates,
   Route,
   RoadAlert,
-  AlertSeverity,
   AlertType,
+  AlertSeverity,
+  AlertStatus,
 } from '@/types/map.types';
+
+// Tipos del backend
+import {
+  Alert as BackendAlert,
+  AlertType as BackendAlertType,
+  AlertSeverity as BackendAlertSeverity,
+  AlertStatus as BackendAlertStatus,
+} from '@/types/Alert';
 
 // API del backend
 import { alertApi } from '@/api/alertApi';
@@ -125,13 +136,89 @@ interface MapState {
 }
 
 // ============================================================================
+// HELPERS: Mapping Alert (backend) → RoadAlert (mapa)
+// ============================================================================
+
+const mapBackendTypeToMapType = (type: BackendAlertType): AlertType => {
+  switch (type) {
+    case BackendAlertType.DERRUMBE:
+      return AlertType.DERRUMBE;
+    case BackendAlertType.ACCIDENTE:
+      return AlertType.ACCIDENTE;
+    case BackendAlertType.INUNDACION:
+      return AlertType.INUNDACION;
+    case BackendAlertType.CIERRE_VIAL:
+      return AlertType.VIA_CERRADA;
+    case BackendAlertType.MANTENIMIENTO:
+      return AlertType.OBRAS_VIALES;
+    default:
+      return AlertType.OTROS;
+  }
+};
+
+const mapBackendSeverityToMapSeverity = (
+  severity: BackendAlertSeverity
+): AlertSeverity => {
+  switch (severity) {
+    case BackendAlertSeverity.BAJA:
+      return AlertSeverity.BAJA;
+    case BackendAlertSeverity.MEDIA:
+      return AlertSeverity.MEDIA;
+    case BackendAlertSeverity.ALTA:
+      return AlertSeverity.ALTA;
+    case BackendAlertSeverity.CRITICA:
+      return AlertSeverity.CRITICA;
+    default:
+      return AlertSeverity.MEDIA;
+  }
+};
+
+const mapBackendStatusToMapStatus = (
+  status: BackendAlertStatus
+): AlertStatus => {
+  switch (status) {
+    case BackendAlertStatus.ACTIVE:
+      return AlertStatus.ACTIVA;
+    case BackendAlertStatus.RESOLVED:
+      return AlertStatus.RESUELTA;
+    case BackendAlertStatus.EXPIRED:
+      return AlertStatus.EXPIRADA;
+    case BackendAlertStatus.IN_PROGRESS:
+      return AlertStatus.EN_REVISION;
+    default:
+      return AlertStatus.ACTIVA;
+  }
+};
+
+const toRoadAlert = (alert: BackendAlert): RoadAlert => ({
+  id: alert.id,
+  type: mapBackendTypeToMapType(alert.type),
+  title: alert.title,
+  description: alert.description,
+  latitude: alert.latitude,
+  longitude: alert.longitude,
+  location: alert.location,
+  municipality: alert.municipality,
+  severity: mapBackendSeverityToMapSeverity(alert.severity),
+  status: mapBackendStatusToMapStatus(alert.status),
+  username: alert.username ?? 'Anónimo',
+  userId: alert.userId ?? 0,
+  imageUrl: alert.imageUrl,
+  upvotes: alert.upvotes ?? 0,
+  downvotes: alert.downvotes ?? 0,
+  createdAt: alert.createdAt ?? new Date().toISOString(),
+  updatedAt: alert.updatedAt,
+  expiresAt: alert.expiresAt,
+});
+
+// ============================================================================
 // COMPONENTE PRINCIPAL
 // ============================================================================
 
 export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
   height = '100vh',
   showControls = true,
-  enableClustering = true,
+  enableClustering = false,
   updateInterval = 10000, // 10 segundos
   onAlertClick,
   onRouteCalculated,
@@ -155,19 +242,19 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
   // Hook de geolocalización
   const {
     position: userPosition,
-    error: geoError,
     isTracking,
     startTracking,
     stopTracking,
     isSupported: isGeoSupported,
   } = useGeolocation({
     onPosition: (pos) => console.log('📍 Ubicación actualizada:', pos),
-    onError: (err) => console.error('❌ Error de geolocalización:', err.message),
+    onError: (err) =>
+      console.error('⚠️ Error de geolocalización:', err.message),
   });
 
   // Referencias
   const mapRef = useRef<L.Map | null>(null);
-  const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const updateTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // =========================================================================
   // EFECTOS
@@ -226,18 +313,21 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
 
       const alerts = await alertApi.getAlerts();
 
-      // Filtrar solo alertas activas
+      // Filtrar solo alertas activas (status del backend)
       const activeAlerts = alerts.filter(
-        (alert) => alert.status === 'ACTIVE'
+        (alert) => alert.status === BackendAlertStatus.ACTIVE
       );
+
+      // Convertir a RoadAlert (tipos del mapa)
+      const roadAlerts: RoadAlert[] = activeAlerts.map(toRoadAlert);
 
       setMapState((prev) => ({
         ...prev,
-        alerts: activeAlerts,
+        alerts: roadAlerts,
         isLoadingAlerts: false,
       }));
 
-      console.log(`✅ ${activeAlerts.length} alertas cargadas`);
+      console.log(`✅ ${roadAlerts.length} alertas cargadas`);
     } catch (error) {
       console.error('Error cargando alertas:', error);
       setMapState((prev) => ({
@@ -256,7 +346,7 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
       try {
         setMapState((prev) => ({ ...prev, isLoadingRoute: true, error: null }));
 
-        console.log('🗺️ Calculando ruta...');
+        console.log('🧭 Calculando ruta...');
 
         const route = await calculateRoute(origin, destination);
 
@@ -302,19 +392,19 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
    * Navega hacia una alerta desde la ubicación actual
    */
   const handleNavigateToAlert = useCallback(
-    (alert: RoadAlert) => {
+    (roadAlert: RoadAlert) => {
       if (!userPosition) {
-        alert('Por favor, habilita tu ubicación para navegar');
+        window.alert('Por favor, habilita tu ubicación para navegar');
         return;
       }
 
       const destination: Coordinates = {
-        lat: alert.latitude,
-        lng: alert.longitude,
+        lat: roadAlert.latitude,
+        lng: roadAlert.longitude,
       };
 
       handleCalculateRoute(userPosition, destination);
-      setMapState((prev) => ({ ...prev, selectedAlert: alert }));
+      setMapState((prev) => ({ ...prev, selectedAlert: roadAlert }));
     },
     [userPosition, handleCalculateRoute]
   );
@@ -342,7 +432,7 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
       {mapState.isLoadingAlerts && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-lg">
           <div className="flex items-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Cargando alertas...
             </span>
@@ -395,6 +485,7 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
         maxBounds={NARINO_BOUNDS}
         style={{ width: '100%', height: '100%' }}
         zoomControl={true}
+        data-enable-clustering={enableClustering ? 'true' : 'false'}
         ref={(map) => {
           if (map) mapRef.current = map;
         }}
@@ -435,10 +526,7 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
           <Marker
             key={alert.id}
             position={[alert.latitude, alert.longitude]}
-            icon={createAlertIcon(
-              alert.type as AlertType,
-              alert.severity as AlertSeverity
-            )}
+            icon={createAlertIcon(alert.type, alert.severity)}
             eventHandlers={{
               click: () => {
                 setMapState((prev) => ({ ...prev, selectedAlert: alert }));
@@ -513,6 +601,10 @@ const RouteInfoPanel: React.FC<{
       </button>
     </div>
 
+    {isLoading && (
+      <div className="mb-2 text-xs text-blue-600">Calculando ruta...</div>
+    )}
+
     <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
       <div className="flex items-center gap-2">
         <span className="font-medium">📏 Distancia:</span>
@@ -520,7 +612,7 @@ const RouteInfoPanel: React.FC<{
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="font-medium">⏱️ Duración:</span>
+        <span className="font-medium">🕒 Duración:</span>
         <span>{formatDuration(route.duration)}</span>
       </div>
 
@@ -657,7 +749,7 @@ const AlertPopupContent: React.FC<{
           onClick={onNavigate}
           className="w-full mt-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
         >
-          🧭 Navegar hasta aquí
+          🚗 Navegar hasta aquí
         </button>
       )}
     </div>

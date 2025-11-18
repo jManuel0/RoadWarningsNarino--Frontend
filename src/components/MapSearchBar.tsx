@@ -8,10 +8,16 @@ interface MapSearchBarProps {
   onReset: () => void;
 }
 
-export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<MapSearchBarProps>) {
+export default function MapSearchBar({
+  alerts,
+  onSearch,
+  onReset,
+}: Readonly<MapSearchBarProps>) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<AlertType | 'ALL'>('ALL');
-  const [selectedPriority, setSelectedPriority] = useState<AlertPriority | 'ALL'>('ALL');
+  const [selectedPriority, setSelectedPriority] = useState<
+    AlertPriority | 'ALL'
+  >('ALL');
   const [radius, setRadius] = useState<number>(5000); // metros
   const [centerPoint, setCenterPoint] = useState<{ lat: number; lng: number } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -28,33 +34,37 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
 
     // Filtro por texto
     if (searchTerm) {
-      filtered = filtered.filter(alert =>
-        alert.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        alert.location.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        alert.affectedRoads.some(road => 
-          road.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      const term = searchTerm.toLowerCase();
+
+      filtered = filtered.filter((alert) =>
+        alert.description.toLowerCase().includes(term) ||
+        alert.location.toLowerCase().includes(term) ||
+        (alert.affectedRoads?.some((road) =>
+          road.toLowerCase().includes(term)
+        ) ?? false)
       );
     }
 
     // Filtro por tipo
     if (selectedType !== 'ALL') {
-      filtered = filtered.filter(alert => alert.type === selectedType);
+      filtered = filtered.filter((alert) => alert.type === selectedType);
     }
 
     // Filtro por prioridad
     if (selectedPriority !== 'ALL') {
-      filtered = filtered.filter(alert => alert.priority === selectedPriority);
+      filtered = filtered.filter(
+        (alert) => alert.priority === selectedPriority
+      );
     }
 
     // Filtro por radio (si hay un punto central)
     if (centerPoint) {
-      filtered = filtered.filter(alert => {
+      filtered = filtered.filter((alert) => {
         const distance = calculateDistance(
           centerPoint.lat,
           centerPoint.lng,
-          alert.location.lat,
-          alert.location.lng
+          alert.latitude,
+          alert.longitude
         );
         return distance <= radius;
       });
@@ -94,7 +104,10 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
       {/* Barra de búsqueda principal */}
       <div className="flex gap-2">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
           <input
             type="text"
             placeholder="Buscar por ubicación, descripción o vía..."
@@ -108,7 +121,7 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
           />
         </div>
-        
+
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`px-4 py-2 rounded-lg transition-colors ${
@@ -128,7 +141,10 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
           Buscar
         </button>
 
-        {(searchTerm || selectedType !== 'ALL' || selectedPriority !== 'ALL' || centerPoint) && (
+        {(searchTerm ||
+          selectedType !== 'ALL' ||
+          selectedPriority !== 'ALL' ||
+          centerPoint) && (
           <button
             onClick={handleReset}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
@@ -144,13 +160,18 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           {/* Filtro por tipo */}
           <div>
-            <label htmlFor="filter-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="filter-type"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Tipo de Alerta
             </label>
             <select
               id="filter-type"
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as AlertType | 'ALL')}
+              onChange={(e) =>
+                setSelectedType(e.target.value as AlertType | 'ALL')
+              }
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="ALL">Todos</option>
@@ -164,13 +185,22 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
 
           {/* Filtro por prioridad */}
           <div>
-            <label htmlFor="filter-priority" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="filter-priority"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Prioridad
             </label>
             <select
               id="filter-priority"
               value={selectedPriority}
-              onChange={(e) => setSelectedPriority(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value) as AlertPriority)}
+              onChange={(e) =>
+                setSelectedPriority(
+                  e.target.value === 'ALL'
+                    ? 'ALL'
+                    : (e.target.value as AlertPriority)
+                )
+              }
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="ALL">Todas</option>
@@ -183,7 +213,10 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
 
           {/* Radio de búsqueda */}
           <div>
-            <label htmlFor="filter-radius" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="filter-radius"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Radio de Búsqueda
             </label>
             <select
@@ -217,7 +250,10 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
       )}
 
       {/* Indicadores de filtros activos */}
-      {(searchTerm || selectedType !== 'ALL' || selectedPriority !== 'ALL' || centerPoint) && (
+      {(searchTerm ||
+        selectedType !== 'ALL' ||
+        selectedPriority !== 'ALL' ||
+        centerPoint) && (
         <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
           {searchTerm && (
             <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">
@@ -246,7 +282,12 @@ export default function MapSearchBar({ alerts, onSearch, onReset }: Readonly<Map
 }
 
 // Función para calcular distancia entre dos puntos (fórmula de Haversine)
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
   const R = 6371e3; // Radio de la Tierra en metros
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;

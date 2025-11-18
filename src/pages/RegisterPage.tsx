@@ -34,7 +34,7 @@ export default function RegisterPage() {
     }
 
     if (password.length < 8 || password.length > 100) {
-      errors.password = "La contrasena debe tener entre 8 y 100 caracteres.";
+      errors.password = "La contrasena debe tener entre 8 y 100 caracteres, debe tener una mayuscula y una minuscula.";
     }
 
     setFieldErrors(errors);

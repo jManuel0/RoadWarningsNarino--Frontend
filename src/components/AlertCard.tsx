@@ -19,6 +19,7 @@ const statusLabel: Record<AlertStatus, string> = {
   [AlertStatus.ACTIVE]: "Activa",
   [AlertStatus.IN_PROGRESS]: "En progreso",
   [AlertStatus.RESOLVED]: "Resuelta",
+  [AlertStatus.EXPIRED]: ""
 };
 
 const severityColor: Record<AlertSeverity, string> = {
