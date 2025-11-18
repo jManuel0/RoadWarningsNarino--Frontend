@@ -1,3 +1,5 @@
+// src/pages/Alerts.tsx
+
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Filter, Search, X } from "lucide-react";
 
@@ -6,7 +8,6 @@ import { useAuthStore } from "@/stores/authStore";
 import { alertApi } from "@/api/alertApi";
 import AlertCard from "@/components/AlertCard";
 import LocationPickerMap from "@/components/LocationPickerMap";
-
 
 import {
   Alert,
@@ -153,7 +154,7 @@ export default function Alerts() {
               </p>
             </div>
 
-            {/* 🔐 Solo usuarios logueados pueden crear alertas */}
+            {/* Solo usuarios registrados pueden crear alertas */}
             {isAuthenticated ? (
               <button
                 onClick={() => setShowCreateModal(true)}
@@ -163,19 +164,27 @@ export default function Alerts() {
                 Nueva Alerta
               </button>
             ) : (
-              <div className="flex flex-col items-end">
+              <div className="flex flex-col items-end gap-1">
                 <span className="text-xs text-gray-500 mb-1">
-                  Inicia sesión para crear alertas
+                  Crea una cuenta para reportar nuevas alertas
                 </span>
-                <button
-                  onClick={() =>
-                    alert("Debes registrarte o iniciar sesión para crear alertas.")
-                  }
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 cursor-not-allowed"
-                >
-                  <Plus size={20} />
-                  Nueva Alerta
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => (window.location.href = "/login")}
+                    className="px-3 py-2 text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg"
+                  >
+                    Iniciar sesión
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => (window.location.href = "/register")}
+                    className="px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-1"
+                  >
+                    <Plus size={14} />
+                    Registrarme
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -214,38 +223,36 @@ export default function Alerts() {
 
             {/* Filtro por estado */}
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Estado
+              </label>
               <select
                 value={filterStatus}
                 onChange={(e) =>
-                  setFilterStatus(
-                    e.target.value === "ALL"
-                      ? "ALL"
-                      : (e.target.value as AlertStatus)
-                  )
+                  setFilterStatus(e.target.value as AlertStatus | "ALL")
                 }
-                className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="ALL">Todos los estados</option>
+                <option value="ALL">Todos</option>
                 <option value={AlertStatus.ACTIVE}>Activas</option>
-                <option value={AlertStatus.IN_PROGRESS}>En Progreso</option>
+                <option value={AlertStatus.IN_PROGRESS}>En progreso</option>
                 <option value={AlertStatus.RESOLVED}>Resueltas</option>
               </select>
             </div>
 
             {/* Filtro por severidad */}
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Severidad
+              </label>
               <select
                 value={filterSeverity}
                 onChange={(e) =>
-                  setFilterSeverity(
-                    e.target.value === "ALL"
-                      ? "ALL"
-                      : (e.target.value as AlertSeverity)
-                  )
+                  setFilterSeverity(e.target.value as AlertSeverity | "ALL")
                 }
-                className="w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="ALL">Todas las severidades</option>
+                <option value="ALL">Todas</option>
                 <option value={AlertSeverity.CRITICA}>Crítica</option>
                 <option value={AlertSeverity.ALTA}>Alta</option>
                 <option value={AlertSeverity.MEDIA}>Media</option>
@@ -256,10 +263,10 @@ export default function Alerts() {
         </div>
 
         {/* Lista de alertas */}
-        {renderAlertsList()}
+        <div className="space-y-6">{renderAlertsList()}</div>
       </div>
 
-      {/* Modal de crear alerta */}
+      {/* Modal de creación de alerta (solo si está autenticado) */}
       {showCreateModal && isAuthenticated && (
         <CreateAlertModal
           onClose={() => setShowCreateModal(false)}
@@ -270,7 +277,7 @@ export default function Alerts() {
               setShowCreateModal(false);
             } catch (err) {
               console.error("Error al crear alerta:", err);
-              alert("Error al crear la alerta");
+              alert("No se pudo crear la alerta");
             }
           }}
         />
@@ -279,29 +286,25 @@ export default function Alerts() {
   );
 }
 
-/* =====================
- * Modal Crear Alerta
- * ===================== */
-
 interface CreateAlertModalProps {
   onClose: () => void;
-  onSubmit: (alert: CreateAlertDTO) => Promise<void> | void;
+  onSubmit: (data: CreateAlertDTO) => Promise<void>;
 }
 
-function CreateAlertModal({
-  onClose,
-  onSubmit,
-}: Readonly<CreateAlertModalProps>) {
-  const [type, setType] = useState<AlertType>(AlertType.CIERRE_VIAL);
-  const [severity, setSeverity] = useState<AlertSeverity>(AlertSeverity.MEDIA);
+function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>) {
+  const [type, setType] = useState<AlertType>(AlertType.ACCIDENTE);
+  const [severity, setSeverity] = useState<AlertSeverity>(
+    AlertSeverity.ALTA
+  );
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [municipality, setMunicipality] = useState("Pasto");
-  const [latitude, setLatitude] = useState(1.2136);
-  const [longitude, setLongitude] = useState(-77.2811);
-  const [estimatedDuration, setEstimatedDuration] =
-    useState<number | undefined>();
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [estimatedDuration, setEstimatedDuration] = useState<
+    number | undefined
+  >(undefined);
 
   const handleMapSelect = (lat: number, lng: number) => {
     setLatitude(lat);
@@ -311,55 +314,75 @@ function CreateAlertModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title.trim() || !description.trim() || !location.trim()) {
-      alert("Por favor completa título, descripción y dirección.");
+    if (!title.trim()) {
+      alert("El título es obligatorio.");
       return;
     }
 
-    const payload: CreateAlertDTO = {
+    if (!location.trim()) {
+      alert("La dirección es obligatoria.");
+      return;
+    }
+
+    if (!municipality.trim()) {
+      alert("El municipio es obligatorio.");
+      return;
+    }
+
+    if (latitude == null || longitude == null) {
+      alert("Por favor selecciona la ubicación en el mapa.");
+      return;
+    }
+
+    const data: CreateAlertDTO = {
       type,
+      severity,
       title,
       description,
-      latitude,
-      longitude,
       location,
       municipality,
-      severity,
+      latitude,
+      longitude,
       estimatedDuration,
     };
 
-    await onSubmit(payload);
+    await onSubmit(data);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Nueva Alerta</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X size={24} />
-            </button>
-          </div>
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Crear nueva alerta
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
+        <div className="p-4 space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Tipo */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo de Alerta *
+                Tipo de alerta *
               </label>
               <select
                 value={type}
-                onChange={(e) => setType(e.target.value as AlertType)}
+                onChange={(e) =>
+                  setType(e.target.value as unknown as AlertType)
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value={AlertType.DERRUMBE}>Derrumbe</option>
                 <option value={AlertType.ACCIDENTE}>Accidente</option>
+                <option value={AlertType.DERRUMBE}>Derrumbe</option>
                 <option value={AlertType.INUNDACION}>Inundación</option>
-                <option value={AlertType.CIERRE_VIAL}>Cierre Vial</option>
+                <option value={AlertType.CIERRE_VIAL}>Cierre vial</option>
                 <option value={AlertType.MANTENIMIENTO}>Mantenimiento</option>
               </select>
             </div>
@@ -372,7 +395,9 @@ function CreateAlertModal({
               <select
                 value={severity}
                 onChange={(e) =>
-                  setSeverity(e.target.value as AlertSeverity)
+                  setSeverity(
+                    e.target.value as unknown as AlertSeverity
+                  )
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
@@ -393,7 +418,7 @@ function CreateAlertModal({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: Accidente vehicular"
+                placeholder="Ej: Accidente en la vía Panamericana"
               />
             </div>
 
@@ -438,7 +463,6 @@ function CreateAlertModal({
                 <option value="Pasto">Pasto</option>
                 <option value="Ipiales">Ipiales</option>
                 <option value="Tumaco">Tumaco</option>
-                {/* Más municipios aquí */}
               </select>
             </div>
 
@@ -462,9 +486,13 @@ function CreateAlertModal({
                 </label>
                 <input
                   type="number"
-                  value={latitude}
+                  value={latitude ?? ""}
                   onChange={(e) =>
-                    setLatitude(parseFloat(e.target.value))
+                    setLatitude(
+                      e.target.value
+                        ? parseFloat(e.target.value)
+                        : null
+                    )
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -475,9 +503,13 @@ function CreateAlertModal({
                 </label>
                 <input
                   type="number"
-                  value={longitude}
+                  value={longitude ?? ""}
                   onChange={(e) =>
-                    setLongitude(parseFloat(e.target.value))
+                    setLongitude(
+                      e.target.value
+                        ? parseFloat(e.target.value)
+                        : null
+                    )
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -526,3 +558,4 @@ function CreateAlertModal({
     </div>
   );
 }
+

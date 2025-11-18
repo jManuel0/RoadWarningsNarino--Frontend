@@ -1,5 +1,6 @@
 // src/components/WazeNavigation.tsx
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   MapContainer,
   TileLayer,
@@ -28,6 +29,7 @@ import { useAlertStore } from "@/stores/alertStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { Alert, AlertSeverity, AlertType } from "@/types/Alert";
 import { useMapDarkMode } from "@/hooks/useMapDarkMode";
+import { useAuthStore } from "@/stores/authStore";
 import { alertApi } from "@/api/alertApi";
 import QuickAlertModal from "./QuickAlertModal";
 
@@ -341,6 +343,7 @@ export default function WazeNavigation() {
   const [showRouteSelector, setShowRouteSelector] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [showQuickReports, setShowQuickReports] = useState(false);
+  const [] = useState<string | null>(null);
 
   const {
     isNavigating,
@@ -364,6 +367,8 @@ export default function WazeNavigation() {
   const alerts = useAlertStore((state) => state.alerts);
   const { voiceGuidance } = useSettingsStore();
   const refreshAlerts = useAlertStore((state) => state.setAlerts);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
+  const navigate = useNavigate();
 
   // Aplicar modo oscuro al mapa
   useMapDarkMode(mapRef);
@@ -443,6 +448,21 @@ export default function WazeNavigation() {
       utterance.lang = "es-ES";
       window.speechSynthesis.speak(utterance);
     }
+  };
+
+  const ensureCanReport = (): boolean => {
+    if (isAuthenticated) return true;
+
+    const goRegister = window.confirm(
+      "Para reportar alertas necesitas una cuenta. ¿Quieres registrarte ahora?"
+    );
+
+    if (goRegister) {
+      navigate("/register");
+    } else {
+      navigate("/login");
+    }
+    return false;
   };
 
   const handleSearchDestination = async () => {
@@ -854,7 +874,10 @@ export default function WazeNavigation() {
       {currentLocation && (
         <button
           type="button"
-          onClick={() => setShowQuickReports(!showQuickReports)}
+          onClick={() => {
+            if (!ensureCanReport()) return;
+            setShowQuickReports(!showQuickReports);
+          }}
           className="absolute bottom-24 right-4 z-[1000] bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-full shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110"
           title="Reportar alerta"
         >
