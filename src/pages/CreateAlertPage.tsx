@@ -25,12 +25,12 @@ const CreateAlertPage: React.FC = () => {
       return;
     }
 
-    if (!location.trim()) {
+    if (false && !location.trim()) {
       alert("La dirección es obligatoria.");
       return;
     }
 
-    if (!municipality.trim()) {
+    if (false && !municipality.trim()) {
       alert("El municipio es obligatorio.");
       return;
     }
@@ -137,7 +137,6 @@ const CreateAlertPage: React.FC = () => {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Ej: Calle 18 con Carrera 25"
-            required
           />
         </label>
 

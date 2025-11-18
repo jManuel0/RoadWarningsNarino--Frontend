@@ -118,7 +118,7 @@ export interface CreateAlertDTO {
   description: string;
   latitude: number;
   longitude: number;
-  location: string;
+  location?: string;
   municipality?: string;
   severity: AlertSeverity;
   estimatedDuration?: number;

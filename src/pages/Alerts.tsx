@@ -1,7 +1,7 @@
 // src/pages/Alerts.tsx
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Filter, Search, X } from "lucide-react";
+import { Plus, Filter, Search, X, Mic } from "lucide-react";
 
 import { useAlertStore } from "@/stores/alertStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -311,6 +311,7 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
     setLongitude(lng);
   };
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -319,12 +320,12 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
       return;
     }
 
-    if (!location.trim()) {
+    if (false && !location.trim()) {
       alert("La dirección es obligatoria.");
       return;
     }
 
-    if (!municipality.trim()) {
+    if (false && !municipality.trim()) {
       alert("El municipio es obligatorio.");
       return;
     }
@@ -347,6 +348,37 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
     };
 
     await onSubmit(data);
+  };
+
+  const handleDictateDescription = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Tu navegador no soporta reconocimiento de voz.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-ES";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event: any) => {
+      const transcript =
+        event.results?.[0]?.[0]?.transcript ?? "";
+      if (!transcript) return;
+      setDescription((prev) =>
+        prev ? `${prev} ${transcript}` : transcript
+      );
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Error de reconocimiento de voz:", event.error);
+    };
+
+    recognition.start();
   };
 
   return (
@@ -422,19 +454,30 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
               />
             </div>
 
-            {/* Descripción */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Descripción *
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows={3}
-                placeholder="Describe la situación..."
-              />
-            </div>
+           {/* Descripción */}
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-medium text-gray-700">
+          Descripción *
+        </label>
+        <button
+          type="button"
+          onClick={handleDictateDescription}
+          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+        >
+          <Mic size={14} />
+          Dictar
+        </button>
+      </div>
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        rows={3}
+        placeholder="Describe la situación..."
+      />
+    </div>
+
 
             {/* Dirección */}
             <div>
@@ -450,10 +493,10 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
               />
             </div>
 
-            {/* Municipio */}
+            {/* Municipio (opcional) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Municipio
+                Municipio (opcional)
               </label>
               <select
                 value={municipality}
@@ -558,4 +601,3 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
     </div>
   );
 }
-

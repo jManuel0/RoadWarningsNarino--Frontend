@@ -30,6 +30,7 @@ export default function Home() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   // Suscripción a alertas en tiempo real vía WebSocket
@@ -87,6 +88,31 @@ export default function Home() {
   // Permiso de notificaciones
   useEffect(() => {
     notificationService.requestPermission();
+  }, []);
+
+  // Obtener ubicación del usuario para ordenar por distancia
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      console.warn("Geolocalización no soportada en este navegador");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserPosition({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+      },
+      (err) => {
+        console.warn("No se pudo obtener la ubicación del usuario:", err);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 5000,
+      }
+    );
   }, []);
 
   // Cargar alertas al inicio + polling
@@ -178,6 +204,28 @@ export default function Home() {
     setSelectedAlert(alert);
   };
 
+  const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number => {
+    const R = 6371e3; // metros
+    const phi1 = (lat1 * Math.PI) / 180;
+    const phi2 = (lat2 * Math.PI) / 180;
+    const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+    const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+      Math.cos(phi1) * Math.cos(phi2) *
+        Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // distancia en metros
+  };
+
   // Derivados locales
   const activeAlerts = alerts.filter((a) => a.status === AlertStatus.ACTIVE);
 
@@ -187,7 +235,25 @@ export default function Home() {
       a.severity === AlertSeverity.CRITICA
   );
 
-  const displayAlerts = isFiltered ? filteredAlerts : activeAlerts;
+  const baseDisplayAlerts = isFiltered ? filteredAlerts : activeAlerts;
+
+  const displayAlerts = userPosition
+    ? [...baseDisplayAlerts].sort((a, b) => {
+        const da = calculateDistance(
+          userPosition.lat,
+          userPosition.lng,
+          a.latitude,
+          a.longitude
+        );
+        const db = calculateDistance(
+          userPosition.lat,
+          userPosition.lng,
+          b.latitude,
+          b.longitude
+        );
+        return da - db;
+      })
+    : baseDisplayAlerts;
 
   const getEmptyAlertsMessage = () =>
     isFiltered
