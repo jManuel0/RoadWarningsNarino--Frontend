@@ -59,8 +59,7 @@ export default function Home() {
 
           const mockAlerts: Alert[] = [
           ]
-
-          if (import.meta.env.DEV) {
+          if (false && import.meta.env.DEV) {
             setAlerts(mockAlerts);
             setError("Modo demo - Backend no disponible");
           } else {
