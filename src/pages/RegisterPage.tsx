@@ -145,7 +145,7 @@ export default function RegisterPage() {
             required
           />
           <p className="mt-1 text-xs text-gray-500">
-            Entre 8 y 100 caracteres. Se recomienda combinar letras y números para mayor seguridad.
+            Entre 8 y 30 caracteres, la contraseña debe tener una mayuscula y una minuscula obligatoriamente.
           </p>
           {fieldErrors.password && (
             <p className="mt-1 text-xs text-red-600">
