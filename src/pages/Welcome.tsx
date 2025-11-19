@@ -10,7 +10,6 @@ export default function Welcome() {
           RoadWarnings Nariño
         </h1>
         <p className="text-sm text-center text-gray-600 dark:text-gray-300">
-          Elige cómo quieres usar la aplicación
         </p>
 
         <button
