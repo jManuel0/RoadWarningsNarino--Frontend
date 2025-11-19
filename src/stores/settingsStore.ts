@@ -7,6 +7,7 @@ type Theme = "light" | "dark";
 interface SettingsState {
   theme: Theme;
   mapDarkMode: boolean;
+  routePreference: "safest" | "fastest" | "shortest";
   autoReroute: boolean;
   voiceGuidance: boolean;
   avoidCriticalAlerts: boolean;
@@ -14,6 +15,7 @@ interface SettingsState {
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
   setMapDarkMode: (enabled: boolean) => void;
+  setRoutePreference: (preference: SettingsState["routePreference"]) => void;
   setAutoReroute: (enabled: boolean) => void;
   setVoiceGuidance: (enabled: boolean) => void;
   setAvoidCriticalAlerts: (enabled: boolean) => void;
@@ -24,6 +26,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set, get) => ({
       theme: "light",
       mapDarkMode: true,
+      routePreference: "safest",
       autoReroute: true,
       voiceGuidance: false,
       avoidCriticalAlerts: true,
@@ -45,6 +48,12 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       setMapDarkMode: (enabled) => set({ mapDarkMode: enabled }),
+
+      setRoutePreference: (preference) =>
+        set({
+          routePreference: preference,
+        }),
+
       setAutoReroute: (enabled) => set({ autoReroute: enabled }),
       setVoiceGuidance: (enabled) => set({ voiceGuidance: enabled }),
       setAvoidCriticalAlerts: (enabled) => set({ avoidCriticalAlerts: enabled }),

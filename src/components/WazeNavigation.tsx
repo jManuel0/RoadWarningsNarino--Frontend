@@ -1,4 +1,3 @@
-// src/components/WazeNavigation.tsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -32,6 +31,7 @@ import { useMapDarkMode } from "@/hooks/useMapDarkMode";
 import { useAuthStore } from "@/stores/authStore";
 import { alertApi } from "@/api/alertApi";
 import QuickAlertModal from "./QuickAlertModal";
+import { getOsrmRoutes } from "@/services/routing";
 
 type PlaceResult = {
   id: string;
@@ -72,6 +72,21 @@ function DestinationCenter({
   return null;
 }
 
+function NavigationFollower() {
+  const map = useMap();
+  const { isNavigating, currentLocation } = useNavigationStore();
+
+  useEffect(() => {
+    if (!isNavigating || !currentLocation) return;
+
+    const currentZoom = map.getZoom();
+    const targetZoom = Math.max(currentZoom, 16);
+    map.setView([currentLocation.lat, currentLocation.lng], targetZoom);
+  }, [isNavigating, currentLocation, map]);
+
+  return null;
+}
+
 // Iconos personalizados
 const userIcon = L.divIcon({
   className: "custom-user-marker",
@@ -97,7 +112,8 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
     selectedRoute,
   } = useNavigationStore();
   const alerts = useAlertStore((state) => state.getActiveAlerts());
-  const { avoidCriticalAlerts, autoReroute } = useSettingsStore();
+  const { avoidCriticalAlerts, autoReroute, routePreference } =
+    useSettingsStore();
   const [calculating, setCalculating] = useState(false);
 
   useEffect(() => {
@@ -113,37 +129,67 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
     setCalculating(true);
 
     try {
-      // Calcular ruta directa
-      const directRoute = calculateDirectRoute(currentLocation, destination);
-
-      // Calcular rutas alternativas
-      const alternativeRoutes = generateAlternativeRoutes(
+      // Obtener rutas reales por calles usando OSRM
+      const baseRoutes = await getOsrmRoutes(
         currentLocation,
         destination,
-        alerts
+        "driving"
       );
 
-      // Calcular riesgo para cada ruta
-      const routesWithRisk = [directRoute, ...alternativeRoutes].map(
-        (route, index) => {
-          const riskScore = calculateRouteRisk(route, alerts);
-          const alertsOnRoute = findAlertsOnRoute(route, alerts);
+      // Si el usuario quiere evitar alertas críticas, intentamos descartar
+      // rutas que pasen demasiado cerca de ellas.
+      let candidateRoutes = baseRoutes;
+      if (avoidCriticalAlerts) {
+        const criticalAlerts = alerts.filter(
+          (a) => a.severity === AlertSeverity.CRITICA
+        );
+        const CRITICAL_AVOID_RADIUS_KM = 0.3; // 300 m
 
-          return {
-            ...route,
-            id: `route-${index}`,
-            name: index === 0 ? "Ruta directa" : `Alternativa ${index}`,
-            riskScore,
-            alertsOnRoute,
-            isRecommended: false,
-          };
+        if (criticalAlerts.length > 0) {
+          const safeRoutes = baseRoutes.filter((route) =>
+            route.points.every((point) =>
+              criticalAlerts.every((alert) => {
+                const distanceToAlert = calculateDistance(point, {
+                  lat: alert.latitude,
+                  lng: alert.longitude,
+                });
+                return distanceToAlert >= CRITICAL_AVOID_RADIUS_KM;
+              })
+            )
+          );
+
+          if (safeRoutes.length > 0) {
+            candidateRoutes = safeRoutes;
+          }
         }
-      );
+      }
 
-      // Marcar la ruta con menor riesgo como recomendada
-      const sortedRoutes = [...routesWithRisk].sort(
-        (a, b) => a.riskScore - b.riskScore
-      );
+      // Calcular riesgo para cada ruta candidata y asociar alertas
+      const routesWithRisk = candidateRoutes.map((route, index) => {
+        const riskScore = calculateRouteRisk(route, alerts);
+        const alertsOnRoute = findAlertsOnRoute(route, alerts);
+
+        return {
+          ...route,
+          id: `route-${index}`,
+          name: index === 0 ? "Ruta recomendada" : `Alternativa ${index}`,
+          riskScore,
+          alertsOnRoute,
+          isRecommended: false,
+        };
+      });
+
+      // Marcar la ruta recomendada según preferencia del usuario
+      const sortedRoutes = [...routesWithRisk].sort((a, b) => {
+        if (routePreference === "fastest") {
+          return a.duration - b.duration;
+        }
+        if (routePreference === "shortest") {
+          return a.distance - b.distance;
+        }
+        // "safest" (por defecto): menor riesgo
+        return a.riskScore - b.riskScore;
+      });
       if (sortedRoutes.length > 0) {
         sortedRoutes[0].isRecommended = true;
       }
@@ -169,96 +215,6 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
     } finally {
       setCalculating(false);
     }
-  };
-
-  const calculateDirectRoute = (
-    start: RoutePoint,
-    end: RoutePoint
-  ): Omit<
-    Route,
-    "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
-  > => {
-    const points: RoutePoint[] = [start, end];
-    const distance = calculateDistance(start, end);
-    const duration = (distance / 50) * 3600; // 50 km/h
-
-    const steps = [
-      {
-        instruction: `Continúa por ${distance.toFixed(1)} km hacia tu destino`,
-        distance,
-        duration,
-        point: end,
-      },
-    ];
-
-    return { points, distance, duration, steps };
-  };
-
-  const generateAlternativeRoutes = (
-    start: RoutePoint,
-    end: RoutePoint,
-    _alerts: Alert[]
-  ): Omit<
-    Route,
-    "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
-  >[] => {
-    const alternatives: Omit<
-      Route,
-      "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
-    >[] = [];
-
-    // Ruta 1: Desviación hacia el norte
-    const northPoint: RoutePoint = {
-      lat: (start.lat + end.lat) / 2 + 0.01,
-      lng: (start.lng + end.lng) / 2,
-    };
-    alternatives.push(createRouteViaPoint(start, northPoint, end));
-
-    // Ruta 2: Desviación hacia el sur
-    const southPoint: RoutePoint = {
-      lat: (start.lat + end.lat) / 2 - 0.01,
-      lng: (start.lng + end.lng) / 2,
-    };
-    alternatives.push(createRouteViaPoint(start, southPoint, end));
-
-    return alternatives;
-  };
-
-  const createRouteViaPoint = (
-    start: RoutePoint,
-    via: RoutePoint,
-    end: RoutePoint
-  ): Omit<
-    Route,
-    "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
-  > => {
-    const points: RoutePoint[] = [start, via, end];
-    const distance =
-      calculateDistance(start, via) + calculateDistance(via, end);
-    const duration = (distance / 45) * 3600; // algo más lento por desvío
-
-    const steps = [
-      {
-        instruction: `Toma el desvío por ${calculateDistance(
-          start,
-          via
-        ).toFixed(1)} km`,
-        distance: calculateDistance(start, via),
-        duration: (calculateDistance(start, via) / 45) * 3600,
-        point: via,
-      },
-      {
-        instruction: `Continúa hacia tu destino por ${calculateDistance(
-          via,
-          end
-        ).toFixed(1)} km`,
-        distance: calculateDistance(via, end),
-        duration: (calculateDistance(via, end) / 45) * 3600,
-        point: end,
-      },
-    ];
-
-    return { points, distance, duration, steps };
   };
 
   const calculateDistance = (point1: RoutePoint, point2: RoutePoint): number => {
@@ -379,7 +335,8 @@ export default function WazeNavigation() {
   } = useNavigationStore();
 
   const alerts = useAlertStore((state) => state.alerts);
-  const { voiceGuidance } = useSettingsStore();
+  const { voiceGuidance, routePreference, setRoutePreference } =
+    useSettingsStore();
   const refreshAlerts = useAlertStore((state) => state.setAlerts);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
   const navigate = useNavigate();
@@ -440,7 +397,16 @@ export default function WazeNavigation() {
     return () => {
       navigator.geolocation.clearWatch(watchId);
     };
-  }, [isNavigating, selectedRoute, currentStepIndex, voiceGuidance, setCurrentLocation, addToRouteHistory, setCurrentStepIndex, stopNavigation]);
+  }, [
+    isNavigating,
+    selectedRoute,
+    currentStepIndex,
+    voiceGuidance,
+    setCurrentLocation,
+    addToRouteHistory,
+    setCurrentStepIndex,
+    stopNavigation,
+  ]);
 
   const calculateDistance = (point1: RoutePoint, point2: RoutePoint): number => {
     const R = 6371;
@@ -512,9 +478,7 @@ export default function WazeNavigation() {
 
       const mapped: PlaceResult[] = results.map((r: any, index: number) => ({
         id: r.place_id ? String(r.place_id) : String(index),
-        name: r.display_name
-          ? String(r.display_name).split(",")[0]
-          : query,
+        name: r.display_name ? String(r.display_name).split(",")[0] : query,
         address: r.display_name ?? "",
         lat: parseFloat(r.lat),
         lng: parseFloat(r.lon),
@@ -601,6 +565,7 @@ export default function WazeNavigation() {
           className="h-full w-full"
           zoomControl={true}
         >
+          <NavigationFollower />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -736,38 +701,53 @@ export default function WazeNavigation() {
       </div>
 
       {/* Panel de controles superior */}
-      <div className="absolute top-4 left-4 right-4 z-[1000] flex gap-2">
-        <input
-          type="text"
-          placeholder="¿A dónde quieres ir? (escribe y presiona Enter)"
-          value={searchDestination}
-          onChange={(e) => setSearchDestination(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleSearchDestination();
+      <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-2">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="¿A dónde quieres ir? (escribe y presiona Enter)"
+            value={searchDestination}
+            onChange={(e) => setSearchDestination(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearchDestination();
+              }
+            }}
+            className="flex-1 px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border-0 focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={routePreference}
+            onChange={(e) =>
+              setRoutePreference(
+                e.target.value as "safest" | "fastest" | "shortest"
+              )
             }
-          }}
-          className="flex-1 px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border-0 focus:ring-2 focus:ring-blue-500"
-        />
-        {isNavigating ? (
-          <button
-            onClick={stopNavigation}
-            className="px-6 py-3 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 font-medium flex items-center gap-2"
+            className="px-3 py-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 text-sm"
           >
-            <X size={20} />
-            Detener
-          </button>
-        ) : (
-          <button
-            onClick={handleStartNavigation}
-            disabled={!destination || isSearchingDestination}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium flex items-center gap-2"
-          >
-            <NavigationIcon size={20} />
-            {isSearchingDestination ? "Buscando..." : "Iniciar"}
-          </button>
-        )}
+            <option value="safest">Más segura</option>
+            <option value="fastest">Más rápida</option>
+            <option value="shortest">Más corta</option>
+          </select>
+          {isNavigating ? (
+            <button
+              onClick={stopNavigation}
+              className="px-6 py-3 bg-red-600 text-white rounded-lg shadow-lg hover:bg-red-700 font-medium flex items-center gap-2"
+            >
+              <X size={20} />
+              Detener
+            </button>
+          ) : (
+            <button
+              onClick={handleStartNavigation}
+              disabled={!destination || isSearchingDestination}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+            >
+              <NavigationIcon size={20} />
+              {isSearchingDestination ? "Buscando..." : "Iniciar"}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Lista de sugerencias de lugares */}
@@ -911,8 +891,8 @@ export default function WazeNavigation() {
                   Alerta en tu ruta
                 </p>
                 <p className="text-sm text-amber-800 dark:text-amber-200">
-                  Hay {alertsNearRoute.length} alerta(s) en tu camino. Recalculando
-                  ruta...
+                  Hay {alertsNearRoute.length} alerta(s) en tu camino.
+                  Recalculando ruta...
                 </p>
               </div>
             </div>
