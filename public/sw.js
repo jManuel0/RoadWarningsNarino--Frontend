@@ -37,13 +37,27 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch - Network First for API, Cache First for static resources
+// Origins del backend donde NO queremos interceptar las peticiones API.
+// De esta forma, las llamadas al backend (Render, localhost) van directo a la red
+// y no devolvemos respuestas "offline" falsas para /api/**.
+const API_BACKEND_ORIGINS = [
+  'https://roadwarningsnarino-backend.onrender.com',
+  'http://localhost:8080',
+];
+
+// Fetch - Network First para API del propio origen, Cache First para recursos estáticos.
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API requests - Network First with cache fallback
-  if (url.pathname.startsWith('/api/')) {
+  // Si la petición va al backend externo (Render o localhost:8080), no la interceptamos.
+  // Dejamos que el navegador la maneje normalmente para evitar respuestas 503 "Sin conexión".
+  if (API_BACKEND_ORIGINS.includes(url.origin) && url.pathname.startsWith('/api/')) {
+    return;
+  }
+
+  // API requests del MISMO origen - Network First with cache fallback
+  if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
