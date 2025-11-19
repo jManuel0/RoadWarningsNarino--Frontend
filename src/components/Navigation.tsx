@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
 
 export default function Navigation() {
   const location = useLocation();
-  const { isAuthenticated, logout, guestMode } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -72,7 +72,7 @@ export default function Navigation() {
               </NavLink>
             )}
 
-            {(isAuthenticated() || guestMode) && (
+            {isAuthenticated() && (
               <button
                 type="button"
                 onClick={logout}

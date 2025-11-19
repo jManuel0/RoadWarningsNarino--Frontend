@@ -8,6 +8,7 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     username?: string;
@@ -24,21 +25,21 @@ export default function RegisterPage() {
 
     if (!/^[A-Za-z0-9_-]+$/.test(username)) {
       errors.username =
-        "Solo letras, numeros, guiones (-) y guiones bajos (_), sin espacios.";
+        "Solo letras, números, guiones (-) y guiones bajos (_), sin espacios.";
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       errors.email =
-        "Ingresa un correo con formato valido (ej. usuario@dominio.com).";
+        "Ingresa un correo con formato válido (ej. usuario@dominio.com).";
     }
 
     if (password.length < 8 || password.length > 30) {
       errors.password =
-        "La contrasena debe tener entre 8 y 30 caracteres.";
+        "La contraseña debe tener entre 8 y 30 caracteres.";
     } else if (!/[a-z]/.test(password) || !/[A-Z]/.test(password)) {
       errors.password =
-        "La contrasena debe incluir al menos una letra mayuscula y una minuscula.";
+        "La contraseña debe incluir al menos una letra mayúscula y una minúscula.";
     }
 
     setFieldErrors(errors);
@@ -79,22 +80,22 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md space-y-4"
+        className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-8 w-full max-w-md space-y-4"
       >
-        <h1 className="text-2xl font-bold text-gray-900 text-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center">
           Registrarse
         </h1>
 
         {isLoading && (
-          <div className="flex flex-col items-center gap-2 text-sm text-gray-600">
+          <div className="flex flex-col items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
             <LoadingSpinner size="sm" />
             <p>Creando tu cuenta...</p>
             {isWakingUp && (
               <p className="text-xs text-amber-600 text-center">
-                El servidor se esta despertando, puede tardar unos minutos en
+                El servidor se está despertando, puede tardar unos minutos en
                 responder.
               </p>
             )}
@@ -102,34 +103,36 @@ export default function RegisterPage() {
         )}
 
         {error && (
-          <div className="bg-red-50 text-red-700 px-3 py-2 rounded text-sm">
+          <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 px-3 py-2 rounded text-sm">
             {error}
           </div>
         )}
 
         <div>
-          <label className="block text-sm mb-1">Usuario</label>
+          <label className="block text-sm mb-1 text-gray-700 dark:text-gray-200">
+            Usuario
+          </label>
           <input
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
           />
-          <p className="mt-1 text-xs text-gray-500">
-            Solo letras, numeros, guiones (-) y guiones bajos (_).
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Solo letras, números, guiones (-) y guiones bajos (_).
           </p>
           {fieldErrors.username && (
-            <p className="mt-1 text-xs text-red-600">
-              {fieldErrors.username}
-            </p>
+            <p className="mt-1 text-xs text-red-600">{fieldErrors.username}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Correo</label>
+          <label className="block text-sm mb-1 text-gray-700 dark:text-gray-200">
+            Correo
+          </label>
           <input
             type="email"
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded px-3 py-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -140,21 +143,31 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label className="block text-sm mb-1">Contrasena</label>
-          <input
-            type="password"
-            className="w-full border rounded px-3 py-2"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Entre 8 y 30 caracteres, la contraseña debe tener una mayuscula y una minuscula obligatoriamente.
+          <label className="block text-sm mb-1 text-gray-700 dark:text-gray-200">
+            Contraseña
+          </label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              className="w-full border rounded px-3 py-2 pr-20 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute inset-y-0 right-2 flex items-center text-xs text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100"
+            >
+              {showPassword ? "Ocultar" : "Ver"}
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Entre 8 y 30 caracteres, debe tener al menos una mayúscula y una
+            minúscula.
           </p>
           {fieldErrors.password && (
-            <p className="mt-1 text-xs text-red-600">
-              {fieldErrors.password}
-            </p>
+            <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>
           )}
         </div>
 
@@ -166,13 +179,17 @@ export default function RegisterPage() {
           {isLoading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
 
-        <p className="text-xs text-center text-gray-500">
+        <p className="text-xs text-center text-gray-500 dark:text-gray-400">
           ¿Ya tienes cuenta?{" "}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Inicia sesion
+          <Link
+            to="/login"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            Inicia sesión
           </Link>
         </p>
       </form>
     </div>
   );
 }
+

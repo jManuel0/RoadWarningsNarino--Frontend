@@ -21,10 +21,9 @@ import { useServiceWorker } from "./hooks/useServiceWorker";
 
 function AppRoutes() {
   const isAuth = useAuthStore((s) => s.isAuthenticated());
-  const guest = useAuthStore((s) => s.guestMode);
 
-  // Si no está logueado ni en modo invitado -> mandar a bienvenida
-  if (!isAuth && !guest) {
+  // Si no está logueado -> mandar a bienvenida
+  if (!isAuth) {
     return (
       <Routes>
         <Route path="/welcome" element={<Welcome />} />
@@ -35,7 +34,7 @@ function AppRoutes() {
     );
   }
 
-  // Ya autenticado o invitado
+  // Ya autenticado
   return (
     <>
       <Navigation />
@@ -56,7 +55,7 @@ function AppRoutes() {
 }
 
 function App() {
-  // Register service worker for PWA functionality
+  // Registrar service worker para funcionalidad PWA
   useServiceWorker();
 
   return (
@@ -78,3 +77,4 @@ function App() {
 }
 
 export default App;
+

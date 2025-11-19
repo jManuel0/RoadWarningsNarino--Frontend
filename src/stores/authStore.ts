@@ -4,9 +4,7 @@ import { persist } from "zustand/middleware";
 interface AuthState {
   token: string | null;
   username: string | null;
-  guestMode: boolean;
   setAuth: (token: string, username: string) => void;
-  setGuest: () => void;
   logout: () => void;
   isAuthenticated: () => boolean;
 }
@@ -16,16 +14,12 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       token: null,
       username: null,
-      guestMode: false,
 
       setAuth: (token, username) =>
-        set({ token, username, guestMode: false }),
-
-      setGuest: () =>
-        set({ token: null, username: null, guestMode: true }),
+        set({ token, username }),
 
       logout: () =>
-        set({ token: null, username: null, guestMode: false }),
+        set({ token: null, username: null }),
 
       isAuthenticated: () => !!get().token,
     }),
