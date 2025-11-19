@@ -195,7 +195,10 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
   };
 
   const generateAlternativeRoutes = (
-start: RoutePoint, end: RoutePoint, _alerts: Alert[]): Omit<
+    start: RoutePoint,
+    end: RoutePoint,
+    _alerts: Alert[]
+  ): Omit<
     Route,
     "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
   >[] => {
@@ -348,13 +351,13 @@ export default function WazeNavigation() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [searchDestination, setSearchDestination] = useState("");
   const [isSearchingDestination, setIsSearchingDestination] = useState(false);
-  const [] = useState<string | null>(null);
-  const [] = useState<PlaceResult[]>([]);
-  const [] = useState(false);
+  const [placeResults, setPlaceResults] = useState<PlaceResult[]>([]);
+  const [showPlaceResults, setShowPlaceResults] = useState(false);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [showRouteSelector, setShowRouteSelector] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [showQuickReports, setShowQuickReports] = useState(false);
-  const [] = useState<string | null>(null);
+  const [, setLastSearchedQuery] = useState<string | null>(null);
 
   const {
     isNavigating,
@@ -486,12 +489,13 @@ export default function WazeNavigation() {
     if (isSearchingDestination) return;
 
     setIsSearchingDestination(true);
+    setShowPlaceResults(false);
 
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
           query
-        )}&limit=1`
+        )}&limit=5`
       );
 
       if (!response.ok) {
@@ -502,17 +506,32 @@ export default function WazeNavigation() {
 
       if (!results.length) {
         alert("No se encontró el lugar. Intenta con otra dirección.");
+        setPlaceResults([]);
         return;
       }
 
-      const best = results[0];
-      const lat = parseFloat(best.lat);
-      const lng = parseFloat(best.lon);
+      const mapped: PlaceResult[] = results.map((r: any, index: number) => ({
+        id: r.place_id ? String(r.place_id) : String(index),
+        name: r.display_name
+          ? String(r.display_name).split(",")[0]
+          : query,
+        address: r.display_name ?? "",
+        lat: parseFloat(r.lat),
+        lng: parseFloat(r.lon),
+      }));
 
-      setDestination({ lat, lng });
+      setPlaceResults(mapped);
+      setShowPlaceResults(true);
+      setLastSearchedQuery(query);
+
+      if (mapped[0]) {
+        setDestination({ lat: mapped[0].lat, lng: mapped[0].lng });
+        setSelectedPlaceId(mapped[0].id);
+      }
     } catch (error) {
       console.error("Error buscando destino:", error);
       alert("No se pudo buscar el destino. Intenta de nuevo.");
+      setPlaceResults([]);
     } finally {
       setIsSearchingDestination(false);
     }
@@ -748,6 +767,37 @@ export default function WazeNavigation() {
             <NavigationIcon size={20} />
             {isSearchingDestination ? "Buscando..." : "Iniciar"}
           </button>
+        )}
+      </div>
+
+      {/* Lista de sugerencias de lugares */}
+      <div className="absolute top-16 left-4 right-4 z-[1100]">
+        {showPlaceResults && placeResults.length > 0 && (
+          <ul className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700">
+            {placeResults.map((place) => (
+              <li
+                key={place.id}
+                onClick={() => {
+                  setDestination({ lat: place.lat, lng: place.lng });
+                  setSearchDestination(place.name);
+                  setSelectedPlaceId(place.id);
+                  setShowPlaceResults(false);
+                }}
+                className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                  selectedPlaceId === place.id
+                    ? "bg-gray-100 dark:bg-gray-700"
+                    : ""
+                }`}
+              >
+                <div className="font-medium text-gray-900 dark:text-gray-100">
+                  {place.name}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {place.address}
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 

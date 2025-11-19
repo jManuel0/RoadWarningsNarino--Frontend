@@ -62,6 +62,41 @@ export interface Alert {
   userId?: number;
 }
 
+// Severidad tal como la expone el backend
+export type BackendAlertSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+export function severityFrontToBackend(
+  severity: AlertSeverity
+): BackendAlertSeverity {
+  switch (severity) {
+    case AlertSeverity.CRITICA:
+      return "CRITICAL";
+    case AlertSeverity.ALTA:
+      return "HIGH";
+    case AlertSeverity.MEDIA:
+      return "MEDIUM";
+    case AlertSeverity.BAJA:
+    default:
+      return "LOW";
+  }
+}
+
+export function severityBackendToFront(
+  severity: BackendAlertSeverity | string
+): AlertSeverity {
+  switch (severity) {
+    case "CRITICAL":
+      return AlertSeverity.CRITICA;
+    case "HIGH":
+      return AlertSeverity.ALTA;
+    case "MEDIUM":
+      return AlertSeverity.MEDIA;
+    case "LOW":
+    default:
+      return AlertSeverity.BAJA;
+  }
+}
+
 // Helper type para compatibilidad con código que use location.address, location.lat, location.lng
 export interface AlertWithLocationObject
   extends Omit<Alert, "location" | "timestamp" | "priority"> {

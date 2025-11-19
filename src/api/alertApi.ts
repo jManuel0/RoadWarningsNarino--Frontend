@@ -7,6 +7,9 @@ import {
   AlertSearchDTO,
   AlertPaginationParams,
   PaginatedAlertsResponse,
+  BackendAlertSeverity,
+  severityFrontToBackend,
+  severityBackendToFront,
 } from "@/types/Alert";
 import { API_BASE } from "./baseUrl";
 
@@ -52,9 +55,24 @@ function buildQuery(
   return query ? `?${query}` : "";
 }
 
+// Mapeo de alertas entre backend y frontend
+function mapAlertFromBackend(raw: any): Alert {
+  return {
+    ...raw,
+    severity: severityBackendToFront(raw.severity as BackendAlertSeverity),
+  };
+}
+
+function mapAlertsPageFromBackend(raw: any): PaginatedAlertsResponse {
+  return {
+    ...raw,
+    content: (raw.content ?? []).map(mapAlertFromBackend),
+  };
+}
+
 export const alertApi = {
   async getAlerts(): Promise<Alert[]> {
-    const res = await fetch(`${API_BASE}/api/alert`, {
+    const res = await fetch(`${API_BASE}/alert`, {
       method: "GET",
       headers: authHeaders(), // sin JSON obligatorio
     });
@@ -62,7 +80,8 @@ export const alertApi = {
     if (!res.ok) {
       throw new Error(`Error al obtener alertas: ${res.status}`);
     }
-    return res.json();
+    const data = await res.json();
+    return (data as any[]).map(mapAlertFromBackend);
   },
 
   async getAlertsPaginated(
@@ -70,7 +89,7 @@ export const alertApi = {
   ): Promise<PaginatedAlertsResponse> {
     const query = buildQuery(params);
 
-    const res = await fetch(`${API_BASE}/api/alert/paginated${query}`, {
+    const res = await fetch(`${API_BASE}/alert/paginated${query}`, {
       method: "GET",
       headers: authHeaders(),
     });
@@ -81,11 +100,12 @@ export const alertApi = {
       );
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertsPageFromBackend(data);
   },
 
   async getActiveAlerts(): Promise<Alert[]> {
-    const res = await fetch(`${API_BASE}/api/alert/active`, {
+    const res = await fetch(`${API_BASE}/alert/active`, {
       method: "GET",
       headers: authHeaders(),
     });
@@ -93,7 +113,8 @@ export const alertApi = {
     if (!res.ok) {
       throw new Error(`Error al obtener alertas activas: ${res.status}`);
     }
-    return res.json();
+    const data = await res.json();
+    return (data as any[]).map(mapAlertFromBackend);
   },
 
   async getActiveAlertsPaginated(
@@ -102,7 +123,7 @@ export const alertApi = {
     const query = buildQuery(params);
 
     const res = await fetch(
-      `${API_BASE}/api/alert/active/paginated${query}`,
+      `${API_BASE}/alert/active/paginated${query}`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -115,14 +136,20 @@ export const alertApi = {
       );
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertsPageFromBackend(data);
   },
 
   async createAlert(data: CreateAlertDTO): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/api/alert`, {
+    const payload = {
+      ...data,
+      severity: severityFrontToBackend(data.severity),
+    };
+
+    const res = await fetch(`${API_BASE}/alert`, {
       method: "POST",
       headers: authHeaders(true),
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
@@ -131,11 +158,12 @@ export const alertApi = {
       throw new Error("Error al crear alerta");
     }
 
-    return res.json();
+    const created = await res.json();
+    return mapAlertFromBackend(created);
   },
 
   async getAlertById(id: number): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/api/alert/${id}`, {
+    const res = await fetch(`${API_BASE}/alert/${id}`, {
       method: "GET",
       headers: authHeaders(),
     });
@@ -144,7 +172,8 @@ export const alertApi = {
       throw new Error("Error al obtener detalle de la alerta");
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertFromBackend(data);
   },
 
   async getNearbyAlerts(params: {
@@ -159,7 +188,7 @@ export const alertApi = {
     });
 
     const res = await fetch(
-      `${API_BASE}/api/alert/nearby${query}`,
+      `${API_BASE}/alert/nearby${query}`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -170,29 +199,36 @@ export const alertApi = {
       throw new Error("Error al obtener alertas cercanas");
     }
 
-    return res.json();
+    const data = await res.json();
+    return (data as any[]).map(mapAlertFromBackend);
   },
 
   async updateAlert(
     id: number,
     data: CreateAlertDTO
   ): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/api/alert/${id}`, {
+    const payload = {
+      ...data,
+      severity: severityFrontToBackend(data.severity),
+    };
+
+    const res = await fetch(`${API_BASE}/alert/${id}`, {
       method: "PUT",
       headers: authHeaders(true),
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
       throw new Error("Error al actualizar alerta");
     }
 
-    return res.json();
+    const updated = await res.json();
+    return mapAlertFromBackend(updated);
   },
 
   async updateAlertStatus(id: number, status: AlertStatus): Promise<Alert> {
     const res = await fetch(
-      `${API_BASE}/api/alert/${id}/status?status=${status}`,
+      `${API_BASE}/alert/${id}/status?status=${status}`,
       {
         method: "PATCH",
         headers: authHeaders(),
@@ -203,11 +239,12 @@ export const alertApi = {
       throw new Error("Error al actualizar estado");
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertFromBackend(data);
   },
 
   async deleteAlert(id: number): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/alert/${id}`, {
+    const res = await fetch(`${API_BASE}/alert/${id}`, {
       method: "DELETE",
       headers: authHeaders(),
     });
@@ -218,7 +255,7 @@ export const alertApi = {
   },
 
   async upvoteAlert(id: number): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/api/alert/${id}/upvote`, {
+    const res = await fetch(`${API_BASE}/alert/${id}/upvote`, {
       method: "POST",
       headers: authHeaders(),
     });
@@ -227,11 +264,12 @@ export const alertApi = {
       throw new Error("Error al votar alerta");
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertFromBackend(data);
   },
 
   async downvoteAlert(id: number): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/api/alert/${id}/downvote`, {
+    const res = await fetch(`${API_BASE}/alert/${id}/downvote`, {
       method: "POST",
       headers: authHeaders(),
     });
@@ -240,7 +278,8 @@ export const alertApi = {
       throw new Error("Error al votar alerta");
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertFromBackend(data);
   },
 
   async getMyAlerts(
@@ -249,7 +288,7 @@ export const alertApi = {
     const query = buildQuery(params);
 
     const res = await fetch(
-      `${API_BASE}/api/alert/my-alerts${query}`,
+      `${API_BASE}/alert/my-alerts${query}`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -260,7 +299,8 @@ export const alertApi = {
       throw new Error("Error al obtener mis alertas");
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertsPageFromBackend(data);
   },
 
   async filterAlerts(
@@ -270,7 +310,7 @@ export const alertApi = {
     const query = buildQuery(params);
 
     const res = await fetch(
-      `${API_BASE}/api/alert/filter${query}`,
+      `${API_BASE}/alert/filter${query}`,
       {
         method: "POST",
         headers: authHeaders(true),
@@ -282,7 +322,8 @@ export const alertApi = {
       throw new Error("Error al filtrar alertas");
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertsPageFromBackend(data);
   },
 
   async getUserAlerts(
@@ -292,7 +333,7 @@ export const alertApi = {
     const query = buildQuery(params);
 
     const res = await fetch(
-      `${API_BASE}/api/alert/user/${userId}${query}`,
+      `${API_BASE}/alert/user/${userId}${query}`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -303,11 +344,12 @@ export const alertApi = {
       throw new Error("Error al obtener alertas del usuario");
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertsPageFromBackend(data);
   },
 
   async expireAlert(id: number): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/api/alert/${id}/expire`, {
+    const res = await fetch(`${API_BASE}/alert/${id}/expire`, {
       method: "PATCH",
       headers: authHeaders(),
     });
@@ -316,7 +358,8 @@ export const alertApi = {
       throw new Error("Error al expirar alerta");
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertFromBackend(data);
   },
 
   async uploadAlertMedia(
@@ -329,7 +372,7 @@ export const alertApi = {
     }
 
     const res = await fetch(
-      `${API_BASE}/api/alert/${alertId}/media`,
+      `${API_BASE}/alert/${alertId}/media`,
       {
         method: "POST",
         headers: authHeaders(),
@@ -351,7 +394,7 @@ export const alertApi = {
     const query = buildQuery(params);
 
     const res = await fetch(
-      `${API_BASE}/api/alert/search${query}`,
+      `${API_BASE}/alert/search${query}`,
       {
         method: "POST",
         headers: authHeaders(true),
@@ -363,12 +406,13 @@ export const alertApi = {
       throw new Error("Error en la b��squeda de alertas");
     }
 
-    return res.json();
+    const data = await res.json();
+    return mapAlertsPageFromBackend(data);
   },
 
   // Comment endpoints
   async getComments(alertId: number): Promise<any[]> {
-    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments`, {
+    const res = await fetch(`${API_BASE}/alert/${alertId}/comments`, {
       method: "GET",
       headers: authHeaders(),
     });
@@ -381,7 +425,7 @@ export const alertApi = {
   },
 
   async addComment(alertId: number, content: string): Promise<any> {
-    const res = await fetch(`${API_BASE}/api/alert/${alertId}/comments`, {
+    const res = await fetch(`${API_BASE}/alert/${alertId}/comments`, {
       method: "POST",
       headers: authHeaders(true),
       body: JSON.stringify({ content }),
@@ -396,7 +440,7 @@ export const alertApi = {
 
   async deleteComment(alertId: number, commentId: number): Promise<void> {
     const res = await fetch(
-      `${API_BASE}/api/alert/${alertId}/comments/${commentId}`,
+      `${API_BASE}/alert/${alertId}/comments/${commentId}`,
       {
         method: "DELETE",
         headers: authHeaders(),
@@ -410,7 +454,7 @@ export const alertApi = {
 
   async likeComment(alertId: number, commentId: number): Promise<any> {
     const res = await fetch(
-      `${API_BASE}/api/alert/${alertId}/comments/${commentId}/like`,
+      `${API_BASE}/alert/${alertId}/comments/${commentId}/like`,
       {
         method: "POST",
         headers: authHeaders(),
@@ -426,7 +470,7 @@ export const alertApi = {
 
   async reportComment(alertId: number, commentId: number): Promise<void> {
     const res = await fetch(
-      `${API_BASE}/api/alert/${alertId}/comments/${commentId}/report`,
+      `${API_BASE}/alert/${alertId}/comments/${commentId}/report`,
       {
         method: "POST",
         headers: authHeaders(),

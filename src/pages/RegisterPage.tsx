@@ -33,8 +33,12 @@ export default function RegisterPage() {
         "Ingresa un correo con formato valido (ej. usuario@dominio.com).";
     }
 
-    if (password.length < 8 || password.length > 100) {
-      errors.password = "La contrasena debe tener entre 8 y 100 caracteres, debe tener una mayuscula y una minuscula.";
+    if (password.length < 8 || password.length > 30) {
+      errors.password =
+        "La contrasena debe tener entre 8 y 30 caracteres.";
+    } else if (!/[a-z]/.test(password) || !/[A-Z]/.test(password)) {
+      errors.password =
+        "La contrasena debe incluir al menos una letra mayuscula y una minuscula.";
     }
 
     setFieldErrors(errors);

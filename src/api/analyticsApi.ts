@@ -21,7 +21,7 @@ function authHeaders(): HeadersInit {
 
 export const analyticsApi = {
   async getStats(): Promise<AnalyticsStats> {
-    const res = await fetch(`${API_BASE}/api/analytics/stats`, {
+    const res = await fetch(`${API_BASE}/analytics/stats`, {
       method: "GET",
       headers: authHeaders(),
     });
@@ -35,7 +35,7 @@ export const analyticsApi = {
 
   async getAlertsByType(): Promise<AlertsByTypeEntry[]> {
     const res = await fetch(
-      `${API_BASE}/api/analytics/alerts-by-type`,
+      `${API_BASE}/analytics/alerts-by-type`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -51,7 +51,7 @@ export const analyticsApi = {
 
   async getAlertsBySeverity(): Promise<AlertsBySeverityEntry[]> {
     const res = await fetch(
-      `${API_BASE}/api/analytics/alerts-by-severity`,
+      `${API_BASE}/analytics/alerts-by-severity`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -67,7 +67,7 @@ export const analyticsApi = {
 
   async getAlertsByStatus(): Promise<AlertsByStatusEntry[]> {
     const res = await fetch(
-      `${API_BASE}/api/analytics/alerts-by-status`,
+      `${API_BASE}/analytics/alerts-by-status`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -83,7 +83,7 @@ export const analyticsApi = {
 
   async getTrend(days: number): Promise<TrendEntry[]> {
     const res = await fetch(
-      `${API_BASE}/api/analytics/trend?days=${days}`,
+      `${API_BASE}/analytics/trend?days=${days}`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -102,7 +102,7 @@ export const analyticsApi = {
       typeof limit === "number" ? `?limit=${limit}` : "";
 
     const res = await fetch(
-      `${API_BASE}/api/analytics/hotspots${query}`,
+      `${API_BASE}/analytics/hotspots${query}`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -123,7 +123,7 @@ export const analyticsApi = {
       typeof limit === "number" ? `?limit=${limit}` : "";
 
     const res = await fetch(
-      `${API_BASE}/api/analytics/top-contributors${query}`,
+      `${API_BASE}/analytics/top-contributors${query}`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -139,7 +139,7 @@ export const analyticsApi = {
 
   async getPeakHours(): Promise<PeakHourEntry[]> {
     const res = await fetch(
-      `${API_BASE}/api/analytics/peak-hours`,
+      `${API_BASE}/analytics/peak-hours`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -155,7 +155,7 @@ export const analyticsApi = {
 
   async getByDayOfWeek(): Promise<DayOfWeekEntry[]> {
     const res = await fetch(
-      `${API_BASE}/api/analytics/by-day-of-week`,
+      `${API_BASE}/analytics/by-day-of-week`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -171,7 +171,7 @@ export const analyticsApi = {
 
   async getAvgResolutionTime(): Promise<AvgResolutionTime> {
     const res = await fetch(
-      `${API_BASE}/api/analytics/avg-resolution-time`,
+      `${API_BASE}/analytics/avg-resolution-time`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -189,7 +189,7 @@ export const analyticsApi = {
 
   async getDashboard(): Promise<AnalyticsDashboard> {
     const res = await fetch(
-      `${API_BASE}/api/analytics/dashboard`,
+      `${API_BASE}/analytics/dashboard`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -203,4 +203,3 @@ export const analyticsApi = {
     return res.json();
   },
 };
-
