@@ -322,8 +322,8 @@ export default function WazeNavigation() {
   const lastLocationRef = useRef<{ point: RoutePoint; time: number } | null>(
     null
   );
-  const [, setCurrentSpeedKmh] = useState<number | null>(null);
-  const [, setNearbyAlertBanner] = useState<{
+  const [currentSpeedKmh, setCurrentSpeedKmh] = useState<number | null>(null);
+  const [nearbyAlertBanner, setNearbyAlertBanner] = useState<{
     alert: Alert;
     distanceKm: number;
   } | null>(null);
@@ -940,12 +940,42 @@ export default function WazeNavigation() {
                         selectedRoute.steps[currentStepIndex].duration
                       )}
                     </span>
+                    {currentSpeedKmh !== null && (
+                      <span className="flex items-center gap-1">
+                        <Gauge size={16} />
+                        {Math.round(currentSpeedKmh)} km/h
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         )}
+
+      {/* Banner de nueva alerta cercana a la ruta */}
+      {isNavigating && nearbyAlertBanner && (
+        <div className="absolute top-32 left-4 right-4 z-[1000]">
+          <div className="bg-amber-100 dark:bg-amber-900 border-l-4 border-amber-600 p-3 rounded-lg shadow-lg flex justify-between items-center">
+            <div>
+              <p className="font-semibold text-amber-900 dark:text-amber-100">
+                Nueva alerta en tu ruta
+              </p>
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                A unos {Math.round(nearbyAlertBanner.distanceKm * 1000)} m:{" "}
+                {nearbyAlertBanner.alert.title}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNearbyAlertBanner(null)}
+              className="text-sm text-amber-900 dark:text-amber-100 font-medium"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Selector de rutas */}
       {showRouteSelector && routes.length > 0 && (

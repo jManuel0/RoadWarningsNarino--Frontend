@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { authApi } from "@/api/authApi";
-import { useAuthStore } from "@/stores/authStore";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function RegisterPage() {
@@ -17,8 +16,7 @@ export default function RegisterPage() {
   }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isWakingUp, setIsWakingUp] = useState(false);
-  const setAuth = useAuthStore((s) => s.setAuth);
-  const navigate = useNavigate();
+  const [isRegistered, setIsRegistered] = useState(false);
 
   const validate = () => {
     const errors: typeof fieldErrors = {};
@@ -63,9 +61,8 @@ export default function RegisterPage() {
     }, 10000);
 
     try {
-      const res = await authApi.register({ username, email, password });
-      setAuth(res.token, username);
-      navigate("/alerts");
+      await authApi.register({ username, email, password });
+      setIsRegistered(true);
     } catch (err) {
       const message =
         err instanceof Error
@@ -88,6 +85,16 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center">
           Registrarse
         </h1>
+
+        {isRegistered && (
+          <div className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-200 px-3 py-2 rounded text-sm">
+            <p className="font-semibold">Registro exitoso</p>
+            <p className="text-xs mt-1">
+              Te enviamos un correo para verificar tu cuenta. Revisa tu bandeja de
+              entrada y haz clic en el enlace de verificación antes de iniciar sesión.
+            </p>
+          </div>
+        )}
 
         {isLoading && (
           <div className="flex flex-col items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -192,4 +199,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

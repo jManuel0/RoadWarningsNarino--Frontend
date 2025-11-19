@@ -10,6 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Welcome from "./pages/Welcome";
 import Profile from "./pages/Profile";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ThemeToggle from "./components/ThemeToggle";
 import Navigation from "./components/Navigation";
 import InstallPWA from "./components/InstallPWA";
@@ -22,13 +23,14 @@ import { useServiceWorker } from "./hooks/useServiceWorker";
 function AppRoutes() {
   const isAuth = useAuthStore((s) => s.isAuthenticated());
 
-  // Si no está logueado -> mandar a bienvenida
+  // Si no está logueado -> mandar a bienvenida / login / registro / verificación
   if (!isAuth) {
     return (
       <Routes>
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="*" element={<Navigate to="/welcome" replace />} />
       </Routes>
     );
@@ -48,6 +50,7 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/welcome" element={<Welcome />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
