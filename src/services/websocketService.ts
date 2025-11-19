@@ -4,6 +4,9 @@ type WebSocketCallback = (alert: Alert) => void;
 type StatusCallback = (status: 'connected' | 'disconnected' | 'error') => void;
 
 class WebSocketService {
+  onAlertCreated(_arg0: (alert: any) => void) {
+    throw new Error("Method not implemented.");
+  }
   private socket: WebSocket | null = null;
   private callbacks: WebSocketCallback[] = [];
   private statusCallbacks: StatusCallback[] = [];

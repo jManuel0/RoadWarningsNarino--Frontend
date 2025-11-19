@@ -32,6 +32,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { alertApi } from "@/api/alertApi";
 import QuickAlertModal from "./QuickAlertModal";
 import { getOsrmRoutes } from "@/services/routing";
+import { websocketService } from "@/services/websocketService";
 
 type PlaceResult = {
   id: string;
@@ -315,6 +316,18 @@ export default function WazeNavigation() {
   const [showQuickReports, setShowQuickReports] = useState(false);
   const [, setLastSearchedQuery] = useState<string | null>(null);
 
+  // Para evitar repetir avisos de voz por cada paso
+  const lastSpokenStep300Ref = useRef<number | null>(null);
+  const lastSpokenStep50Ref = useRef<number | null>(null);
+  const lastLocationRef = useRef<{ point: RoutePoint; time: number } | null>(
+    null
+  );
+  const [, setCurrentSpeedKmh] = useState<number | null>(null);
+  const [, setNearbyAlertBanner] = useState<{
+    alert: Alert;
+    distanceKm: number;
+  } | null>(null);
+
   const {
     isNavigating,
     currentLocation,
@@ -332,6 +345,9 @@ export default function WazeNavigation() {
     selectRoute,
     addToRouteHistory,
     setCurrentStepIndex,
+    savedDestinations,
+    addRecentDestination,
+    toggleFavoriteDestination,
   } = useNavigationStore();
 
   const alerts = useAlertStore((state) => state.alerts);
@@ -355,6 +371,22 @@ export default function WazeNavigation() {
           lng: position.coords.longitude,
         };
 
+        // Calcular velocidad aproximada en km/h a partir de la ubicación previa
+        const now = Date.now();
+        if (lastLocationRef.current) {
+          const dtSeconds =
+            (now - lastLocationRef.current.time) / 1000;
+          if (dtSeconds > 0) {
+            const distKm = calculateDistance(
+              lastLocationRef.current.point,
+              newLocation
+            );
+            const speed = (distKm / dtSeconds) * 3600; // km/h
+            setCurrentSpeedKmh(speed);
+          }
+        }
+        lastLocationRef.current = { point: newLocation, time: now };
+
         setCurrentLocation(newLocation);
         addToRouteHistory(newLocation);
 
@@ -366,17 +398,49 @@ export default function WazeNavigation() {
             currentStep.point
           );
 
-          if (distanceToStep < 0.05) {
-            // Menos de 50 metros
+          // Aviso anticipado a ~300 metros
+          if (
+            voiceGuidance &&
+            distanceToStep <= 0.3 &&
+            distanceToStep > 0.05 &&
+            lastSpokenStep300Ref.current !== currentStepIndex
+          ) {
+            speakInstruction(
+              `En 300 metros, ${currentStep.instruction || "sigue las indicaciones"}`
+            );
+            lastSpokenStep300Ref.current = currentStepIndex;
+          }
+
+          // Aviso anticipado a ~50 metros
+          if (
+            voiceGuidance &&
+            distanceToStep <= 0.05 &&
+            distanceToStep > 0.02 &&
+            lastSpokenStep50Ref.current !== currentStepIndex
+          ) {
+            speakInstruction(
+              `En 50 metros, ${currentStep.instruction || "sigue las indicaciones"}`
+            );
+            lastSpokenStep50Ref.current = currentStepIndex;
+          }
+
+          // Consideramos que llegamos al punto del paso a menos de 20 metros
+          if (distanceToStep <= 0.02) {
             const nextIndex = currentStepIndex + 1;
             if (nextIndex < selectedRoute.steps.length) {
               setCurrentStepIndex(nextIndex);
+              // Reiniciar avisos para el siguiente paso
+              lastSpokenStep300Ref.current = null;
+              lastSpokenStep50Ref.current = null;
+
               if (voiceGuidance) {
                 speakInstruction(selectedRoute.steps[nextIndex].instruction);
               }
             } else {
               // Llegamos al destino
               stopNavigation();
+              lastSpokenStep300Ref.current = null;
+              lastSpokenStep50Ref.current = null;
               if (voiceGuidance) {
                 speakInstruction("Has llegado a tu destino");
               }
@@ -429,6 +493,34 @@ export default function WazeNavigation() {
       window.speechSynthesis.speak(utterance);
     }
   };
+
+  // Banner de nuevas alertas cercanas a la ruta actual
+  useEffect(() => {
+    const unsubscribe = websocketService.onAlertCreated((alert: Alert) => {
+      if (!isNavigating || !selectedRoute) return;
+
+      const alertPoint: RoutePoint = {
+        lat: alert.latitude,
+        lng: alert.longitude,
+      };
+
+      let minDistance = Infinity;
+      selectedRoute.points.forEach((p) => {
+        const d = calculateDistance(p, alertPoint);
+        if (d < minDistance) minDistance = d;
+      });
+
+      const THRESHOLD_KM = 0.3; // 300 m
+      if (minDistance <= THRESHOLD_KM) {
+        setNearbyAlertBanner({
+          alert,
+          distanceKm: minDistance,
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [isNavigating, selectedRoute]);
 
   const ensureCanReport = (): boolean => {
     if (isAuthenticated) return true;
@@ -489,8 +581,13 @@ export default function WazeNavigation() {
       setLastSearchedQuery(query);
 
       if (mapped[0]) {
-        setDestination({ lat: mapped[0].lat, lng: mapped[0].lng });
+        const destPoint: RoutePoint = {
+          lat: mapped[0].lat,
+          lng: mapped[0].lng,
+        };
+        setDestination(destPoint);
         setSelectedPlaceId(mapped[0].id);
+        addRecentDestination(mapped[0].name, destPoint);
       }
     } catch (error) {
       console.error("Error buscando destino:", error);
@@ -535,9 +632,11 @@ export default function WazeNavigation() {
   };
 
   const handleSelectDestination = (lat: number, lng: number) => {
-    setDestination({ lat, lng });
+    const destPoint: RoutePoint = { lat, lng };
+    setDestination(destPoint);
     setShowRouteSelector(false);
     setSearchDestination(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    addRecentDestination(`${lat.toFixed(5)}, ${lng.toFixed(5)}`, destPoint);
   };
 
   const handleRouteSelection = (route: Route) => {
@@ -748,6 +847,34 @@ export default function WazeNavigation() {
             </button>
           )}
         </div>
+
+        {savedDestinations.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {savedDestinations.slice(0, 5).map((dest) => (
+              <button
+                key={dest.id}
+                type="button"
+                onClick={() => {
+                  setDestination(dest.location);
+                  setSearchDestination(dest.name);
+                }}
+                className="px-3 py-1 rounded-full bg-white/90 dark:bg-gray-800/90 shadow text-xs flex items-center gap-2"
+              >
+                <span>{dest.name}</span>
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavoriteDestination(dest.id);
+                  }}
+                  className="cursor-pointer"
+                  title="Marcar como favorito"
+                >
+                  {dest.favorite ? "★" : "☆"}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Lista de sugerencias de lugares */}
@@ -758,10 +885,15 @@ export default function WazeNavigation() {
               <li
                 key={place.id}
                 onClick={() => {
-                  setDestination({ lat: place.lat, lng: place.lng });
+                  const destPoint: RoutePoint = {
+                    lat: place.lat,
+                    lng: place.lng,
+                  };
+                  setDestination(destPoint);
                   setSearchDestination(place.name);
                   setSelectedPlaceId(place.id);
                   setShowPlaceResults(false);
+                  addRecentDestination(place.name, destPoint);
                 }}
                 className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
                   selectedPlaceId === place.id
