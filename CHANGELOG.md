@@ -2,6 +2,43 @@
 
 Todas las mejoras y cambios notables en el proyecto serán documentados en este archivo.
 
+## [1.1.0] - 2025-01-19
+
+### ♿ Accessibility (Accesibilidad)
+
+- **Keyboard Navigation**: Navegación completa con teclado
+  - Skip link para saltar al contenido principal
+  - Focus trap en modales y diálogos
+  - Soporte completo de teclas (Escape, Enter, Tab, Arrows)
+  - Custom hooks: useKeyboardNavigation, useFocusTrap, useSkipLink
+- **Screen Reader Support**: Soporte completo para lectores de pantalla
+  - useScreenReaderAnnouncement hook para anuncios dinámicos
+  - ARIA live regions configuradas
+  - Semantic HTML en todos los componentes
+- **ARIA Labels y Roles**: Etiquetas y roles ARIA apropiados
+  - Navigation con role="navigation" y aria-label
+  - Modales con role="dialog" y aria-modal
+  - Botones con aria-label, aria-pressed, aria-disabled
+  - Formularios con htmlFor, aria-describedby, aria-required
+  - Grupos con role="group" y aria-labelledby
+  - Icons decorativos con aria-hidden
+- **Focus Management**: Gestión mejorada del foco
+  - Focus-visible para navegación con teclado
+  - Outline de 2px azul en todos los elementos interactivos
+  - Prevención de scroll en body cuando modales están abiertos
+  - Main content con id="main-content" y tabIndex={-1}
+- **Accessibility Styles**: Estilos de accesibilidad globales
+  - .sr-only class para contenido solo para lectores de pantalla
+  - Prefers-reduced-motion support
+  - Prefers-contrast: high support
+  - Minimum 44x44px touch target size
+  - Custom focus indicators
+- **Documentation**: Guía completa de accesibilidad
+  - ACCESSIBILITY.md con patrones y ejemplos
+  - Keyboard shortcuts documentados
+  - Testing checklist
+  - WCAG 2.1 Level AA compliance
+
 ## [1.0.0] - 2025-01-19
 
 ### 🎉 Mejoras Completas del Proyecto

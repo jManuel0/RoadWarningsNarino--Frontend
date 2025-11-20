@@ -1,8 +1,16 @@
 import { renderHook, act } from "@testing-library/react";
-import { useSettingsStore } from "./settingsStore";
+
+const loadSettingsStore = () => require("./settingsStore");
 
 describe("settingsStore", () => {
+  let useSettingsStore: ReturnType<typeof loadSettingsStore>["useSettingsStore"];
+  const resetStore = () => {
+    jest.resetModules();
+    useSettingsStore = loadSettingsStore().useSettingsStore;
+  };
+
   beforeEach(() => {
+    resetStore();
     const { result } = renderHook(() => useSettingsStore());
     act(() => {
       result.current.setTheme("light");
@@ -159,6 +167,7 @@ describe("settingsStore", () => {
       })
     );
 
+    resetStore();
     const { result } = renderHook(() => useSettingsStore());
 
     expect(result.current.theme).toBe("dark");

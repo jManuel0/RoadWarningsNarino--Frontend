@@ -6,6 +6,7 @@ module.exports = {
   setupFilesAfterEnv: ["<rootDir>/src/test/setup.ts"],
   moduleNameMapper: {
     "^@/api/baseUrl$": "<rootDir>/src/test/__mocks__/baseUrl.ts",
+    "^react-leaflet$": "<rootDir>/src/test/__mocks__/react-leaflet.ts",
     "^@/(.*)$": "<rootDir>/src/$1",
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
     "\\.(jpg|jpeg|png|gif|svg|webp|ico)$": "<rootDir>/src/test/__mocks__/fileMock.ts",

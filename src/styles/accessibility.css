@@ -1,0 +1,196 @@
+/**
+ * Accessibility Styles
+ * These styles improve accessibility for keyboard navigation and screen readers
+ */
+
+/* Screen reader only class - hides content visually but keeps it accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus visible styles for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove outline for mouse/touch users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Ensure interactive elements have pointer cursor */
+button,
+a,
+[role="button"],
+[role="link"],
+input[type="submit"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"],
+select {
+  cursor: pointer;
+}
+
+/* Disabled elements should not have pointer cursor */
+button:disabled,
+a[aria-disabled="true"],
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* Ensure sufficient touch target size (minimum 44x44px per WCAG) */
+button,
+a,
+[role="button"],
+[role="link"],
+input[type="submit"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Exception for inline text links */
+a:not([role="button"]) {
+  min-height: unset;
+  min-width: unset;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  * {
+    border-width: 2px;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Skip link focus styles */
+.skip-link:focus {
+  position: absolute;
+  top: 0 !important;
+  left: 0;
+  z-index: 9999;
+  padding: 1rem 1.5rem;
+  background: #000;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Ensure links are distinguishable */
+a {
+  text-decoration-skip-ink: auto;
+}
+
+/* Better focus styles for form elements */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Improve readability with better line height */
+p,
+li,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.5;
+}
+
+/* Ensure text can be resized up to 200% without breaking layout */
+html {
+  font-size: 100%;
+}
+
+/* Improve text spacing for better readability */
+* {
+  letter-spacing: 0.01em;
+}
+
+/* Dark mode considerations for accessibility */
+@media (prefers-color-scheme: dark) {
+  *:focus-visible {
+    outline-color: #60a5fa;
+  }
+}
+
+/* Ensure sufficient color contrast for placeholder text */
+::placeholder {
+  opacity: 0.6;
+}
+
+/* Better focus indicator for checkbox and radio */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Accessible table styles */
+table {
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-weight: bold;
+}
+
+/* Ensure images have alt text or are marked decorative */
+img:not([alt]) {
+  outline: 2px dashed red;
+}
+
+/* Keyboard navigation indicator */
+.keyboard-user *:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Announce loading states to screen readers */
+[aria-busy="true"]::after {
+  content: " (Cargando...)";
+  position: absolute;
+  left: -10000px;
+}
+
+/* Error messages should be clearly visible */
+[role="alert"],
+[aria-live="assertive"] {
+  font-weight: 600;
+}

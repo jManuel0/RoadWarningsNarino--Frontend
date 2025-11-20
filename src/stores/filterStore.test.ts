@@ -1,9 +1,17 @@
 import { renderHook, act } from "@testing-library/react";
-import { useFilterStore } from "./filterStore";
 import { AlertType, AlertSeverity, AlertStatus } from "@/types/Alert";
 
+const loadFilterStore = () => require("./filterStore");
+
 describe("filterStore", () => {
+  let useFilterStore: ReturnType<typeof loadFilterStore>["useFilterStore"];
+  const resetStore = () => {
+    jest.resetModules();
+    useFilterStore = loadFilterStore().useFilterStore;
+  };
+
   beforeEach(() => {
+    resetStore();
     const { result } = renderHook(() => useFilterStore());
     act(() => {
       result.current.clearFilters();
@@ -158,6 +166,7 @@ describe("filterStore", () => {
       })
     );
 
+    resetStore();
     const { result } = renderHook(() => useFilterStore());
 
     expect(result.current.filters.types).toContain(AlertType.ACCIDENTE);

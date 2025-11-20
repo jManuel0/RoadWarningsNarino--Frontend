@@ -1,9 +1,17 @@
 import { renderHook, act } from "@testing-library/react";
-import { useAuthStore } from "./authStore";
+
+const loadAuthStore = () => require("./authStore");
 
 describe("authStore", () => {
+  let useAuthStore: ReturnType<typeof loadAuthStore>["useAuthStore"];
+
+  const resetStore = () => {
+    jest.resetModules();
+    useAuthStore = loadAuthStore().useAuthStore;
+  };
+
   beforeEach(() => {
-    // Reset store to initial state
+    resetStore();
     const { result } = renderHook(() => useAuthStore());
     act(() => {
       result.current.logout();
@@ -65,7 +73,6 @@ describe("authStore", () => {
   });
 
   it("loads auth from localStorage on initialization", () => {
-    // Set localStorage manually
     localStorage.setItem(
       "auth-storage",
       JSON.stringify({
@@ -77,7 +84,7 @@ describe("authStore", () => {
       })
     );
 
-    // Create new instance
+    resetStore();
     const { result } = renderHook(() => useAuthStore());
 
     expect(result.current.token).toBe("persisted-token");

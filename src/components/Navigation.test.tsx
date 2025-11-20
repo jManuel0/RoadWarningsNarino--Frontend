@@ -37,7 +37,7 @@ describe("Navigation", () => {
     render(<Navigation />);
 
     const logoutButton = screen.getByRole("button", {
-      name: /cerrar sesi\u00f3n/i,
+      name: /salir/i,
     });
     expect(logoutButton).toBeInTheDocument();
   });
@@ -46,7 +46,7 @@ describe("Navigation", () => {
     render(<Navigation />);
 
     const logoutButton = screen.getByRole("button", {
-      name: /cerrar sesi\u00f3n/i,
+      name: /salir/i,
     });
     fireEvent.click(logoutButton);
 
@@ -73,7 +73,7 @@ describe("Navigation", () => {
 
     expect(screen.queryByText(/perfil/i)).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /cerrar sesi\u00f3n/i })
+      screen.queryByRole("button", { name: /salir/i })
     ).not.toBeInTheDocument();
   });
 });

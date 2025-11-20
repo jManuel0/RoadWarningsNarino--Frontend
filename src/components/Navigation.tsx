@@ -18,7 +18,11 @@ export default function Navigation() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <nav
+      className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+      role="navigation"
+      aria-label="Navegación principal"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Links principales */}
@@ -77,8 +81,9 @@ export default function Navigation() {
                 type="button"
                 onClick={logout}
                 className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors"
+                aria-label="Cerrar sesión"
               >
-                <LogOut size={18} />
+                <LogOut size={18} aria-hidden="true" />
                 <span className="text-sm font-medium">Salir</span>
               </button>
             )}
@@ -105,8 +110,9 @@ function NavLink({ to, active, icon, children }: Readonly<NavLinkProps>) {
           ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
           : "border-transparent text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
       }`}
+      aria-current={active ? "page" : undefined}
     >
-      {icon}
+      <span aria-hidden="true">{icon}</span>
       {children}
     </Link>
   );

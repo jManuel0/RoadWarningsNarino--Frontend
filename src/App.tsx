@@ -9,6 +9,7 @@ import InstallPWA from "./components/InstallPWA";
 import OfflineIndicator from "./components/OfflineIndicator";
 import FloatingClearFilters from "./components/FloatingClearFilters";
 import LoadingSpinner from "./components/LoadingSpinner";
+import SkipLink from "./components/SkipLink";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useAuthStore } from "./stores/authStore";
 import { useServiceWorker } from "./hooks/useServiceWorker";
@@ -46,22 +47,25 @@ function AppRoutes() {
   // Ya autenticado
   return (
     <>
+      <SkipLink />
       <Navigation />
-      <Suspense fallback={<LoadingSpinner />}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/alerts" element={<Alerts />} />
-          <Route path="/statistics" element={<Statistics />} />
-          <Route path="/gps" element={<GpsPage />} />
-          <Route path="/waze" element={<WazePage />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/welcome" element={<Welcome />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+      <main id="main-content" tabIndex={-1}>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/alerts" element={<Alerts />} />
+            <Route path="/statistics" element={<Statistics />} />
+            <Route path="/gps" element={<GpsPage />} />
+            <Route path="/waze" element={<WazePage />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/welcome" element={<Welcome />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </main>
     </>
   );
 }
