@@ -1,4 +1,4 @@
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 import {
   NotificationDTO,
   DeviceTokenRequestDTO,
@@ -66,13 +66,10 @@ export const notificationsApi = {
   ): Promise<PaginatedNotificationsResponse> {
     const query = buildQuery(params);
 
-    const res = await fetch(
-      `${API_BASE}/api/notifications/paginated${query}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/notifications/paginated${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener notificaciones paginadas");
@@ -82,13 +79,10 @@ export const notificationsApi = {
   },
 
   async getUnreadNotifications(): Promise<NotificationDTO[]> {
-    const res = await fetch(
-      `${API_BASE}/api/notifications/unread`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/notifications/unread`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener notificaciones no leídas");
@@ -98,13 +92,10 @@ export const notificationsApi = {
   },
 
   async getUnreadCount(): Promise<number> {
-    const res = await fetch(
-      `${API_BASE}/api/notifications/unread/count`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/notifications/unread/count`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener conteo de no leídas");
@@ -116,13 +107,10 @@ export const notificationsApi = {
   },
 
   async markAsRead(id: number): Promise<void> {
-    const res = await fetch(
-      `${API_BASE}/api/notifications/${id}/read`,
-      {
-        method: "PATCH",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/notifications/${id}/read`, {
+      method: "PATCH",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al marcar notificación como leída");
@@ -130,13 +118,10 @@ export const notificationsApi = {
   },
 
   async markAllAsRead(): Promise<void> {
-    const res = await fetch(
-      `${API_BASE}/api/notifications/read-all`,
-      {
-        method: "PATCH",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/notifications/read-all`, {
+      method: "PATCH",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al marcar todas como leídas");
@@ -144,13 +129,10 @@ export const notificationsApi = {
   },
 
   async deleteNotification(id: number): Promise<void> {
-    const res = await fetch(
-      `${API_BASE}/api/notifications/${id}`,
-      {
-        method: "DELETE",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/notifications/${id}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al eliminar notificación");
@@ -158,13 +140,10 @@ export const notificationsApi = {
   },
 
   async deleteReadNotifications(): Promise<void> {
-    const res = await fetch(
-      `${API_BASE}/api/notifications/read`,
-      {
-        method: "DELETE",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/notifications/read`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al eliminar notificaciones leídas");
@@ -173,17 +152,12 @@ export const notificationsApi = {
 
   // ==== DEVICE TOKENS ====
 
-  async registerDeviceToken(
-    data: DeviceTokenRequestDTO
-  ): Promise<void> {
-    const res = await fetch(
-      `${API_BASE}/api/notifications/device-token`,
-      {
-        method: "POST",
-        headers: authHeaders(true),
-        body: JSON.stringify(data),
-      }
-    );
+  async registerDeviceToken(data: DeviceTokenRequestDTO): Promise<void> {
+    const res = await fetch(`${API_BASE}/api/notifications/device-token`, {
+      method: "POST",
+      headers: authHeaders(true),
+      body: JSON.stringify(data),
+    });
 
     if (!res.ok) {
       throw new Error("Error al registrar device token");
@@ -192,9 +166,7 @@ export const notificationsApi = {
 
   async deleteDeviceToken(token: string): Promise<void> {
     const res = await fetch(
-      `${API_BASE}/api/notifications/device-token/${encodeURIComponent(
-        token
-      )}`,
+      `${API_BASE}/api/notifications/device-token/${encodeURIComponent(token)}`,
       {
         method: "DELETE",
         headers: authHeaders(),
@@ -207,13 +179,10 @@ export const notificationsApi = {
   },
 
   async getDeviceTokens(): Promise<DeviceTokenRequestDTO[]> {
-    const res = await fetch(
-      `${API_BASE}/api/notifications/device-tokens`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/notifications/device-tokens`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener device tokens");
@@ -222,4 +191,3 @@ export const notificationsApi = {
     return res.json();
   },
 };
-

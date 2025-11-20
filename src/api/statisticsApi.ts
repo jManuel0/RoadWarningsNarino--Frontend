@@ -1,4 +1,4 @@
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 import {
   UserStatistics,
   LeaderboardEntry,
@@ -51,13 +51,10 @@ export const statisticsApi = {
   },
 
   async getUserStatistics(userId: number): Promise<UserStatistics> {
-    const res = await fetch(
-      `${API_BASE}/api/statistics/user/${userId}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/statistics/user/${userId}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener estadísticas del usuario");
@@ -66,9 +63,7 @@ export const statisticsApi = {
     return res.json();
   },
 
-  async getLeaderboardReputation(
-    limit?: number
-  ): Promise<LeaderboardEntry[]> {
+  async getLeaderboardReputation(limit?: number): Promise<LeaderboardEntry[]> {
     const query = buildQuery({ limit });
 
     const res = await fetch(
@@ -86,9 +81,7 @@ export const statisticsApi = {
     return res.json();
   },
 
-  async getLeaderboardAlerts(
-    limit?: number
-  ): Promise<LeaderboardEntry[]> {
+  async getLeaderboardAlerts(limit?: number): Promise<LeaderboardEntry[]> {
     const query = buildQuery({ limit });
 
     const res = await fetch(
@@ -106,9 +99,7 @@ export const statisticsApi = {
     return res.json();
   },
 
-  async getLeaderboardUpvotes(
-    limit?: number
-  ): Promise<LeaderboardEntry[]> {
+  async getLeaderboardUpvotes(limit?: number): Promise<LeaderboardEntry[]> {
     const query = buildQuery({ limit });
 
     const res = await fetch(
@@ -127,13 +118,10 @@ export const statisticsApi = {
   },
 
   async getMyBadges(): Promise<UserBadgeSummary[]> {
-    const res = await fetch(
-      `${API_BASE}/api/statistics/badges/me`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/statistics/badges/me`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener tus insignias");
@@ -142,9 +130,7 @@ export const statisticsApi = {
     return res.json();
   },
 
-  async getUserBadges(
-    userId: number
-  ): Promise<UserBadgeSummary[]> {
+  async getUserBadges(userId: number): Promise<UserBadgeSummary[]> {
     const res = await fetch(
       `${API_BASE}/api/statistics/badges/user/${userId}`,
       {
@@ -160,4 +146,3 @@ export const statisticsApi = {
     return res.json();
   },
 };
-

@@ -8,9 +8,23 @@ const actualCreate =
 const storeResetFns = new Set<() => void>();
 
 // Create a version of create that tracks the store reset function
-export const create = <TState>(
+export function create<TState>(
   createState: StateCreator<TState, [], []>
-): StoreApi<TState> => {
+): StoreApi<TState>;
+
+export function create<TState>(): (
+  createState: StateCreator<TState, [], []>
+) => StoreApi<TState>;
+
+export function create<TState>(
+  createState?: StateCreator<TState, [], []>
+):
+  | StoreApi<TState>
+  | ((createState: StateCreator<TState, [], []>) => StoreApi<TState>) {
+  if (!createState) {
+    return (stateCreator: StateCreator<TState, [], []>) => create(stateCreator);
+  }
+
   const store = actualCreate(createState);
   const initialState = store.getState();
 
@@ -21,7 +35,7 @@ export const create = <TState>(
   storeResetFns.add(reset);
 
   return store;
-};
+}
 
 // Helper to reset all stores
 export const resetAllStores = () => {
@@ -31,6 +45,3 @@ export const resetAllStores = () => {
     });
   });
 };
-
-// Re-export everything else from zustand
-export * from "zustand";

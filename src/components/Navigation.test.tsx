@@ -1,5 +1,4 @@
 import { render, screen, fireEvent } from "@/test/test-utils";
-import { BrowserRouter } from "react-router-dom";
 import Navigation from "./Navigation";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -19,11 +18,7 @@ describe("Navigation", () => {
   });
 
   it("renders all navigation links", () => {
-    render(
-      <BrowserRouter>
-        <Navigation />
-      </BrowserRouter>
-    );
+    render(<Navigation />);
 
     expect(screen.getByText(/inicio/i)).toBeInTheDocument();
     expect(screen.getByText(/alertas/i)).toBeInTheDocument();
@@ -33,21 +28,13 @@ describe("Navigation", () => {
   });
 
   it("shows profile link when authenticated", () => {
-    render(
-      <BrowserRouter>
-        <Navigation />
-      </BrowserRouter>
-    );
+    render(<Navigation />);
 
     expect(screen.getByText(/perfil/i)).toBeInTheDocument();
   });
 
   it("shows logout button when authenticated", () => {
-    render(
-      <BrowserRouter>
-        <Navigation />
-      </BrowserRouter>
-    );
+    render(<Navigation />);
 
     const logoutButton = screen.getByRole("button", {
       name: /cerrar sesi\u00f3n/i,
@@ -56,11 +43,7 @@ describe("Navigation", () => {
   });
 
   it("calls logout function when logout button is clicked", () => {
-    render(
-      <BrowserRouter>
-        <Navigation />
-      </BrowserRouter>
-    );
+    render(<Navigation />);
 
     const logoutButton = screen.getByRole("button", {
       name: /cerrar sesi\u00f3n/i,
@@ -73,11 +56,7 @@ describe("Navigation", () => {
   it("highlights active link based on current path", () => {
     window.history.pushState({}, "", "/alerts");
 
-    render(
-      <BrowserRouter>
-        <Navigation />
-      </BrowserRouter>
-    );
+    render(<Navigation />);
 
     const alertsLink = screen.getByText(/alertas/i).closest("a");
     expect(alertsLink).toHaveClass("text-blue-600");
@@ -90,11 +69,7 @@ describe("Navigation", () => {
       username: null,
     });
 
-    render(
-      <BrowserRouter>
-        <Navigation />
-      </BrowserRouter>
-    );
+    render(<Navigation />);
 
     expect(screen.queryByText(/perfil/i)).not.toBeInTheDocument();
     expect(

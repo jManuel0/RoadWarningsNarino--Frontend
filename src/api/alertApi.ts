@@ -11,7 +11,18 @@ import {
   severityFrontToBackend,
   severityBackendToFront,
 } from "@/types/Alert";
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
+import type { Comment } from "@/types/Comment";
+type BackendAlert = Omit<Alert, "severity"> & {
+  severity: BackendAlertSeverity;
+};
+
+type BackendPaginatedAlertsResponse = Omit<
+  PaginatedAlertsResponse,
+  "content"
+> & {
+  content?: BackendAlert[];
+};
 
 // Lee el token desde localStorage (guardado por authStore)
 function getAuthToken(): string | null {
@@ -56,14 +67,16 @@ function buildQuery(
 }
 
 // Mapeo de alertas entre backend y frontend
-function mapAlertFromBackend(raw: any): Alert {
+function mapAlertFromBackend(raw: BackendAlert): Alert {
   return {
     ...raw,
     severity: severityBackendToFront(raw.severity as BackendAlertSeverity),
   };
 }
 
-function mapAlertsPageFromBackend(raw: any): PaginatedAlertsResponse {
+function mapAlertsPageFromBackend(
+  raw: BackendPaginatedAlertsResponse
+): PaginatedAlertsResponse {
   return {
     ...raw,
     content: (raw.content ?? []).map(mapAlertFromBackend),
@@ -80,8 +93,8 @@ export const alertApi = {
     if (!res.ok) {
       throw new Error(`Error al obtener alertas: ${res.status}`);
     }
-    const data = await res.json();
-    return (data as any[]).map(mapAlertFromBackend);
+    const data = (await res.json()) as BackendAlert[];
+    return data.map(mapAlertFromBackend);
   },
 
   async getAlertsPaginated(
@@ -95,12 +108,10 @@ export const alertApi = {
     });
 
     if (!res.ok) {
-      throw new Error(
-        `Error al obtener alertas paginadas: ${res.status}`
-      );
+      throw new Error(`Error al obtener alertas paginadas: ${res.status}`);
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendPaginatedAlertsResponse;
     return mapAlertsPageFromBackend(data);
   },
 
@@ -113,8 +124,8 @@ export const alertApi = {
     if (!res.ok) {
       throw new Error(`Error al obtener alertas activas: ${res.status}`);
     }
-    const data = await res.json();
-    return (data as any[]).map(mapAlertFromBackend);
+    const data = (await res.json()) as BackendAlert[];
+    return data.map(mapAlertFromBackend);
   },
 
   async getActiveAlertsPaginated(
@@ -122,13 +133,10 @@ export const alertApi = {
   ): Promise<PaginatedAlertsResponse> {
     const query = buildQuery(params);
 
-    const res = await fetch(
-      `${API_BASE}/alert/active/paginated${query}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/alert/active/paginated${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error(
@@ -136,7 +144,7 @@ export const alertApi = {
       );
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendPaginatedAlertsResponse;
     return mapAlertsPageFromBackend(data);
   },
 
@@ -158,7 +166,7 @@ export const alertApi = {
       throw new Error("Error al crear alerta");
     }
 
-    const created = await res.json();
+    const created = (await res.json()) as BackendAlert;
     return mapAlertFromBackend(created);
   },
 
@@ -172,7 +180,7 @@ export const alertApi = {
       throw new Error("Error al obtener detalle de la alerta");
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendAlert;
     return mapAlertFromBackend(data);
   },
 
@@ -187,26 +195,20 @@ export const alertApi = {
       radius: params.radius,
     });
 
-    const res = await fetch(
-      `${API_BASE}/alert/nearby${query}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/alert/nearby${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener alertas cercanas");
     }
 
-    const data = await res.json();
-    return (data as any[]).map(mapAlertFromBackend);
+    const data = (await res.json()) as BackendAlert[];
+    return data.map(mapAlertFromBackend);
   },
 
-  async updateAlert(
-    id: number,
-    data: CreateAlertDTO
-  ): Promise<Alert> {
+  async updateAlert(id: number, data: CreateAlertDTO): Promise<Alert> {
     const payload = {
       ...data,
       severity: severityFrontToBackend(data.severity),
@@ -222,24 +224,21 @@ export const alertApi = {
       throw new Error("Error al actualizar alerta");
     }
 
-    const updated = await res.json();
+    const updated = (await res.json()) as BackendAlert;
     return mapAlertFromBackend(updated);
   },
 
   async updateAlertStatus(id: number, status: AlertStatus): Promise<Alert> {
-    const res = await fetch(
-      `${API_BASE}/alert/${id}/status?status=${status}`,
-      {
-        method: "PATCH",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/alert/${id}/status?status=${status}`, {
+      method: "PATCH",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al actualizar estado");
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendAlert;
     return mapAlertFromBackend(data);
   },
 
@@ -264,7 +263,7 @@ export const alertApi = {
       throw new Error("Error al votar alerta");
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendAlert;
     return mapAlertFromBackend(data);
   },
 
@@ -278,7 +277,7 @@ export const alertApi = {
       throw new Error("Error al votar alerta");
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendAlert;
     return mapAlertFromBackend(data);
   },
 
@@ -287,19 +286,16 @@ export const alertApi = {
   ): Promise<PaginatedAlertsResponse> {
     const query = buildQuery(params);
 
-    const res = await fetch(
-      `${API_BASE}/alert/my-alerts${query}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/alert/my-alerts${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener mis alertas");
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendPaginatedAlertsResponse;
     return mapAlertsPageFromBackend(data);
   },
 
@@ -309,20 +305,17 @@ export const alertApi = {
   ): Promise<PaginatedAlertsResponse> {
     const query = buildQuery(params);
 
-    const res = await fetch(
-      `${API_BASE}/alert/filter${query}`,
-      {
-        method: "POST",
-        headers: authHeaders(true),
-        body: JSON.stringify(filters),
-      }
-    );
+    const res = await fetch(`${API_BASE}/alert/filter${query}`, {
+      method: "POST",
+      headers: authHeaders(true),
+      body: JSON.stringify(filters),
+    });
 
     if (!res.ok) {
       throw new Error("Error al filtrar alertas");
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendPaginatedAlertsResponse;
     return mapAlertsPageFromBackend(data);
   },
 
@@ -332,19 +325,16 @@ export const alertApi = {
   ): Promise<PaginatedAlertsResponse> {
     const query = buildQuery(params);
 
-    const res = await fetch(
-      `${API_BASE}/alert/user/${userId}${query}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/alert/user/${userId}${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener alertas del usuario");
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendPaginatedAlertsResponse;
     return mapAlertsPageFromBackend(data);
   },
 
@@ -358,27 +348,21 @@ export const alertApi = {
       throw new Error("Error al expirar alerta");
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendAlert;
     return mapAlertFromBackend(data);
   },
 
-  async uploadAlertMedia(
-    alertId: number,
-    files: File[]
-  ): Promise<any> {
+  async uploadAlertMedia(alertId: number, files: File[]): Promise<unknown> {
     const formData = new FormData();
     for (const file of files) {
       formData.append("files", file);
     }
 
-    const res = await fetch(
-      `${API_BASE}/alert/${alertId}/media`,
-      {
-        method: "POST",
-        headers: authHeaders(),
-        body: formData,
-      }
-    );
+    const res = await fetch(`${API_BASE}/alert/${alertId}/media`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: formData,
+    });
 
     if (!res.ok) {
       throw new Error("Error al subir archivos de la alerta");
@@ -393,25 +377,22 @@ export const alertApi = {
   ): Promise<PaginatedAlertsResponse> {
     const query = buildQuery(params);
 
-    const res = await fetch(
-      `${API_BASE}/alert/search${query}`,
-      {
-        method: "POST",
-        headers: authHeaders(true),
-        body: JSON.stringify(criteria),
-      }
-    );
+    const res = await fetch(`${API_BASE}/alert/search${query}`, {
+      method: "POST",
+      headers: authHeaders(true),
+      body: JSON.stringify(criteria),
+    });
 
     if (!res.ok) {
       throw new Error("Error en la b��squeda de alertas");
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as BackendPaginatedAlertsResponse;
     return mapAlertsPageFromBackend(data);
   },
 
   // Comment endpoints
-  async getComments(alertId: number): Promise<any[]> {
+  async getComments(alertId: number): Promise<Comment[]> {
     const res = await fetch(`${API_BASE}/alert/${alertId}/comments`, {
       method: "GET",
       headers: authHeaders(),
@@ -421,10 +402,11 @@ export const alertApi = {
       throw new Error("Error al obtener comentarios");
     }
 
-    return res.json();
+    const comments = (await res.json()) as Comment[];
+    return comments;
   },
 
-  async addComment(alertId: number, content: string): Promise<any> {
+  async addComment(alertId: number, content: string): Promise<Comment> {
     const res = await fetch(`${API_BASE}/alert/${alertId}/comments`, {
       method: "POST",
       headers: authHeaders(true),
@@ -435,7 +417,8 @@ export const alertApi = {
       throw new Error("Error al agregar comentario");
     }
 
-    return res.json();
+    const comment = (await res.json()) as Comment;
+    return comment;
   },
 
   async deleteComment(alertId: number, commentId: number): Promise<void> {
@@ -452,7 +435,7 @@ export const alertApi = {
     }
   },
 
-  async likeComment(alertId: number, commentId: number): Promise<any> {
+  async likeComment(alertId: number, commentId: number): Promise<Comment> {
     const res = await fetch(
       `${API_BASE}/alert/${alertId}/comments/${commentId}/like`,
       {
@@ -465,7 +448,8 @@ export const alertApi = {
       throw new Error("Error al dar like al comentario");
     }
 
-    return res.json();
+    const comment = (await res.json()) as Comment;
+    return comment;
   },
 
   async reportComment(alertId: number, commentId: number): Promise<void> {

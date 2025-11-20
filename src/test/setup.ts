@@ -59,6 +59,7 @@ const mockGeolocation = {
 Object.defineProperty(navigator, "geolocation", {
   value: mockGeolocation,
   writable: true,
+  configurable: true,
 });
 
 // Mock Notification API

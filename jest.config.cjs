@@ -5,6 +5,7 @@ module.exports = {
   roots: ["<rootDir>/src"],
   setupFilesAfterEnv: ["<rootDir>/src/test/setup.ts"],
   moduleNameMapper: {
+    "^@/api/baseUrl$": "<rootDir>/src/test/__mocks__/baseUrl.ts",
     "^@/(.*)$": "<rootDir>/src/$1",
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
     "\\.(jpg|jpeg|png|gif|svg|webp|ico)$": "<rootDir>/src/test/__mocks__/fileMock.ts",

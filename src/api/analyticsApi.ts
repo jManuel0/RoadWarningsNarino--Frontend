@@ -1,4 +1,4 @@
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 import {
   AnalyticsStats,
   AlertsByTypeEntry,
@@ -34,13 +34,10 @@ export const analyticsApi = {
   },
 
   async getAlertsByType(): Promise<AlertsByTypeEntry[]> {
-    const res = await fetch(
-      `${API_BASE}/analytics/alerts-by-type`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/alerts-by-type`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener alertas por tipo");
@@ -50,13 +47,10 @@ export const analyticsApi = {
   },
 
   async getAlertsBySeverity(): Promise<AlertsBySeverityEntry[]> {
-    const res = await fetch(
-      `${API_BASE}/analytics/alerts-by-severity`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/alerts-by-severity`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener alertas por severidad");
@@ -66,13 +60,10 @@ export const analyticsApi = {
   },
 
   async getAlertsByStatus(): Promise<AlertsByStatusEntry[]> {
-    const res = await fetch(
-      `${API_BASE}/analytics/alerts-by-status`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/alerts-by-status`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener alertas por estado");
@@ -82,13 +73,10 @@ export const analyticsApi = {
   },
 
   async getTrend(days: number): Promise<TrendEntry[]> {
-    const res = await fetch(
-      `${API_BASE}/analytics/trend?days=${days}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/trend?days=${days}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener tendencia de alertas");
@@ -98,16 +86,12 @@ export const analyticsApi = {
   },
 
   async getHotspots(limit?: number): Promise<HotspotEntry[]> {
-    const query =
-      typeof limit === "number" ? `?limit=${limit}` : "";
+    const query = typeof limit === "number" ? `?limit=${limit}` : "";
 
-    const res = await fetch(
-      `${API_BASE}/analytics/hotspots${query}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/hotspots${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener hotspots");
@@ -116,19 +100,13 @@ export const analyticsApi = {
     return res.json();
   },
 
-  async getTopContributors(
-    limit?: number
-  ): Promise<TopContributorEntry[]> {
-    const query =
-      typeof limit === "number" ? `?limit=${limit}` : "";
+  async getTopContributors(limit?: number): Promise<TopContributorEntry[]> {
+    const query = typeof limit === "number" ? `?limit=${limit}` : "";
 
-    const res = await fetch(
-      `${API_BASE}/analytics/top-contributors${query}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/top-contributors${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener top de contribuidores");
@@ -138,13 +116,10 @@ export const analyticsApi = {
   },
 
   async getPeakHours(): Promise<PeakHourEntry[]> {
-    const res = await fetch(
-      `${API_BASE}/analytics/peak-hours`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/peak-hours`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener horas pico");
@@ -154,13 +129,10 @@ export const analyticsApi = {
   },
 
   async getByDayOfWeek(): Promise<DayOfWeekEntry[]> {
-    const res = await fetch(
-      `${API_BASE}/analytics/by-day-of-week`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/by-day-of-week`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener datos por día de la semana");
@@ -170,31 +142,23 @@ export const analyticsApi = {
   },
 
   async getAvgResolutionTime(): Promise<AvgResolutionTime> {
-    const res = await fetch(
-      `${API_BASE}/analytics/avg-resolution-time`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/avg-resolution-time`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
-      throw new Error(
-        "Error al obtener tiempo promedio de resolución"
-      );
+      throw new Error("Error al obtener tiempo promedio de resolución");
     }
 
     return res.json();
   },
 
   async getDashboard(): Promise<AnalyticsDashboard> {
-    const res = await fetch(
-      `${API_BASE}/analytics/dashboard`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/analytics/dashboard`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener datos del dashboard");

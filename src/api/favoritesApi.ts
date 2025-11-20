@@ -1,4 +1,4 @@
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 import {
   FavoriteRouteRequestDTO,
   FavoriteRoute,
@@ -100,13 +100,10 @@ export const favoritesApi = {
   },
 
   async deleteFavoriteRoute(routeId: number): Promise<void> {
-    const res = await fetch(
-      `${API_BASE}/api/favorites/routes/${routeId}`,
-      {
-        method: "DELETE",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/favorites/routes/${routeId}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al eliminar ruta favorita");
@@ -149,13 +146,10 @@ export const favoritesApi = {
   // ==== ALERTAS FAVORITAS ====
 
   async addFavoriteAlert(alertId: number): Promise<FavoriteAlert> {
-    const res = await fetch(
-      `${API_BASE}/api/favorites/alerts/${alertId}`,
-      {
-        method: "POST",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/favorites/alerts/${alertId}`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al agregar alerta a favoritos");
@@ -198,13 +192,10 @@ export const favoritesApi = {
   },
 
   async deleteFavoriteAlert(alertId: number): Promise<void> {
-    const res = await fetch(
-      `${API_BASE}/api/favorites/alerts/${alertId}`,
-      {
-        method: "DELETE",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/favorites/alerts/${alertId}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al eliminar alerta de favoritos");
@@ -229,4 +220,3 @@ export const favoritesApi = {
     return !!(data && (data.favorite ?? data.isFavorite));
   },
 };
-

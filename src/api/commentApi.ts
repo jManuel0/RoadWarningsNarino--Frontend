@@ -5,7 +5,7 @@ import {
   CommentPaginationParams,
   PaginatedCommentsResponse,
 } from "@/types/Comment";
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 
 function getAuthToken(): string | null {
   try {
@@ -121,10 +121,7 @@ export const commentApi = {
     return res.json();
   },
 
-  async updateComment(
-    id: number,
-    data: CommentUpdateDTO
-  ): Promise<Comment> {
+  async updateComment(id: number, data: CommentUpdateDTO): Promise<Comment> {
     const res = await fetch(`${API_BASE}/api/comments/${id}`, {
       method: "PUT",
       headers: authHeaders(true),
@@ -183,4 +180,3 @@ export const commentApi = {
     return res.json();
   },
 };
-

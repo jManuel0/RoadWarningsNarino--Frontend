@@ -1,5 +1,5 @@
 import { Alert } from "@/types/Alert";
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 
 function getAuthToken(): string | null {
   try {
@@ -168,13 +168,10 @@ export const userApi = {
 
   // Estadisticas de otro usuario
   async getUserStatistics(userId: number): Promise<UserStats> {
-    const res = await fetch(
-      `${API_BASE}/api/users/${userId}/statistics`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/users/${userId}/statistics`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener estadisticas del usuario");
@@ -184,9 +181,10 @@ export const userApi = {
   },
 
   // Actualizar mi perfil (propio)
-  async updateProfile(
-    data: { email?: string; username?: string }
-  ): Promise<UserProfile> {
+  async updateProfile(data: {
+    email?: string;
+    username?: string;
+  }): Promise<UserProfile> {
     const res = await fetch(`${API_BASE}/api/users/me`, {
       method: "PUT",
       headers: authHeaders(true),
@@ -276,9 +274,7 @@ export const userApi = {
   },
 
   // Contraseña y recuperación
-  async changeMyPassword(
-    data: ChangePasswordRequestDTO
-  ): Promise<void> {
+  async changeMyPassword(data: ChangePasswordRequestDTO): Promise<void> {
     const res = await fetch(`${API_BASE}/api/users/me/password`, {
       method: "PATCH",
       headers: authHeaders(true),
@@ -290,9 +286,7 @@ export const userApi = {
     }
   },
 
-  async forgotPassword(
-    data: ForgotPasswordRequestDTO
-  ): Promise<void> {
+  async forgotPassword(data: ForgotPasswordRequestDTO): Promise<void> {
     const res = await fetch(`${API_BASE}/api/users/forgot-password`, {
       method: "POST",
       headers: authHeaders(true),
@@ -304,9 +298,7 @@ export const userApi = {
     }
   },
 
-  async resetPassword(
-    data: ResetPasswordRequestDTO
-  ): Promise<void> {
+  async resetPassword(data: ResetPasswordRequestDTO): Promise<void> {
     const res = await fetch(`${API_BASE}/api/users/reset-password`, {
       method: "POST",
       headers: authHeaders(true),
@@ -333,13 +325,10 @@ export const userApi = {
   },
 
   async getUserBadges(userId: number): Promise<UserBadge[]> {
-    const res = await fetch(
-      `${API_BASE}/api/users/${userId}/badges`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/users/${userId}/badges`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener insignias del usuario");
@@ -350,13 +339,10 @@ export const userApi = {
 
   // Progreso de nivel
   async getMyLevelProgress(): Promise<UserLevelProgress> {
-    const res = await fetch(
-      `${API_BASE}/api/users/me/level-progress`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/users/me/level-progress`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener progreso de nivel");
@@ -365,21 +351,14 @@ export const userApi = {
     return res.json();
   },
 
-  async getUserLevelProgress(
-    userId: number
-  ): Promise<UserLevelProgress> {
-    const res = await fetch(
-      `${API_BASE}/api/users/${userId}/level-progress`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+  async getUserLevelProgress(userId: number): Promise<UserLevelProgress> {
+    const res = await fetch(`${API_BASE}/api/users/${userId}/level-progress`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
-      throw new Error(
-        "Error al obtener progreso de nivel del usuario"
-      );
+      throw new Error("Error al obtener progreso de nivel del usuario");
     }
 
     return res.json();

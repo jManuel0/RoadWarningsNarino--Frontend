@@ -1,4 +1,4 @@
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 import type { AlertSearchDTO } from "@/types/Alert";
 
 function getAuthToken(): string | null {

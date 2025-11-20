@@ -1,4 +1,4 @@
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 import {
   CurrentWeather,
   WeatherForecastResponse,
@@ -66,4 +66,3 @@ export const weatherApi = {
     return res.json();
   },
 };
-

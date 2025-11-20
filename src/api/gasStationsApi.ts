@@ -1,4 +1,4 @@
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 import {
   GasStation,
   GasStationRequestDTO,
@@ -33,9 +33,7 @@ function buildQuery(
 }
 
 export const gasStationsApi = {
-  async create(
-    data: GasStationRequestDTO
-  ): Promise<GasStation> {
+  async create(data: GasStationRequestDTO): Promise<GasStation> {
     const res = await fetch(`${API_BASE}/api/gas-stations`, {
       method: "POST",
       headers: authHeaders(true),
@@ -67,13 +65,10 @@ export const gasStationsApi = {
   ): Promise<PaginatedGasStationResponse> {
     const query = buildQuery(params);
 
-    const res = await fetch(
-      `${API_BASE}/api/gas-stations/paginated${query}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/gas-stations/paginated${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener estaciones paginadas");
@@ -95,10 +90,7 @@ export const gasStationsApi = {
     return res.json();
   },
 
-  async update(
-    id: number,
-    data: GasStationRequestDTO
-  ): Promise<GasStation> {
+  async update(id: number, data: GasStationRequestDTO): Promise<GasStation> {
     const res = await fetch(`${API_BASE}/api/gas-stations/${id}`, {
       method: "PUT",
       headers: authHeaders(true),
@@ -134,13 +126,10 @@ export const gasStationsApi = {
       radiusKm: params.radiusKm,
     });
 
-    const res = await fetch(
-      `${API_BASE}/api/gas-stations/nearby${query}`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/gas-stations/nearby${query}`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener estaciones cercanas");
@@ -155,14 +144,11 @@ export const gasStationsApi = {
   ): Promise<PaginatedGasStationResponse> {
     const query = buildQuery(params);
 
-    const res = await fetch(
-      `${API_BASE}/api/gas-stations/filter${query}`,
-      {
-        method: "POST",
-        headers: authHeaders(true),
-        body: JSON.stringify(filters),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/gas-stations/filter${query}`, {
+      method: "POST",
+      headers: authHeaders(true),
+      body: JSON.stringify(filters),
+    });
 
     if (!res.ok) {
       throw new Error("Error al filtrar estaciones de servicio");
@@ -172,13 +158,10 @@ export const gasStationsApi = {
   },
 
   async getOpenNow(): Promise<GasStation[]> {
-    const res = await fetch(
-      `${API_BASE}/api/gas-stations/open-now`,
-      {
-        method: "GET",
-        headers: authHeaders(),
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/gas-stations/open-now`, {
+      method: "GET",
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       throw new Error("Error al obtener estaciones abiertas");
@@ -187,13 +170,9 @@ export const gasStationsApi = {
     return res.json();
   },
 
-  async getByFuelType(
-    fuelType: FuelType
-  ): Promise<GasStation[]> {
+  async getByFuelType(fuelType: FuelType): Promise<GasStation[]> {
     const res = await fetch(
-      `${API_BASE}/api/gas-stations/fuel-type/${encodeURIComponent(
-        fuelType
-      )}`,
+      `${API_BASE}/api/gas-stations/fuel-type/${encodeURIComponent(fuelType)}`,
       {
         method: "GET",
         headers: authHeaders(),
@@ -207,4 +186,3 @@ export const gasStationsApi = {
     return res.json();
   },
 };
-

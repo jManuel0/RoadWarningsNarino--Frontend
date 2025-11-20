@@ -1,5 +1,5 @@
 import { LoginRequest, RegisterRequest, AuthResponse } from "@/types/auth";
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 
 async function parseErrorMessage(
   res: Response,

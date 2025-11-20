@@ -1,4 +1,4 @@
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 
 function getAuthToken(): string | null {
   try {
@@ -74,14 +74,11 @@ export const uploadApi = {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const res = await fetch(
-      `${API_BASE}/api/images/upload/base64${query}`,
-      {
-        method: "POST",
-        headers,
-        body: base64,
-      }
-    );
+    const res = await fetch(`${API_BASE}/api/images/upload/base64${query}`, {
+      method: "POST",
+      headers,
+      body: base64,
+    });
 
     if (!res.ok) {
       throw new Error("Error al subir la imagen base64");

@@ -1,4 +1,4 @@
-import { API_BASE } from "./baseUrl";
+import { API_BASE } from "@/api/baseUrl";
 import type { UserProfile, UserPaginationParams } from "./userApi";
 
 function getAuthToken(): string | null {
@@ -116,10 +116,7 @@ export const adminApi = {
     return res.json();
   },
 
-  async updateUserStatus(
-    userId: number,
-    active: boolean
-  ): Promise<AdminUser> {
+  async updateUserStatus(userId: number, active: boolean): Promise<AdminUser> {
     const query = buildQuery({ active });
 
     const res = await fetch(
@@ -177,4 +174,3 @@ export const adminApi = {
     return res.json();
   },
 };
-
