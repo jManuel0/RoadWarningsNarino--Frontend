@@ -53,7 +53,7 @@ export function useFormValidation<T extends Record<string, unknown>>(
       const error = validateField(fieldName, values[fieldName]);
 
       if (error) {
-        newErrors[fieldName as keyof T] = error;
+        newErrors[fieldName] = error;
         isValid = false;
       }
     });

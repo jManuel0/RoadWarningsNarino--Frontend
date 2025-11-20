@@ -250,7 +250,7 @@ export function isValidURL(url: string): boolean {
  * Rate limiting helper
  */
 export class RateLimiter {
-  private attempts: Map<string, number[]> = new Map();
+  private readonly attempts: Map<string, number[]> = new Map();
 
   /**
    * Check if action is allowed within rate limit

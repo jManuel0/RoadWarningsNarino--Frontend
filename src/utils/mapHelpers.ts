@@ -3,8 +3,8 @@
  * Incluye cálculos geoespaciales, conversiones y utilidades de Leaflet
  */
 
-import L, { LatLngBounds, LatLngExpression } from 'leaflet';
-import { Coordinates, MapBounds, DistanceResult, RoadAlert } from '@/types/map.types';
+import L, { LatLngBounds, LatLngExpression } from "leaflet";
+import { Coordinates, DistanceResult, RoadAlert } from "@/types/map.types";
 
 // ============================================================================
 // CONSTANTES GEOGRÁFICAS
@@ -41,7 +41,7 @@ export const PASTO_CENTER: Coordinates = {
  * Límites geográficos del departamento de Nariño
  */
 export const NARINO_BOUNDS: [[number, number], [number, number]] = [
-  [0.5, -79.0], // Suroeste
+  [0.5, -79], // Suroeste
   [2.8, -76.5], // Noreste
 ];
 
@@ -53,7 +53,7 @@ export const NARINO_MUNICIPALITIES: Record<string, Coordinates> = {
   Ipiales: { lat: 0.8247, lng: -77.6425 },
   Tumaco: { lat: 1.8001, lng: -78.7998 },
   Túquerres: { lat: 1.0869, lng: -77.6169 },
-  'La Unión': { lat: 1.6019, lng: -77.1294 },
+  "La Unión": { lat: 1.6019, lng: -77.1294 },
   Samaniego: { lat: 1.3328, lng: -77.5878 },
   Sandona: { lat: 1.2817, lng: -77.4719 },
 };
@@ -237,7 +237,7 @@ export function fromLatLng(latLng: L.LatLng): Coordinates {
  */
 export function createBoundsFromPoints(points: Coordinates[]): LatLngBounds {
   if (points.length === 0) {
-    throw new Error('No se pueden crear bounds sin puntos');
+    throw new Error("No se pueden crear bounds sin puntos");
   }
 
   const latLngs = points.map(toLatLngExpression);
@@ -274,7 +274,11 @@ export function filterAlertsInRadius(
   radiusMeters: number
 ): RoadAlert[] {
   return alerts.filter((alert) =>
-    isWithinRadius({ lat: alert.latitude, lng: alert.longitude }, center, radiusMeters)
+    isWithinRadius(
+      { lat: alert.latitude, lng: alert.longitude },
+      center,
+      radiusMeters
+    )
   );
 }
 
@@ -289,8 +293,14 @@ export function sortAlertsByDistance(
   from: Coordinates
 ): RoadAlert[] {
   return [...alerts].sort((a, b) => {
-    const distA = calculateDistance(from, { lat: a.latitude, lng: a.longitude });
-    const distB = calculateDistance(from, { lat: b.latitude, lng: b.longitude });
+    const distA = calculateDistance(from, {
+      lat: a.latitude,
+      lng: a.longitude,
+    });
+    const distB = calculateDistance(from, {
+      lat: b.latitude,
+      lng: b.longitude,
+    });
     return distA - distB;
   });
 }
@@ -306,7 +316,7 @@ export function groupAlertsByMunicipality(
   const grouped = new Map<string, RoadAlert[]>();
 
   alerts.forEach((alert) => {
-    const municipality = alert.municipality || 'Desconocido';
+    const municipality = alert.municipality || "Desconocido";
     const existing = grouped.get(municipality) || [];
     grouped.set(municipality, [...existing, alert]);
   });
@@ -324,7 +334,10 @@ export function groupAlertsByMunicipality(
  * @param decimals - Número de decimales
  * @returns Coordenadas formateadas
  */
-export function formatCoordinates(coords: Coordinates, decimals: number = 6): string {
+export function formatCoordinates(
+  coords: Coordinates,
+  decimals: number = 6
+): string {
   return `${coords.lat.toFixed(decimals)}, ${coords.lng.toFixed(decimals)}`;
 }
 
@@ -334,7 +347,7 @@ export function formatCoordinates(coords: Coordinates, decimals: number = 6): st
  * @returns Nombre de la dirección (N, NE, E, SE, S, SW, W, NW)
  */
 export function getCardinalDirection(bearing: number): string {
-  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+  const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
   const index = Math.round(((bearing % 360) / 45) % 8);
   return directions[index];
 }
@@ -375,7 +388,7 @@ export function calculateZoomLevel(
   }
 
   function zoom(mapPx: number, worldPx: number, fraction: number): number {
-    return Math.floor(Math.log(mapPx / worldPx / fraction) / Math.LN2);
+    return Math.floor(Math.log2(mapPx / worldPx / fraction));
   }
 
   const ne = bounds.getNorthEast();
@@ -438,11 +451,14 @@ export function isInNarino(coords: Coordinates): boolean {
  * @param coords - Coordenadas a validar
  * @returns true si son válidas
  */
-export function isValidCoordinates(coords: any): coords is Coordinates {
+export function isValidCoordinates(coords: unknown): coords is Coordinates {
   return (
-    coords &&
-    typeof coords.lat === 'number' &&
-    typeof coords.lng === 'number' &&
+    !!coords &&
+    typeof coords === "object" &&
+    "lat" in coords &&
+    "lng" in coords &&
+    typeof coords.lat === "number" &&
+    typeof coords.lng === "number" &&
     coords.lat >= -90 &&
     coords.lat <= 90 &&
     coords.lng >= -180 &&

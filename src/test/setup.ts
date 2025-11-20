@@ -17,9 +17,6 @@ Object.defineProperty(window, "matchMedia", {
 
 // Mock IntersectionObserver
 globalThis.IntersectionObserver = class IntersectionObserver {
-  constructor() {
-    // Mock constructor
-  }
   disconnect() {
     // Mock disconnect
   }
@@ -36,9 +33,6 @@ globalThis.IntersectionObserver = class IntersectionObserver {
 
 // Mock ResizeObserver
 globalThis.ResizeObserver = class ResizeObserver {
-  constructor() {
-    // Mock constructor
-  }
   disconnect() {
     // Mock disconnect
   }
@@ -68,9 +62,7 @@ globalThis.Notification = class Notification {
   static readonly requestPermission = jest.fn(() =>
     Promise.resolve("granted" as NotificationPermission)
   );
-  constructor() {
-    // Mock constructor
-  }
+
   close() {
     // Mock close
   }

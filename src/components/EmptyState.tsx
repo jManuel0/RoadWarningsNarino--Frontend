@@ -36,7 +36,7 @@ export default function EmptyState({
   secondaryAction,
   variant = "default",
   children,
-}: EmptyStateProps) {
+}: Readonly<EmptyStateProps>) {
   const variantStyles = {
     default: {
       iconBg: "bg-gray-100 dark:bg-gray-800",
@@ -105,9 +105,9 @@ export default function EmptyState({
 
 export function NoAlertsEmptyState({
   onCreateAlert,
-}: {
+}: Readonly<{
   onCreateAlert?: () => void;
-}) {
+}>) {
   return (
     <EmptyState
       icon={AlertTriangle}
@@ -125,10 +125,10 @@ export function NoAlertsEmptyState({
 export function NoSearchResultsEmptyState({
   searchTerm,
   onClearSearch,
-}: {
+}: Readonly<{
   searchTerm?: string;
   onClearSearch?: () => void;
-}) {
+}>) {
   return (
     <EmptyState
       icon={Search}
@@ -160,9 +160,9 @@ export function NoNotificationsEmptyState() {
 
 export function NoFavoritesEmptyState({
   onBrowseAlerts,
-}: {
+}: Readonly<{
   onBrowseAlerts?: () => void;
-}) {
+}>) {
   return (
     <EmptyState
       icon={Star}
@@ -189,9 +189,9 @@ export function NoStatisticsEmptyState() {
 
 export function NoCommentsEmptyState({
   onAddComment,
-}: {
+}: Readonly<{
   onAddComment?: () => void;
-}) {
+}>) {
   return (
     <EmptyState
       icon={FileText}
@@ -210,11 +210,11 @@ export function ErrorEmptyState({
   title = "Algo salió mal",
   description = "No pudimos cargar la información. Por favor, intenta nuevamente.",
   onRetry,
-}: {
+}: Readonly<{
   title?: string;
   description?: string;
   onRetry?: () => void;
-}) {
+}>) {
   return (
     <EmptyState
       icon={AlertTriangle}
@@ -239,9 +239,9 @@ export function OfflineEmptyState() {
 
 export function NoUsersEmptyState({
   onInviteUsers,
-}: {
+}: Readonly<{
   onInviteUsers?: () => void;
-}) {
+}>) {
   return (
     <EmptyState
       icon={Users}

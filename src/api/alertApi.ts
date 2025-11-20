@@ -70,7 +70,7 @@ function buildQuery(
 function mapAlertFromBackend(raw: BackendAlert): Alert {
   return {
     ...raw,
-    severity: severityBackendToFront(raw.severity as BackendAlertSeverity),
+    severity: severityBackendToFront(raw.severity),
   };
 }
 

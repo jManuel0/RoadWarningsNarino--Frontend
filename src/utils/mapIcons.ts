@@ -3,8 +3,8 @@
  * Genera iconos HTML/SVG para diferentes tipos de alertas y marcadores
  */
 
-import L from 'leaflet';
-import { AlertType, AlertSeverity, MarkerType } from '@/types/map.types';
+import L from "leaflet";
+import { AlertType, AlertSeverity, MarkerType } from "@/types/map.types";
 
 // ============================================================================
 // CONFIGURACIÓN DE COLORES
@@ -14,48 +14,48 @@ import { AlertType, AlertSeverity, MarkerType } from '@/types/map.types';
  * Colores por tipo de alerta
  */
 const ALERT_COLORS: Record<AlertType, string> = {
-  [AlertType.ACCIDENTE]: '#ef4444', // Rojo - Crítico
-  [AlertType.DERRUMBE]: '#f97316', // Naranja - Muy peligroso
-  [AlertType.INUNDACION]: '#3b82f6', // Azul - Agua
-  [AlertType.VIA_CERRADA]: '#dc2626', // Rojo oscuro - Bloqueado
-  [AlertType.OBRAS_VIALES]: '#eab308', // Amarillo - Precaución
-  [AlertType.NEBLINA]: '#94a3b8', // Gris azulado - Neblina
-  [AlertType.TRAFICO_PESADO]: '#f59e0b', // Ámbar - Congestión
-  [AlertType.VEHICULO_VARADO]: '#a855f7', // Púrpura - Vehículo
-  [AlertType.POLICIA]: '#1d4ed8', // Azul oscuro - Autoridad
-  [AlertType.PROTESTA]: '#dc2626', // Rojo - Bloqueo
-  [AlertType.ANIMALES_EN_VIA]: '#84cc16', // Verde lima - Animal
-  [AlertType.SEMAFORO_DANADO]: '#facc15', // Amarillo brillante
-  [AlertType.OTROS]: '#6b7280', // Gris - Genérico
+  [AlertType.ACCIDENTE]: "#ef4444", // Rojo - Crítico
+  [AlertType.DERRUMBE]: "#f97316", // Naranja - Muy peligroso
+  [AlertType.INUNDACION]: "#3b82f6", // Azul - Agua
+  [AlertType.VIA_CERRADA]: "#dc2626", // Rojo oscuro - Bloqueado
+  [AlertType.OBRAS_VIALES]: "#eab308", // Amarillo - Precaución
+  [AlertType.NEBLINA]: "#94a3b8", // Gris azulado - Neblina
+  [AlertType.TRAFICO_PESADO]: "#f59e0b", // Ámbar - Congestión
+  [AlertType.VEHICULO_VARADO]: "#a855f7", // Púrpura - Vehículo
+  [AlertType.POLICIA]: "#1d4ed8", // Azul oscuro - Autoridad
+  [AlertType.PROTESTA]: "#dc2626", // Rojo - Bloqueo
+  [AlertType.ANIMALES_EN_VIA]: "#84cc16", // Verde lima - Animal
+  [AlertType.SEMAFORO_DANADO]: "#facc15", // Amarillo brillante
+  [AlertType.OTROS]: "#6b7280", // Gris - Genérico
 };
 
 /**
  * Colores por severidad de alerta
  */
 const SEVERITY_COLORS: Record<AlertSeverity, string> = {
-  [AlertSeverity.BAJA]: '#22c55e', // Verde
-  [AlertSeverity.MEDIA]: '#eab308', // Amarillo
-  [AlertSeverity.ALTA]: '#f97316', // Naranja
-  [AlertSeverity.CRITICA]: '#ef4444', // Rojo
+  [AlertSeverity.BAJA]: "#22c55e", // Verde
+  [AlertSeverity.MEDIA]: "#eab308", // Amarillo
+  [AlertSeverity.ALTA]: "#f97316", // Naranja
+  [AlertSeverity.CRITICA]: "#ef4444", // Rojo
 };
 
 /**
  * Emojis por tipo de alerta (para fallback o iconos simples)
  */
 const ALERT_EMOJIS: Record<AlertType, string> = {
-  [AlertType.ACCIDENTE]: '🚗💥',
-  [AlertType.DERRUMBE]: '🪨',
-  [AlertType.INUNDACION]: '🌊',
-  [AlertType.VIA_CERRADA]: '🚧',
-  [AlertType.OBRAS_VIALES]: '🔧',
-  [AlertType.NEBLINA]: '🌫️',
-  [AlertType.TRAFICO_PESADO]: '🚦',
-  [AlertType.VEHICULO_VARADO]: '🚗⚠️',
-  [AlertType.POLICIA]: '👮',
-  [AlertType.PROTESTA]: '⚠️',
-  [AlertType.ANIMALES_EN_VIA]: '🐄',
-  [AlertType.SEMAFORO_DANADO]: '🚦❌',
-  [AlertType.OTROS]: '⚠️',
+  [AlertType.ACCIDENTE]: "🚗💥",
+  [AlertType.DERRUMBE]: "🪨",
+  [AlertType.INUNDACION]: "🌊",
+  [AlertType.VIA_CERRADA]: "🚧",
+  [AlertType.OBRAS_VIALES]: "🔧",
+  [AlertType.NEBLINA]: "🌫️",
+  [AlertType.TRAFICO_PESADO]: "🚦",
+  [AlertType.VEHICULO_VARADO]: "🚗⚠️",
+  [AlertType.POLICIA]: "👮",
+  [AlertType.PROTESTA]: "⚠️",
+  [AlertType.ANIMALES_EN_VIA]: "🐄",
+  [AlertType.SEMAFORO_DANADO]: "🚦❌",
+  [AlertType.OTROS]: "⚠️",
 };
 
 // ============================================================================
@@ -96,14 +96,14 @@ export function createAlertIcon(
       ${
         severity === AlertSeverity.CRITICA
           ? `<path d="M 35 5 L 40 0 L 40 10 Z" fill="${severityColor}" />`
-          : ''
+          : ""
       }
     </svg>
   `;
 
   return L.divIcon({
     html: svgIcon,
-    className: 'custom-alert-icon',
+    className: "custom-alert-icon",
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -size / 2],
@@ -119,7 +119,7 @@ export function createUserLocationIcon(heading?: number): L.DivIcon {
   const size = 24;
 
   // Si hay heading, mostrar dirección
-  const rotation = heading !== undefined ? `rotate(${heading} 12 12)` : '';
+  const rotation = heading === undefined ? "" : `rotate(${heading} 12 12)`;
 
   const svgIcon = `
     <svg width="${size}" height="${size}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -131,9 +131,9 @@ export function createUserLocationIcon(heading?: number): L.DivIcon {
 
       <!-- Indicador de dirección (si hay heading) -->
       ${
-        heading !== undefined
-          ? `<path d="M 12 2 L 15 8 L 12 6 L 9 8 Z" fill="white" transform="${rotation}"/>`
-          : ''
+        heading === undefined
+          ? ""
+          : `<path d="M 12 2 L 15 8 L 12 6 L 9 8 Z" fill="white" transform="${rotation}"/>`
       }
     </svg>
     <style>
@@ -149,7 +149,7 @@ export function createUserLocationIcon(heading?: number): L.DivIcon {
 
   return L.divIcon({
     html: svgIcon,
-    className: 'custom-user-location-icon',
+    className: "custom-user-location-icon",
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
@@ -162,19 +162,19 @@ export function createUserLocationIcon(heading?: number): L.DivIcon {
  * @returns Icono de Leaflet
  */
 export function createWaypointIcon(
-  type: 'origin' | 'destination' | 'waypoint',
+  type: "origin" | "destination" | "waypoint",
   label?: string
 ): L.DivIcon {
   const colors = {
-    origin: '#10b981', // Verde
-    destination: '#ef4444', // Rojo
-    waypoint: '#3b82f6', // Azul
+    origin: "#10b981", // Verde
+    destination: "#ef4444", // Rojo
+    waypoint: "#3b82f6", // Azul
   };
 
   const labels = {
-    origin: 'A',
-    destination: 'B',
-    waypoint: '•',
+    origin: "A",
+    destination: "B",
+    waypoint: "•",
   };
 
   const color = colors[type];
@@ -259,7 +259,7 @@ export function createClusterIcon(
 
   return L.divIcon({
     html: svgIcon,
-    className: 'custom-cluster-icon',
+    className: "custom-cluster-icon",
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
@@ -286,7 +286,7 @@ export function createGasStationIcon(): L.DivIcon {
 
   return L.divIcon({
     html: svgIcon,
-    className: 'custom-gas-station-icon',
+    className: "custom-gas-station-icon",
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     popupAnchor: [0, -size / 2],
@@ -325,12 +325,25 @@ export function getAlertEmoji(type: AlertType): string {
 }
 
 /**
+ * Datos adicionales para personalizar el icono
+ */
+interface MarkerIconData {
+  heading?: number;
+  type?: AlertType;
+  severity?: AlertSeverity;
+  label?: string;
+}
+
+/**
  * Crea un icono genérico basado en el tipo de marcador
  * @param type - Tipo de marcador
  * @param data - Datos adicionales para personalizar el icono
  * @returns Icono de Leaflet
  */
-export function createMarkerIcon(type: MarkerType, data?: any): L.DivIcon {
+export function createMarkerIcon(
+  type: MarkerType,
+  data?: MarkerIconData
+): L.DivIcon {
   switch (type) {
     case MarkerType.USER_LOCATION:
       return createUserLocationIcon(data?.heading);
@@ -342,19 +355,19 @@ export function createMarkerIcon(type: MarkerType, data?: any): L.DivIcon {
       );
 
     case MarkerType.ORIGIN:
-      return createWaypointIcon('origin', data?.label);
+      return createWaypointIcon("origin", data?.label);
 
     case MarkerType.DESTINATION:
-      return createWaypointIcon('destination', data?.label);
+      return createWaypointIcon("destination", data?.label);
 
     case MarkerType.WAYPOINT:
-      return createWaypointIcon('waypoint', data?.label);
+      return createWaypointIcon("waypoint", data?.label);
 
     case MarkerType.GAS_STATION:
       return createGasStationIcon();
 
     default:
-      return createWaypointIcon('waypoint');
+      return createWaypointIcon("waypoint");
   }
 }
 
@@ -367,14 +380,14 @@ export function createMarkerIcon(type: MarkerType, data?: any): L.DivIcon {
  * Debe llamarse una vez al inicializar la aplicación
  */
 export function injectMapIconStyles(): void {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
 
-  const styleId = 'leaflet-custom-icons-styles';
+  const styleId = "leaflet-custom-icons-styles";
 
   // Evitar inyectar múltiples veces
   if (document.getElementById(styleId)) return;
 
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.id = styleId;
   style.textContent = `
     .custom-alert-icon,
