@@ -1,7 +1,12 @@
 import { ReactElement } from "react";
 import { render, RenderOptions } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
-import type { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import type {
+  AxiosError,
+  AxiosResponse,
+  AxiosRequestHeaders,
+  InternalAxiosRequestConfig,
+} from "axios";
 
 type MockAlert = {
   id: number;
@@ -27,13 +32,6 @@ type MockUser = {
   email: string;
   level: number;
   points: number;
-};
-
-type MockFetchResponse<T> = {
-  ok: boolean;
-  status: number;
-  json: () => Promise<T>;
-  text: () => Promise<string>;
 };
 
 // Wrapper for components that need routing
@@ -131,7 +129,7 @@ export class MockWebSocket {
 
 // Mock fetch
 export const mockFetch = <T,>(response: T, ok = true) => {
-  return jest.fn<() => Promise<MockFetchResponse<T>>>(() =>
+  return jest.fn(() =>
     Promise.resolve({
       ok,
       status: ok ? 200 : 400,
@@ -147,7 +145,9 @@ export const mockAxiosResponse = <T,>(data: T): AxiosResponse<T> => ({
   status: 200,
   statusText: "OK",
   headers: {},
-  config: {} as AxiosRequestConfig,
+  config: {
+    headers: {} as AxiosRequestHeaders,
+  } as InternalAxiosRequestConfig,
 });
 
 // Mock axios error
@@ -161,12 +161,16 @@ export const mockAxiosError = (
       status,
       statusText: "Bad Request",
       headers: {},
-      config: {} as AxiosRequestConfig,
+      config: {
+        headers: {} as AxiosRequestHeaders,
+      } as InternalAxiosRequestConfig,
     },
     message,
     isAxiosError: true,
     toJSON: () => ({}),
     name: "AxiosError",
-    config: {} as AxiosRequestConfig,
+    config: {
+      headers: {} as AxiosRequestHeaders,
+    } as InternalAxiosRequestConfig,
     code: status.toString(),
   }) as AxiosError<{ message: string }>;
