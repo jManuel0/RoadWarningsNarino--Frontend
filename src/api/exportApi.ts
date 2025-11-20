@@ -65,9 +65,9 @@ export const exportApi = {
     let filename: string | null = null;
 
     if (disposition) {
-      const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(disposition);
-      if (match && match[1]) {
-        filename = decodeURIComponent(match[1].replace(/\"/g, ""));
+      const match = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(disposition);
+      if (match?.[1]) {
+        filename = decodeURIComponent(match[1].replace(/"/g, ""));
       }
     }
 
@@ -78,4 +78,3 @@ export const exportApi = {
     };
   },
 };
-

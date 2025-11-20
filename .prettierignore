@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Build output
+dist
+build
+coverage
+
+# Generated files
+.vercel
+.next
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode
+.idea
+
+# Tests
+coverage
+
+# Other
+public/sw.js

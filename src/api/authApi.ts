@@ -11,8 +11,7 @@ async function parseErrorMessage(
 
     try {
       const data = JSON.parse(text);
-      const msg =
-        (data && (data.message || data.error || data.detail)) ?? text;
+      const msg = (data && (data.message || data.error || data.detail)) ?? text;
       return typeof msg === "string" ? msg : fallback;
     } catch {
       return text || fallback;
@@ -42,6 +41,28 @@ export const authApi = {
         );
       }
 
+      throw new Error(message);
+    }
+
+    return res.json();
+  },
+
+  async refreshToken(
+    refreshToken: string
+  ): Promise<{ token: string; expiresIn?: number }> {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) {
+      const message = await parseErrorMessage(
+        res,
+        "No se pudo renovar la sesión"
+      );
       throw new Error(message);
     }
 
@@ -78,7 +99,6 @@ export const authApi = {
     }
 
     // No necesitamos procesar el body para el flujo de verificación por correo
-    return;
   },
 
   async verifyEmail(token: string): Promise<void> {
@@ -96,7 +116,5 @@ export const authApi = {
       );
       throw new Error(message);
     }
-
-    return;
   },
 };
