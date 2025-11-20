@@ -28,13 +28,11 @@ export default function LoginPage() {
 
     try {
       const res = await authApi.login({ username, password });
-      setAuth(res.token, username);
+      setAuth(res.token, res.username, res.refreshToken, res.expiresIn);
       navigate("/alerts");
     } catch (err) {
       const message =
-        err instanceof Error
-          ? err.message
-          : "Usuario o contraseña incorrectos";
+        err instanceof Error ? err.message : "Usuario o contraseña incorrectos";
       setError(message);
     } finally {
       window.clearTimeout(wakeUpTimeout);
@@ -127,4 +125,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
