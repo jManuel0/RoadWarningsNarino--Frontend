@@ -91,6 +91,7 @@ export interface UserPaginationParams {
   size?: number;
   sortBy?: string;
   sortDirection?: "asc" | "desc" | "ASC" | "DESC";
+  [key: string]: string | number | boolean | undefined | null;
 }
 
 export interface PaginatedUsersResponse {

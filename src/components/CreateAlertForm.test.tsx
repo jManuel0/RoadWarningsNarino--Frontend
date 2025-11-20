@@ -25,12 +25,8 @@ describe("CreateAlertForm", () => {
   it("allows user to input title and description", () => {
     render(<CreateAlertForm />);
 
-    const titleInput = screen.getByLabelText(
-      /t\u00edtulo/i
-    ) as HTMLInputElement;
-    const descInput = screen.getByLabelText(
-      /descripci\u00f3n/i
-    ) as HTMLTextAreaElement;
+    const titleInput = screen.getByLabelText(/t\u00edtulo/i);
+    const descInput = screen.getByLabelText(/descripci\u00f3n/i);
 
     fireEvent.change(titleInput, { target: { value: "Test Alert" } });
     fireEvent.change(descInput, { target: { value: "Test Description" } });
@@ -51,7 +47,7 @@ describe("CreateAlertForm", () => {
       ),
     };
 
-    Object.defineProperty(global.navigator, "geolocation", {
+    Object.defineProperty(globalThis.navigator, "geolocation", {
       value: mockGeolocation,
       configurable: true,
     });
@@ -81,7 +77,7 @@ describe("CreateAlertForm", () => {
       ),
     };
 
-    Object.defineProperty(global.navigator, "geolocation", {
+    Object.defineProperty(globalThis.navigator, "geolocation", {
       value: mockGeolocation,
       configurable: true,
     });
@@ -124,7 +120,7 @@ describe("CreateAlertForm", () => {
       ),
     };
 
-    Object.defineProperty(global.navigator, "geolocation", {
+    Object.defineProperty(globalThis.navigator, "geolocation", {
       value: mockGeolocation,
       configurable: true,
     });
