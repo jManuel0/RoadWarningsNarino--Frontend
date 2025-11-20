@@ -4,17 +4,19 @@
 
 interface SkeletonProps {
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function Skeleton({ className = "" }: SkeletonProps) {
+export function Skeleton({ className = "", style }: Readonly<SkeletonProps>) {
   return (
     <div
       className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}
+      style={style}
     />
   );
 }
 
-export function SkeletonText({ lines = 3 }: { lines?: number }) {
+export function SkeletonText({ lines = 3 }: Readonly<{ lines?: number }>) {
   return (
     <div className="space-y-2">
       {Array.from({ length: lines }).map((_, i) => (
@@ -83,7 +85,7 @@ export function SkeletonMap() {
   );
 }
 
-export function SkeletonTable({ rows = 5 }: { rows?: number }) {
+export function SkeletonTable({ rows = 5 }: Readonly<{ rows?: number }>) {
   return (
     <div className="space-y-2">
       <Skeleton className="h-12 w-full" />
@@ -116,7 +118,7 @@ export function SkeletonChart() {
   );
 }
 
-export function SkeletonList({ items = 5 }: { items?: number }) {
+export function SkeletonList({ items = 5 }: Readonly<{ items?: number }>) {
   return (
     <div className="space-y-3">
       {Array.from({ length: items }).map((_, i) => (
