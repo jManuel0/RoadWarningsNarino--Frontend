@@ -3,6 +3,7 @@ import type {
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
+  InternalAxiosRequestConfig,
 } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 import { authApi } from "@/api/authApi";
@@ -30,7 +31,22 @@ export async function authFetch(
 
   // Check if token is expired and refresh if needed
   if (authStore.isTokenExpired() && authStore.refreshToken) {
-    if (!isRefreshing) {
+    if (isRefreshing) {
+      // Wait for token refresh to complete
+      return new Promise((resolve, reject) => {
+        subscribeTokenRefresh((token: string) => {
+          // Retry original request with new token
+          const newOptions = {
+            ...options,
+            headers: {
+              ...options.headers,
+              Authorization: `Bearer ${token}`,
+            },
+          };
+          fetch(url, newOptions).then(resolve).catch(reject);
+        });
+      });
+    } else {
       isRefreshing = true;
 
       try {
@@ -46,21 +62,6 @@ export async function authFetch(
         window.location.href = "/login";
         throw error;
       }
-    } else {
-      // Wait for token refresh to complete
-      return new Promise((resolve, reject) => {
-        subscribeTokenRefresh((token: string) => {
-          // Retry original request with new token
-          const newOptions = {
-            ...options,
-            headers: {
-              ...options.headers,
-              Authorization: `Bearer ${token}`,
-            },
-          };
-          fetch(url, newOptions).then(resolve).catch(reject);
-        });
-      });
     }
   }
 
@@ -122,7 +123,7 @@ export function getAuthToken(): string | null {
 export function setupAxiosInterceptors(axiosInstance: AxiosInstance) {
   // Request interceptor
   axiosInstance.interceptors.request.use(
-    async (config: AxiosRequestConfig) => {
+    async (config: InternalAxiosRequestConfig) => {
       const authStore = useAuthStore.getState();
 
       // Check if token is expired and refresh if needed
@@ -148,11 +149,8 @@ export function setupAxiosInterceptors(axiosInstance: AxiosInstance) {
 
       // Add token to header
       const token = authStore.token;
-      if (token) {
-        config.headers = {
-          ...(config.headers || {}),
-          Authorization: `Bearer ${token}`,
-        };
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
 
       return config;
@@ -183,7 +181,7 @@ export function setupAxiosInterceptors(axiosInstance: AxiosInstance) {
 
             // Retry original request with new token
             originalRequest.headers = {
-              ...(originalRequest.headers || {}),
+              ...originalRequest.headers,
               Authorization: `Bearer ${token}`,
             };
             return axiosInstance(originalRequest);
@@ -198,7 +196,7 @@ export function setupAxiosInterceptors(axiosInstance: AxiosInstance) {
         }
       }
 
-      return Promise.reject(error);
+      throw error;
     }
   );
 }
