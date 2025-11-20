@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@/test/test-utils";
 import VotingButtons from "./VotingButtons";
-import { upvoteAlert, downvoteAlert } from "@/api/alertApi";
+import { alertApi } from "@/api/alertApi";
 import { notificationService } from "@/utils/notifications";
 
 jest.mock("@/api/alertApi");
@@ -44,7 +44,7 @@ describe("VotingButtons", () => {
   });
 
   it("calls upvoteAlert when upvote button is clicked", async () => {
-    (upvoteAlert as jest.Mock).mockResolvedValue({
+    (alertApi.upvoteAlert as jest.Mock).mockResolvedValue({
       data: { upvotes: 6, downvotes: 2 },
     });
 
@@ -61,13 +61,13 @@ describe("VotingButtons", () => {
     fireEvent.click(upvoteButton);
 
     await waitFor(() => {
-      expect(upvoteAlert).toHaveBeenCalledWith(1);
+      expect(alertApi.upvoteAlert).toHaveBeenCalledWith(1);
       expect(mockOnVoteChange).toHaveBeenCalled();
     });
   });
 
   it("calls downvoteAlert when downvote button is clicked", async () => {
-    (downvoteAlert as jest.Mock).mockResolvedValue({
+    (alertApi.downvoteAlert as jest.Mock).mockResolvedValue({
       data: { upvotes: 5, downvotes: 3 },
     });
 
@@ -84,13 +84,13 @@ describe("VotingButtons", () => {
     fireEvent.click(downvoteButton);
 
     await waitFor(() => {
-      expect(downvoteAlert).toHaveBeenCalledWith(1);
+      expect(alertApi.downvoteAlert).toHaveBeenCalledWith(1);
       expect(mockOnVoteChange).toHaveBeenCalled();
     });
   });
 
   it("disables buttons while voting", async () => {
-    (upvoteAlert as jest.Mock).mockImplementation(
+    (alertApi.upvoteAlert as jest.Mock).mockImplementation(
       () => new Promise((resolve) => setTimeout(resolve, 100))
     );
 
@@ -118,7 +118,9 @@ describe("VotingButtons", () => {
   });
 
   it("handles voting errors gracefully", async () => {
-    (upvoteAlert as jest.Mock).mockRejectedValue(new Error("Network error"));
+    (alertApi.upvoteAlert as jest.Mock).mockRejectedValue(
+      new Error("Network error")
+    );
 
     render(
       <VotingButtons
@@ -140,7 +142,7 @@ describe("VotingButtons", () => {
   });
 
   it("prevents multiple simultaneous votes", async () => {
-    (upvoteAlert as jest.Mock).mockImplementation(
+    (alertApi.upvoteAlert as jest.Mock).mockImplementation(
       () => new Promise((resolve) => setTimeout(resolve, 100))
     );
 
@@ -161,7 +163,7 @@ describe("VotingButtons", () => {
 
     await waitFor(
       () => {
-        expect(upvoteAlert).toHaveBeenCalledTimes(1);
+        expect(alertApi.upvoteAlert).toHaveBeenCalledTimes(1);
       },
       { timeout: 2000 }
     );
