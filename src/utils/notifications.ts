@@ -1,32 +1,33 @@
-import { toast } from 'sonner';
-import { Alert, AlertPriority } from '@/types/Alert';
+import { toast } from "sonner";
+import { Alert, AlertSeverity } from "@/types/Alert";
 
 export const notificationService = {
   // Notificación de nueva alerta
   newAlert: (alert: Alert) => {
     const priorityConfig = {
-      [AlertPriority.CRITICA]: {
+      [AlertSeverity.CRITICA]: {
         duration: 10000,
-        style: { background: '#dc2626', color: 'white' }
+        style: { background: "#dc2626", color: "white" },
       },
-      [AlertPriority.ALTA]: {
+      [AlertSeverity.ALTA]: {
         duration: 7000,
-        style: { background: '#ea580c', color: 'white' }
+        style: { background: "#ea580c", color: "white" },
       },
-      [AlertPriority.MEDIA]: {
+      [AlertSeverity.MEDIA]: {
         duration: 5000,
-        style: { background: '#facc15', color: 'black' }
+        style: { background: "#facc15", color: "black" },
       },
-      [AlertPriority.BAJA]: {
+      [AlertSeverity.BAJA]: {
         duration: 3000,
-        style: { background: '#3b82f6', color: 'white' }
-      }
+        style: { background: "#3b82f6", color: "white" },
+      },
     };
 
-    const config = priorityConfig[alert.priority];
+    const severity = alert.severity || alert.priority || AlertSeverity.BAJA;
+    const config = priorityConfig[severity];
 
     toast.error(`🚨 ${alert.type}`, {
-      description: `${alert.description} - ${alert.location.address}`,
+      description: `${alert.description} - ${alert.location}`,
       duration: config.duration,
       style: config.style,
     });
@@ -58,11 +59,11 @@ export const notificationService = {
 
   // Solicitar permisos de notificaciones del navegador
   requestPermission: async () => {
-    if ('Notification' in globalThis && Notification.permission === 'default') {
+    if ("Notification" in globalThis && Notification.permission === "default") {
       const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        toast.success('Notificaciones activadas', {
-          description: 'Recibirás alertas en tiempo real',
+      if (permission === "granted") {
+        toast.success("Notificaciones activadas", {
+          description: "Recibirás alertas en tiempo real",
         });
       }
     }
@@ -70,14 +71,15 @@ export const notificationService = {
 
   // Notificación del navegador
   browserNotification: (alert: Alert) => {
-    if ('Notification' in globalThis && Notification.permission === 'granted') {
+    if ("Notification" in globalThis && Notification.permission === "granted") {
+      const severity = alert.severity || alert.priority || AlertSeverity.BAJA;
       new Notification(`🚨 ${alert.type}`, {
         body: alert.description,
-        icon: '/alert-icon.png',
-        badge: '/badge-icon.png',
-        tag: alert.id,
-        requireInteraction: alert.priority === AlertPriority.CRITICA,
+        icon: "/alert-icon.png",
+        badge: "/badge-icon.png",
+        tag: alert.id.toString(),
+        requireInteraction: severity === AlertSeverity.CRITICA,
       });
     }
-  }
+  },
 };
