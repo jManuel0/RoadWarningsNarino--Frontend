@@ -18,7 +18,8 @@ export interface CommentUpdateDTO {
   content: string;
 }
 
-export interface CommentPaginationParams {
+export interface CommentPaginationParams
+  extends Record<string, string | number | boolean | null | undefined> {
   page?: number;
   size?: number;
   sortBy?: string;
@@ -32,4 +33,3 @@ export interface PaginatedCommentsResponse {
   pageNumber?: number;
   pageSize?: number;
 }
-

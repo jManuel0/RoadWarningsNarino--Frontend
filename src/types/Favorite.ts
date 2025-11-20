@@ -48,7 +48,8 @@ export interface FavoriteAlert {
   alert?: Alert;
 }
 
-export interface FavoritesPaginationParams {
+export interface FavoritesPaginationParams
+  extends Record<string, string | number | boolean | null | undefined> {
   page?: number;
   size?: number;
 }
@@ -68,4 +69,3 @@ export interface PaginatedFavoriteAlertsResponse {
   pageNumber?: number;
   pageSize?: number;
 }
-

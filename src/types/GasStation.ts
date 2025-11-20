@@ -38,7 +38,8 @@ export interface GasStationFilterDTO {
   openNow?: boolean;
 }
 
-export interface GasStationPaginationParams {
+export interface GasStationPaginationParams
+  extends Record<string, string | number | boolean | null | undefined> {
   page?: number;
   size?: number;
   sortBy?: string;
@@ -52,4 +53,3 @@ export interface PaginatedGasStationResponse {
   pageNumber?: number;
   pageSize?: number;
 }
-

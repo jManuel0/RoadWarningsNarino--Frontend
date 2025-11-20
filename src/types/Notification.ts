@@ -15,7 +15,8 @@ export interface DeviceTokenRequestDTO {
   deviceId?: string;
 }
 
-export interface NotificationPaginationParams {
+export interface NotificationPaginationParams
+  extends Record<string, string | number | boolean | null | undefined> {
   page?: number;
   size?: number;
 }
@@ -27,4 +28,3 @@ export interface PaginatedNotificationsResponse {
   pageNumber?: number;
   pageSize?: number;
 }
-
