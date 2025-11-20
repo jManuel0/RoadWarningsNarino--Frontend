@@ -69,9 +69,8 @@ export const authApi = {
     return res.json();
   },
 
-  // Registro: el backend crea el usuario y envía correo de verificación.
-  // No devuelve token de sesión.
-  async register(data: RegisterRequest): Promise<void> {
+  // Registro: el backend crea el usuario y devuelve token inmediatamente
+  async register(data: RegisterRequest): Promise<AuthResponse> {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -98,7 +97,7 @@ export const authApi = {
       throw new Error(message);
     }
 
-    // No necesitamos procesar el body para el flujo de verificación por correo
+    return res.json();
   },
 
   async verifyEmail(token: string): Promise<void> {
