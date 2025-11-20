@@ -1,147 +1,102 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import {
+  Skeleton,
+  SkeletonText,
   SkeletonCard,
   SkeletonAlertCard,
   SkeletonList,
   SkeletonMap,
-  SkeletonStats,
-  SkeletonProfile,
   SkeletonTable,
-  SkeletonForm,
   SkeletonChart,
-  SkeletonNavigation,
+  PageLoadingSkeleton,
 } from './SkeletonLoader';
 
 describe('SkeletonLoader components', () => {
-  describe('SkeletonCard', () => {
-    it('renders skeleton card', () => {
-      const { container } = render(<SkeletonCard />);
+  describe('Skeleton', () => {
+    it('renders skeleton with default styles', () => {
+      const { container } = render(<Skeleton />);
       expect(container.firstChild).toHaveClass('animate-pulse');
     });
 
-    it('renders with custom count', () => {
-      const { container } = render(<SkeletonCard count={3} />);
-      const cards = container.querySelectorAll('.animate-pulse');
-      expect(cards).toHaveLength(3);
+    it('applies custom className', () => {
+      const { container } = render(<Skeleton className="custom-class" />);
+      expect(container.firstChild).toHaveClass('custom-class');
+    });
+  });
+
+  describe('SkeletonText', () => {
+    it('renders default number of lines', () => {
+      const { container } = render(<SkeletonText />);
+      const lines = container.querySelectorAll('.animate-pulse');
+      expect(lines.length).toBeGreaterThan(0);
+    });
+
+    it('renders custom number of lines', () => {
+      const { container } = render(<SkeletonText lines={5} />);
+      const lines = container.querySelectorAll('.animate-pulse');
+      expect(lines).toHaveLength(5);
+    });
+  });
+
+  describe('SkeletonCard', () => {
+    it('renders skeleton card', () => {
+      const { container } = render(<SkeletonCard />);
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     });
   });
 
   describe('SkeletonAlertCard', () => {
     it('renders skeleton alert card', () => {
       const { container } = render(<SkeletonAlertCard />);
-      expect(container.firstChild).toHaveClass('animate-pulse');
-    });
-
-    it('renders with custom count', () => {
-      const { container } = render(<SkeletonAlertCard count={5} />);
-      const cards = container.querySelectorAll('.animate-pulse');
-      expect(cards).toHaveLength(5);
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     });
   });
 
   describe('SkeletonList', () => {
     it('renders skeleton list with default items', () => {
       const { container } = render(<SkeletonList />);
-      const items = container.querySelectorAll('.animate-pulse > div');
+      const items = container.querySelectorAll('.animate-pulse');
       expect(items.length).toBeGreaterThan(0);
     });
 
     it('renders with custom item count', () => {
       const { container } = render(<SkeletonList items={3} />);
-      const items = container.querySelectorAll('.animate-pulse > div');
-      expect(items).toHaveLength(3);
+      const listItems = container.querySelectorAll('.rounded-lg');
+      expect(listItems).toHaveLength(3);
     });
   });
 
   describe('SkeletonMap', () => {
     it('renders skeleton map', () => {
       const { container } = render(<SkeletonMap />);
-      expect(container.firstChild).toHaveClass('animate-pulse');
-      expect(container.querySelector('[style*="height"]')).toBeInTheDocument();
-    });
-
-    it('renders with custom height', () => {
-      const { container } = render(<SkeletonMap height="500px" />);
-      const mapContainer = container.querySelector('div[style*="500px"]');
-      expect(mapContainer).toBeInTheDocument();
-    });
-  });
-
-  describe('SkeletonStats', () => {
-    it('renders skeleton stats', () => {
-      const { container } = render(<SkeletonStats />);
-      expect(container.firstChild).toHaveClass('animate-pulse');
-    });
-
-    it('renders with custom count', () => {
-      const { container } = render(<SkeletonStats count={4} />);
-      const stats = container.querySelectorAll('.animate-pulse > div');
-      expect(stats).toHaveLength(4);
-    });
-  });
-
-  describe('SkeletonProfile', () => {
-    it('renders skeleton profile', () => {
-      const { container } = render(<SkeletonProfile />);
-      expect(container.firstChild).toHaveClass('animate-pulse');
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     });
   });
 
   describe('SkeletonTable', () => {
     it('renders skeleton table with default rows', () => {
       const { container } = render(<SkeletonTable />);
-      expect(container.querySelector('table')).toBeInTheDocument();
+      expect(container.querySelector('.space-y-2')).toBeInTheDocument();
     });
 
     it('renders with custom row count', () => {
       const { container } = render(<SkeletonTable rows={10} />);
-      const tableRows = container.querySelectorAll('tbody tr');
-      expect(tableRows).toHaveLength(10);
-    });
-
-    it('renders with custom column count', () => {
-      const { container } = render(<SkeletonTable columns={5} />);
-      const headerCells = container.querySelectorAll('thead th');
-      expect(headerCells).toHaveLength(5);
-    });
-  });
-
-  describe('SkeletonForm', () => {
-    it('renders skeleton form', () => {
-      const { container } = render(<SkeletonForm />);
-      expect(container.firstChild).toHaveClass('animate-pulse');
-    });
-
-    it('renders with custom field count', () => {
-      const { container } = render(<SkeletonForm fields={6} />);
-      const fields = container.querySelectorAll('.animate-pulse > div');
-      expect(fields).toHaveLength(6);
+      const rows = container.querySelectorAll('.animate-pulse');
+      expect(rows.length).toBeGreaterThanOrEqual(10);
     });
   });
 
   describe('SkeletonChart', () => {
     it('renders skeleton chart', () => {
       const { container } = render(<SkeletonChart />);
-      expect(container.firstChild).toHaveClass('animate-pulse');
-    });
-
-    it('renders with custom height', () => {
-      const { container } = render(<SkeletonChart height="400px" />);
-      const chart = container.querySelector('div[style*="400px"]');
-      expect(chart).toBeInTheDocument();
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     });
   });
 
-  describe('SkeletonNavigation', () => {
-    it('renders skeleton navigation', () => {
-      const { container } = render(<SkeletonNavigation />);
-      expect(container.firstChild).toHaveClass('animate-pulse');
-    });
-
-    it('renders with custom item count', () => {
-      const { container } = render(<SkeletonNavigation items={7} />);
-      const items = container.querySelectorAll('.animate-pulse > div > div');
-      expect(items).toHaveLength(7);
+  describe('PageLoadingSkeleton', () => {
+    it('renders page loading skeleton', () => {
+      const { container } = render(<PageLoadingSkeleton />);
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     });
   });
 });

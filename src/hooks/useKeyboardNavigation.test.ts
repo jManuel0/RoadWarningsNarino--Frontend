@@ -115,7 +115,7 @@ describe('useFocusTrap', () => {
 
     const containerRef = { current: container };
 
-    renderHook(() => useFocusTrap(containerRef as any, true));
+    renderHook(() => useFocusTrap(containerRef as React.RefObject<HTMLElement>, true));
 
     expect(document.activeElement).toBe(button1);
 
@@ -133,7 +133,7 @@ describe('useFocusTrap', () => {
 
     const containerRef = { current: container };
 
-    renderHook(() => useFocusTrap(containerRef as any, true));
+    renderHook(() => useFocusTrap(containerRef as React.RefObject<HTMLElement>, true));
 
     // Simulate Tab on last element
     button2.focus();
@@ -155,7 +155,7 @@ describe('useFocusTrap', () => {
 
     const containerRef = { current: container };
 
-    renderHook(() => useFocusTrap(containerRef as any, false));
+    renderHook(() => useFocusTrap(containerRef as React.RefObject<HTMLElement>, false));
 
     expect(document.activeElement).not.toBe(button);
 

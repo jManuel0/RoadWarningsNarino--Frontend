@@ -1,7 +1,8 @@
 import { renderHook, act } from "@testing-library/react";
 import { AlertType, AlertSeverity, AlertStatus } from "@/types/Alert";
+import * as filterStoreModule from "./filterStore";
 
-const loadFilterStore = () => require("./filterStore");
+const loadFilterStore = () => filterStoreModule;
 
 describe("filterStore", () => {
   let useFilterStore: ReturnType<typeof loadFilterStore>["useFilterStore"];

@@ -1,6 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
+import * as settingsStoreModule from "./settingsStore";
 
-const loadSettingsStore = () => require("./settingsStore");
+const loadSettingsStore = () => settingsStoreModule;
 
 describe("settingsStore", () => {
   let useSettingsStore: ReturnType<typeof loadSettingsStore>["useSettingsStore"];

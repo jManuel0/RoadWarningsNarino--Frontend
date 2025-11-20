@@ -1,6 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
+import * as authStoreModule from "./authStore";
 
-const loadAuthStore = () => require("./authStore");
+const loadAuthStore = () => authStoreModule;
 
 describe("authStore", () => {
   let useAuthStore: ReturnType<typeof loadAuthStore>["useAuthStore"];
