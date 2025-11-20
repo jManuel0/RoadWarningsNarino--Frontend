@@ -207,7 +207,7 @@ export function debounceAsync<
   func: T,
   wait: number
 ): (...args: Parameters<T>) => Promise<Awaited<ReturnType<T>>> {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: number | null = null;
   let pendingPromise: Promise<Awaited<ReturnType<T>>> | null = null;
 
   return (...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> => {
@@ -215,21 +215,19 @@ export function debounceAsync<
       clearTimeout(timeout);
     }
 
-    if (!pendingPromise) {
-      pendingPromise = new Promise((resolve, reject) => {
-        timeout = setTimeout(async () => {
-          try {
-            const result = await func(...args);
-            resolve(result as Awaited<ReturnType<T>>);
-          } catch (error) {
-            reject(error);
-          } finally {
-            pendingPromise = null;
-            timeout = null;
-          }
-        }, wait);
-      });
-    }
+    pendingPromise ??= new Promise((resolve, reject) => {
+      timeout = setTimeout(async () => {
+        try {
+          const result = await func(...args);
+          resolve(result as Awaited<ReturnType<T>>);
+        } catch (error) {
+          reject(error);
+        } finally {
+          pendingPromise = null;
+          timeout = null;
+        }
+      }, wait);
+    });
 
     return pendingPromise;
   };

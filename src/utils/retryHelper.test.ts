@@ -5,9 +5,9 @@ import {
   CircuitBreaker,
   debounceAsync,
   throttleAsync,
-} from './retryHelper';
+} from "./retryHelper";
 
-describe('retryHelper utilities', () => {
+describe("retryHelper utilities", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -16,21 +16,21 @@ describe('retryHelper utilities', () => {
     jest.useRealTimers();
   });
 
-  describe('retryAsync', () => {
-    it('succeeds on first attempt', async () => {
-      const operation = jest.fn().mockResolvedValue('success');
+  describe("retryAsync", () => {
+    it("succeeds on first attempt", async () => {
+      const operation = jest.fn().mockResolvedValue("success");
       const result = await retryAsync(operation);
 
-      expect(result).toBe('success');
+      expect(result).toBe("success");
       expect(operation).toHaveBeenCalledTimes(1);
     });
 
-    it('retries on failure and eventually succeeds', async () => {
+    it("retries on failure and eventually succeeds", async () => {
       const operation = jest
         .fn()
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValue('success');
+        .mockRejectedValueOnce(new Error("fail"))
+        .mockRejectedValueOnce(new Error("fail"))
+        .mockResolvedValue("success");
 
       const promise = retryAsync(operation, { maxAttempts: 3, delay: 100 });
 
@@ -38,28 +38,28 @@ describe('retryHelper utilities', () => {
       await jest.runAllTimersAsync();
 
       const result = await promise;
-      expect(result).toBe('success');
+      expect(result).toBe("success");
       expect(operation).toHaveBeenCalledTimes(3);
     });
 
-    it('throws after max attempts', async () => {
-      const operation = jest.fn().mockRejectedValue(new Error('fail'));
+    it("throws after max attempts", async () => {
+      const operation = jest.fn().mockRejectedValue(new Error("fail"));
 
       const promise = retryAsync(operation, { maxAttempts: 3, delay: 100 });
 
       await jest.runAllTimersAsync();
 
-      await expect(promise).rejects.toThrow('fail');
+      await expect(promise).rejects.toThrow("fail");
       expect(operation).toHaveBeenCalledTimes(3);
     });
 
-    it('uses exponential backoff', async () => {
-      const operation = jest.fn().mockRejectedValue(new Error('fail'));
+    it("uses exponential backoff", async () => {
+      const operation = jest.fn().mockRejectedValue(new Error("fail"));
 
       const promise = retryAsync(operation, {
         maxAttempts: 3,
         delay: 100,
-        exponentialBackoff: true,
+        backoff: true,
       });
 
       // This will fail after all retries
@@ -74,11 +74,11 @@ describe('retryHelper utilities', () => {
       expect(operation).toHaveBeenCalledTimes(3);
     });
 
-    it('calls onRetry callback', async () => {
+    it("calls onRetry callback", async () => {
       const operation = jest
         .fn()
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValue('success');
+        .mockRejectedValueOnce(new Error("fail"))
+        .mockResolvedValue("success");
 
       const onRetry = jest.fn();
 
@@ -91,31 +91,35 @@ describe('retryHelper utilities', () => {
       await jest.runAllTimersAsync();
       await promise;
 
-      expect(onRetry).toHaveBeenCalledWith(new Error('fail'), 1);
+      expect(onRetry).toHaveBeenCalledWith(new Error("fail"), 1);
     });
   });
 
-  describe('retryFetch', () => {
-    it('succeeds on first fetch', async () => {
-      const mockResponse = { ok: true, json: async () => ({ data: 'test' }) };
-      global.fetch = jest.fn().mockResolvedValue(mockResponse);
+  describe("retryFetch", () => {
+    it("succeeds on first fetch", async () => {
+      const mockResponse = { ok: true, json: async () => ({ data: "test" }) };
+      globalThis.fetch = jest.fn().mockResolvedValue(mockResponse);
 
-      const result = await retryFetch('https://api.example.com/data');
+      const result = await retryFetch("https://api.example.com/data");
 
       expect(result).toEqual(mockResponse);
       expect(fetch).toHaveBeenCalledTimes(1);
     });
 
-    it('retries on network error', async () => {
-      global.fetch = jest
+    it("retries on network error", async () => {
+      globalThis.fetch = jest
         .fn()
-        .mockRejectedValueOnce(new Error('Network error'))
-        .mockResolvedValue({ ok: true, json: async () => ({ data: 'test' }) });
+        .mockRejectedValueOnce(new Error("Network error"))
+        .mockResolvedValue({ ok: true, json: async () => ({ data: "test" }) });
 
-      const promise = retryFetch('https://api.example.com/data', {
-        maxAttempts: 2,
-        delay: 100,
-      });
+      const promise = retryFetch(
+        "https://api.example.com/data",
+        {},
+        {
+          maxAttempts: 2,
+          delay: 100,
+        }
+      );
 
       await jest.runAllTimersAsync();
       const result = await promise;
@@ -124,17 +128,20 @@ describe('retryHelper utilities', () => {
       expect(fetch).toHaveBeenCalledTimes(2);
     });
 
-    it('retries on 500 errors', async () => {
-      global.fetch = jest
+    it("retries on 500 errors", async () => {
+      globalThis.fetch = jest
         .fn()
         .mockResolvedValueOnce({ ok: false, status: 500 })
-        .mockResolvedValue({ ok: true, json: async () => ({ data: 'test' }) });
+        .mockResolvedValue({ ok: true, json: async () => ({ data: "test" }) });
 
-      const promise = retryFetch('https://api.example.com/data', {
-        maxAttempts: 2,
-        delay: 100,
-        retryOn: [500],
-      });
+      const promise = retryFetch(
+        "https://api.example.com/data",
+        {},
+        {
+          maxAttempts: 2,
+          delay: 100,
+        }
+      );
 
       await jest.runAllTimersAsync();
       const result = await promise;
@@ -143,13 +150,19 @@ describe('retryHelper utilities', () => {
       expect(fetch).toHaveBeenCalledTimes(2);
     });
 
-    it('does not retry on 404', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 404 });
+    it("does not retry on 404", async () => {
+      globalThis.fetch = jest
+        .fn()
+        .mockResolvedValue({ ok: false, status: 404 });
 
-      const promise = retryFetch('https://api.example.com/data', {
-        maxAttempts: 3,
-        delay: 100,
-      });
+      const promise = retryFetch(
+        "https://api.example.com/data",
+        {},
+        {
+          maxAttempts: 3,
+          delay: 100,
+        }
+      );
 
       await jest.runAllTimersAsync();
       const result = await promise;
@@ -159,69 +172,71 @@ describe('retryHelper utilities', () => {
     });
   });
 
-  describe('retryWithTimeout', () => {
-    it('succeeds before timeout', async () => {
-      const operation = jest.fn().mockResolvedValue('success');
+  describe("retryWithTimeout", () => {
+    it("succeeds before timeout", async () => {
+      const operation = jest.fn().mockResolvedValue("success");
 
       const result = await retryWithTimeout(operation, 5000);
 
-      expect(result).toBe('success');
+      expect(result).toBe("success");
     });
 
-    it('throws timeout error', async () => {
-      const operation = jest.fn().mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 10000))
-      );
+    it("throws timeout error", async () => {
+      const operation = jest
+        .fn()
+        .mockImplementation(
+          () => new Promise((resolve) => setTimeout(resolve, 10000))
+        );
 
       const promise = retryWithTimeout(operation, 1000);
 
       jest.advanceTimersByTime(1000);
 
-      await expect(promise).rejects.toThrow('timeout');
+      await expect(promise).rejects.toThrow("timeout");
     });
   });
 
-  describe('CircuitBreaker', () => {
-    it('allows requests when circuit is closed', async () => {
+  describe("CircuitBreaker", () => {
+    it("allows requests when circuit is closed", async () => {
       const breaker = new CircuitBreaker(3, 1000);
-      const operation = jest.fn().mockResolvedValue('success');
+      const operation = jest.fn().mockResolvedValue("success");
 
       const result = await breaker.execute(operation);
 
-      expect(result).toBe('success');
+      expect(result).toBe("success");
       expect(operation).toHaveBeenCalledTimes(1);
     });
 
-    it('opens circuit after threshold failures', async () => {
+    it("opens circuit after threshold failures", async () => {
       const breaker = new CircuitBreaker(2, 1000);
-      const operation = jest.fn().mockRejectedValue(new Error('fail'));
+      const operation = jest.fn().mockRejectedValue(new Error("fail"));
 
       // First two failures
-      await expect(breaker.execute(operation)).rejects.toThrow('fail');
-      await expect(breaker.execute(operation)).rejects.toThrow('fail');
+      await expect(breaker.execute(operation)).rejects.toThrow("fail");
+      await expect(breaker.execute(operation)).rejects.toThrow("fail");
 
       // Circuit should be open now
       await expect(breaker.execute(operation)).rejects.toThrow(
-        'Circuit breaker is OPEN'
+        "Circuit breaker is OPEN"
       );
 
       // Operation should not be called the third time
       expect(operation).toHaveBeenCalledTimes(2);
     });
 
-    it('transitions to half-open after timeout', async () => {
+    it("transitions to half-open after timeout", async () => {
       const breaker = new CircuitBreaker(1, 1000);
       const operation = jest
         .fn()
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValue('success');
+        .mockRejectedValueOnce(new Error("fail"))
+        .mockResolvedValue("success");
 
       // Open the circuit
-      await expect(breaker.execute(operation)).rejects.toThrow('fail');
+      await expect(breaker.execute(operation)).rejects.toThrow("fail");
 
       // Should reject while circuit is open
       await expect(breaker.execute(operation)).rejects.toThrow(
-        'Circuit breaker is OPEN'
+        "Circuit breaker is OPEN"
       );
 
       // Fast-forward past timeout
@@ -229,34 +244,34 @@ describe('retryHelper utilities', () => {
 
       // Should allow one request (half-open)
       const result = await breaker.execute(operation);
-      expect(result).toBe('success');
+      expect(result).toBe("success");
     });
 
-    it('resets failure count on success', async () => {
+    it("resets failure count on success", async () => {
       const breaker = new CircuitBreaker(3, 1000);
       const operation = jest
         .fn()
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValueOnce('success')
-        .mockRejectedValueOnce(new Error('fail'))
-        .mockResolvedValue('success');
+        .mockRejectedValueOnce(new Error("fail"))
+        .mockRejectedValueOnce(new Error("fail"))
+        .mockResolvedValueOnce("success")
+        .mockRejectedValueOnce(new Error("fail"))
+        .mockResolvedValue("success");
 
-      await expect(breaker.execute(operation)).rejects.toThrow('fail');
-      await expect(breaker.execute(operation)).rejects.toThrow('fail');
+      await expect(breaker.execute(operation)).rejects.toThrow("fail");
+      await expect(breaker.execute(operation)).rejects.toThrow("fail");
       await breaker.execute(operation); // Success resets count
 
       // One more failure should not open circuit (count reset)
-      await expect(breaker.execute(operation)).rejects.toThrow('fail');
+      await expect(breaker.execute(operation)).rejects.toThrow("fail");
 
       // Circuit should still be closed
-      await expect(breaker.execute(operation)).resolves.toBe('success');
+      await expect(breaker.execute(operation)).resolves.toBe("success");
     });
   });
 
-  describe.skip('debounceAsync', () => {
-    it('debounces function calls', async () => {
-      const fn = jest.fn().mockResolvedValue('result');
+  describe.skip("debounceAsync", () => {
+    it("debounces function calls", async () => {
+      const fn = jest.fn().mockResolvedValue("result");
       const debounced = debounceAsync(fn, 100);
 
       debounced();
@@ -271,27 +286,27 @@ describe('retryHelper utilities', () => {
       expect(fn).toHaveBeenCalledTimes(1);
     });
 
-    it('returns result from last call', async () => {
-      const fn = jest.fn().mockResolvedValue('result');
+    it("returns result from last call", async () => {
+      const fn = jest.fn().mockResolvedValue("result");
       const debounced = debounceAsync(fn, 100);
 
-      debounced('arg1');
-      debounced('arg2');
-      const promise3 = debounced('arg3');
+      debounced("arg1");
+      debounced("arg2");
+      const promise3 = debounced("arg3");
 
       jest.advanceTimersByTime(100);
       await Promise.resolve();
 
       const result = await promise3;
-      expect(result).toBe('result');
-      expect(fn).toHaveBeenCalledWith('arg3');
+      expect(result).toBe("result");
+      expect(fn).toHaveBeenCalledWith("arg3");
       expect(fn).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('throttleAsync', () => {
-    it('throttles function calls', async () => {
-      const fn = jest.fn().mockResolvedValue('result');
+  describe("throttleAsync", () => {
+    it("throttles function calls", async () => {
+      const fn = jest.fn().mockResolvedValue("result");
       const throttled = throttleAsync(fn, 100);
 
       throttled(); // Called
@@ -307,8 +322,8 @@ describe('retryHelper utilities', () => {
       expect(fn).toHaveBeenCalledTimes(2);
     });
 
-    it('allows one call per interval', async () => {
-      const fn = jest.fn().mockResolvedValue('result');
+    it("allows one call per interval", async () => {
+      const fn = jest.fn().mockResolvedValue("result");
       const throttled = throttleAsync(fn, 100);
 
       throttled();
