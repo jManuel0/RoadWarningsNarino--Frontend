@@ -24,7 +24,7 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  private resetTimeout: number | null = null;
+  private readonly resetTimeout: number | null = null;
 
   constructor(props: Props) {
     super(props);
@@ -80,27 +80,27 @@ export class ErrorBoundary extends Component<Props, State> {
     // });
   }
 
-  private handleReset = () => {
-    this.setState({
+  private readonly handleReset = () => {
+    this.setState((prevState) => ({
       hasError: false,
       error: null,
       errorInfo: null,
-      retryCount: this.state.retryCount + 1,
-    });
+      retryCount: prevState.retryCount + 1,
+    }));
 
     this.props.onReset?.();
   };
 
-  private handleReload = () => {
+  private readonly handleReload = () => {
     window.location.reload();
   };
 
-  private handleGoHome = () => {
+  private readonly handleGoHome = () => {
     window.location.href = "/";
   };
 
-  private toggleDetails = () => {
-    this.setState({ showDetails: !this.state.showDetails });
+  private readonly toggleDetails = () => {
+    this.setState((prevState) => ({ showDetails: !prevState.showDetails }));
   };
 
   render() {
