@@ -47,14 +47,6 @@ export default function Navigation() {
             </NavLink>
 
             <NavLink
-              to="/map"
-              icon={<NavigationIcon size={18} />}
-              active={isActive("/map")}
-            >
-              Mapa
-            </NavLink>
-
-            <NavLink
               to="/waze"
               icon={<NavigationIcon size={18} />}
               active={isActive("/waze")}
