@@ -62,6 +62,8 @@ export interface Alert {
 
   username?: string;
   userId?: number;
+  isPending?: boolean;
+  isOffline?: boolean;
 }
 
 // Severidad tal como la expone el backend

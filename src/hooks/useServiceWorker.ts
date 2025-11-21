@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { notificationService } from '@/utils/notifications';
+import { useEffect, useState } from "react";
+import { notificationService } from "@/utils/notifications";
 
 interface ServiceWorkerState {
   isSupported: boolean;
@@ -10,7 +10,7 @@ interface ServiceWorkerState {
 
 export function useServiceWorker() {
   const [state, setState] = useState<ServiceWorkerState>({
-    isSupported: 'serviceWorker' in navigator,
+    isSupported: "serviceWorker" in navigator,
     isRegistered: false,
     isUpdateAvailable: false,
     registration: null,
@@ -18,20 +18,25 @@ export function useServiceWorker() {
 
   useEffect(() => {
     if (!state.isSupported) {
-      console.log('Service Worker not supported in this browser');
+      console.log("Service Worker not supported in this browser");
       return;
     }
 
-    registerServiceWorker();
+    // Wrap in try-catch to prevent app crashes
+    try {
+      registerServiceWorker();
+    } catch (error) {
+      console.error("Failed to register service worker:", error);
+    }
   }, [state.isSupported]);
 
   const registerServiceWorker = async () => {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/',
+      const registration = await navigator.serviceWorker.register("/sw.js", {
+        scope: "/",
       });
 
-      console.log('Service Worker registered:', registration);
+      console.log("Service Worker registered:", registration);
 
       setState((prev) => ({
         ...prev,
@@ -40,54 +45,61 @@ export function useServiceWorker() {
       }));
 
       // Check for updates
-      registration.addEventListener('updatefound', () => {
+      registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
 
         if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          newWorker.addEventListener("statechange", () => {
+            if (
+              newWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
               // New service worker available
               setState((prev) => ({ ...prev, isUpdateAvailable: true }));
-              notificationService.info('Nueva versión disponible. Recarga la página para actualizar.');
+              notificationService.info(
+                "Nueva versión disponible. Recarga la página para actualizar."
+              );
             }
           });
         }
       });
 
       // Handle controller change (new service worker activated)
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
         window.location.reload();
       });
 
       // Check for updates every hour
-      setInterval(() => {
-        registration.update();
-      }, 60 * 60 * 1000);
-
+      setInterval(
+        () => {
+          registration.update();
+        },
+        60 * 60 * 1000
+      );
     } catch (error) {
-      console.error('Service Worker registration failed:', error);
+      console.error("Service Worker registration failed:", error);
     }
   };
 
   const updateServiceWorker = async () => {
     if (state.registration?.waiting) {
-      state.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      state.registration.waiting.postMessage({ type: "SKIP_WAITING" });
     }
   };
 
   const requestNotificationPermission = async () => {
-    if (!('Notification' in window)) {
-      console.log('Notifications not supported');
+    if (!("Notification" in window)) {
+      console.log("Notifications not supported");
       return false;
     }
 
-    if (Notification.permission === 'granted') {
+    if (Notification.permission === "granted") {
       return true;
     }
 
-    if (Notification.permission !== 'denied') {
+    if (Notification.permission !== "denied") {
       const permission = await Notification.requestPermission();
-      return permission === 'granted';
+      return permission === "granted";
     }
 
     return false;

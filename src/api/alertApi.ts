@@ -11,6 +11,7 @@ import {
   severityFrontToBackend,
   severityBackendToFront,
 } from "@/types/Alert";
+import { offlineAlertService } from "@/services/offlineAlertService";
 import { API_BASE } from "@/api/baseUrl";
 import type { Comment } from "@/types/Comment";
 type BackendAlert = Omit<Alert, "severity"> & {
@@ -85,16 +86,24 @@ function mapAlertsPageFromBackend(
 
 export const alertApi = {
   async getAlerts(): Promise<Alert[]> {
-    const res = await fetch(`${API_BASE}/alert`, {
-      method: "GET",
-      headers: authHeaders(), // sin JSON obligatorio
-    });
+    try {
+      const res = await fetch(`${API_BASE}/alert`, {
+        method: "GET",
+        headers: authHeaders(), // sin JSON obligatorio
+      });
 
-    if (!res.ok) {
-      throw new Error(`Error al obtener alertas: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`Error al obtener alertas: ${res.status}`);
+      }
+
+      const data = (await res.json()) as BackendAlert[];
+      const alerts = data.map(mapAlertFromBackend);
+      offlineAlertService.cacheAlerts(alerts);
+      return alerts;
+    } catch (error) {
+      console.warn("Usando cache local de alertas debido a un error:", error);
+      return offlineAlertService.getCachedAlerts();
     }
-    const data = (await res.json()) as BackendAlert[];
-    return data.map(mapAlertFromBackend);
   },
 
   async getAlertsPaginated(
@@ -116,16 +125,29 @@ export const alertApi = {
   },
 
   async getActiveAlerts(): Promise<Alert[]> {
-    const res = await fetch(`${API_BASE}/alert/active`, {
-      method: "GET",
-      headers: authHeaders(),
-    });
+    try {
+      const res = await fetch(`${API_BASE}/alert/active`, {
+        method: "GET",
+        headers: authHeaders(),
+      });
 
-    if (!res.ok) {
-      throw new Error(`Error al obtener alertas activas: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`Error al obtener alertas activas: ${res.status}`);
+      }
+
+      const data = (await res.json()) as BackendAlert[];
+      const alerts = data.map(mapAlertFromBackend);
+      offlineAlertService.cacheAlerts(alerts);
+      return alerts;
+    } catch (error) {
+      console.warn(
+        "No se pudieron obtener alertas activas, usando cache:",
+        error
+      );
+      return offlineAlertService
+        .getCachedAlerts()
+        .filter((alert) => alert.status === AlertStatus.ACTIVE);
     }
-    const data = (await res.json()) as BackendAlert[];
-    return data.map(mapAlertFromBackend);
   },
 
   async getActiveAlertsPaginated(
@@ -154,34 +176,56 @@ export const alertApi = {
       severity: severityFrontToBackend(data.severity),
     };
 
-    const res = await fetch(`${API_BASE}/alert`, {
-      method: "POST",
-      headers: authHeaders(true),
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch(`${API_BASE}/alert`, {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Error backend crear alerta:", text);
-      throw new Error("Error al crear alerta");
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Error backend crear alerta:", text);
+        throw new Error("Error al crear alerta");
+      }
+
+      const created = (await res.json()) as BackendAlert;
+      const alert = mapAlertFromBackend(created);
+      offlineAlertService.addAlertToCache(alert);
+      return alert;
+    } catch (error) {
+      const online = typeof navigator === "undefined" ? true : navigator.onLine;
+      if (!online) {
+        const pendingAlert = offlineAlertService.buildPendingAlert(data);
+        offlineAlertService.queueCreateAlert(data);
+        offlineAlertService.addAlertToCache(pendingAlert);
+        return pendingAlert;
+      }
+      throw error;
     }
-
-    const created = (await res.json()) as BackendAlert;
-    return mapAlertFromBackend(created);
   },
 
   async getAlertById(id: number): Promise<Alert> {
-    const res = await fetch(`${API_BASE}/alert/${id}`, {
-      method: "GET",
-      headers: authHeaders(),
-    });
+    try {
+      const res = await fetch(`${API_BASE}/alert/${id}`, {
+        method: "GET",
+        headers: authHeaders(),
+      });
 
-    if (!res.ok) {
-      throw new Error("Error al obtener detalle de la alerta");
+      if (!res.ok) {
+        throw new Error("Error al obtener detalle de la alerta");
+      }
+
+      const data = (await res.json()) as BackendAlert;
+      return mapAlertFromBackend(data);
+    } catch (error) {
+      console.warn("Usando cache local para detalle de alerta:", error);
+      const cached = offlineAlertService
+        .getCachedAlerts()
+        .find((alert) => alert.id === id);
+      if (cached) return cached;
+      throw error;
     }
-
-    const data = (await res.json()) as BackendAlert;
-    return mapAlertFromBackend(data);
   },
 
   async getNearbyAlerts(params: {

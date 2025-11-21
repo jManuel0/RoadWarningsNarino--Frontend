@@ -9,9 +9,11 @@ import InstallPWA from "./components/InstallPWA";
 import FloatingClearFilters from "./components/FloatingClearFilters";
 import LoadingSpinner from "./components/LoadingSpinner";
 import SkipLink from "./components/SkipLink";
+import NotificationPermissionPrompt from "./components/NotificationPermissionPrompt";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useAuthStore } from "./stores/authStore";
 import { useServiceWorker } from "./hooks/useServiceWorker";
+import { useOfflineSync } from "./hooks/useOfflineSync";
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -47,6 +49,7 @@ function AppRoutes() {
     <>
       <SkipLink />
       <Navigation />
+      <NotificationPermissionPrompt />
       <main id="main-content" tabIndex={-1}>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
@@ -69,7 +72,9 @@ function AppRoutes() {
 
 function App() {
   // Registrar service worker para funcionalidad PWA
+  // Los hooks deben llamarse incondicionalmente
   useServiceWorker();
+  useOfflineSync();
 
   return (
     <ErrorBoundary>

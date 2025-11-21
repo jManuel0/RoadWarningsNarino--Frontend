@@ -6,6 +6,7 @@ import { useAuthStore } from "@/stores/authStore";
 import AlertCard from "@/components/AlertCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
+import { NotificationStatus } from "@/components/NotificationPermissionPrompt";
 import { notificationService } from "@/utils/notifications";
 import { alertApi } from "@/api/alertApi";
 
@@ -290,6 +291,16 @@ export default function Profile() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Notificaciones Push */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            Configuración de Notificaciones
+          </h2>
+          <NotificationStatus />
         </div>
       </div>
 
