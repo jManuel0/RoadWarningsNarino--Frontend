@@ -25,6 +25,7 @@ const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const Welcome = lazy(() => import("./pages/Welcome"));
 const Profile = lazy(() => import("./pages/Profile"));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
+const EnhancedMapPage = lazy(() => import("./pages/EnhancedMapPage"));
 
 function AppRoutes() {
   const isAuth = useAuthStore((s) => s.isAuthenticated());
@@ -57,6 +58,7 @@ function AppRoutes() {
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/gps" element={<GpsPage />} />
             <Route path="/waze" element={<WazePage />} />
+            <Route path="/map" element={<EnhancedMapPage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
