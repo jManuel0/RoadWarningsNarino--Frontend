@@ -1,5 +1,6 @@
 // src/stores/alertStore.ts
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { Alert, AlertSeverity, AlertStatus } from "@/types/Alert";
 
 // --- Subject sencillo para notificar nuevas alertas (para useObserver) ---
@@ -44,45 +45,54 @@ interface AlertState {
   alertSubject: Subject<Alert>;
 }
 
-export const useAlertStore = create<AlertState>((set, get) => ({
-  alerts: [],
-  loading: false,
-  error: null,
+export const useAlertStore = create<AlertState>()(
+  persist(
+    (set, get) => ({
+      alerts: [],
+      loading: false,
+      error: null,
 
-  setAlerts: (alerts) => set({ alerts }),
+      setAlerts: (alerts) => set({ alerts }),
 
-  addAlert: (alert) => {
-    set((state) => ({
-      alerts: [alert, ...state.alerts],
-    }));
-    // Notificar a los observadores (Home, notificaciones, etc.)
-    alertSubjectInstance.notify(alert);
-  },
+      addAlert: (alert) => {
+        set((state) => ({
+          alerts: [alert, ...state.alerts],
+        }));
+        // Notificar a los observadores (Home, notificaciones, etc.)
+        alertSubjectInstance.notify(alert);
+      },
 
-  updateAlert: (id, data) =>
-    set((state) => ({
-      alerts: state.alerts.map((a) =>
-        a.id === id ? { ...a, ...data } : a
-      ),
-    })),
+      updateAlert: (id, data) =>
+        set((state) => ({
+          alerts: state.alerts.map((a) =>
+            a.id === id ? { ...a, ...data } : a
+          ),
+        })),
 
-  removeAlert: (id) =>
-    set((state) => ({
-      alerts: state.alerts.filter((a) => a.id !== id),
-    })),
+      removeAlert: (id) =>
+        set((state) => ({
+          alerts: state.alerts.filter((a) => a.id !== id),
+        })),
 
-  setLoading: (loading) => set({ loading }),
-  setError: (error) => set({ error }),
+      setLoading: (loading) => set({ loading }),
+      setError: (error) => set({ error }),
 
-  getActiveAlerts: () =>
-    get().alerts.filter((a) => a.status === AlertStatus.ACTIVE),
+      getActiveAlerts: () =>
+        get().alerts.filter((a) => a.status === AlertStatus.ACTIVE),
 
-  getCriticalAlerts: () =>
-    get().alerts.filter(
-      (a) =>
-        a.status === AlertStatus.ACTIVE &&
-        a.severity === AlertSeverity.CRITICA
-    ),
+      getCriticalAlerts: () =>
+        get().alerts.filter(
+          (a) =>
+            a.status === AlertStatus.ACTIVE &&
+            a.severity === AlertSeverity.CRITICA
+        ),
 
-  alertSubject: alertSubjectInstance,
-}));
+      alertSubject: alertSubjectInstance,
+    }),
+    {
+      name: "alert-storage", // Nombre de la key en localStorage
+      // Solo persistir las alertas, no loading ni error
+      partialize: (state) => ({ alerts: state.alerts }),
+    }
+  )
+);

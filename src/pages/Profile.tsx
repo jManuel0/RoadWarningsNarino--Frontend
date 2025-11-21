@@ -1,16 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import {
-  User,
-  Calendar,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-} from "lucide-react";
+import { Calendar, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import { userApi, UserProfile, UserStats } from "@/api/userApi";
 import { Alert, AlertStatus } from "@/types/Alert";
 import { useAuthStore } from "@/stores/authStore";
 import AlertCard from "@/components/AlertCard";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import { notificationService } from "@/utils/notifications";
 import { alertApi } from "@/api/alertApi";
 
@@ -122,6 +117,16 @@ export default function Profile() {
     return true;
   });
 
+  // Manejar actualización de foto de perfil
+  const handlePictureUpdated = (newPictureUrl: string | null) => {
+    if (profile) {
+      setProfile({
+        ...profile,
+        profilePicture: newPictureUrl || undefined,
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -180,10 +185,14 @@ export default function Profile() {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
-            <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-full">
-              <User className="text-blue-600 dark:text-blue-400" size={32} />
-            </div>
+          <div className="flex items-center gap-6">
+            {/* Foto de perfil con opción de subir */}
+            <ProfilePictureUpload
+              currentPicture={profile?.profilePicture}
+              onPictureUpdated={handlePictureUpdated}
+            />
+
+            {/* Información del usuario */}
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {username || profile?.username}

@@ -44,6 +44,7 @@ export interface UserProfile {
   id: number;
   username: string;
   email?: string;
+  profilePicture?: string; // URL de la imagen de perfil
   createdAt: string;
   alertCount: number;
   resolvedCount: number;
@@ -363,5 +364,43 @@ export const userApi = {
     }
 
     return res.json();
+  },
+
+  // Foto de perfil
+  async uploadProfilePicture(
+    file: File
+  ): Promise<{ profilePictureUrl: string }> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const token = getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE}/api/users/me/profile-picture`, {
+      method: "POST",
+      headers: headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText || "Error al subir la foto de perfil");
+    }
+
+    return res.json();
+  },
+
+  async deleteProfilePicture(): Promise<void> {
+    const res = await fetch(`${API_BASE}/api/users/me/profile-picture`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error al eliminar la foto de perfil");
+    }
   },
 };
