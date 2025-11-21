@@ -30,7 +30,10 @@ export default function Home() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);
   const [isFiltered, setIsFiltered] = useState(false);
-  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [userPosition, setUserPosition] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   // Suscripción a alertas en tiempo real vía WebSocket
@@ -56,17 +59,19 @@ export default function Home() {
           setError(null);
         } catch (apiError) {
           // Si el API falla, usar datos de ejemplo en desarrollo
-          console.warn("Backend no disponible, usando datos de ejemplo:", apiError);
+          console.warn(
+            "Backend no disponible, usando datos de ejemplo:",
+            apiError
+          );
 
-          const mockAlerts: Alert[] = [
-          ]
-          if (false && import.meta.env.DEV) {
+          const mockAlerts: Alert[] = [];
+          if (import.meta.env.DEV) {
             setAlerts(mockAlerts);
             setError("Modo demo - Backend no disponible");
           } else {
             // Producción: no mostramos alertas falsas si el backend no responde
             setAlerts([]);
-            setError("No se pudieron cargar las alertas (backend no disponible)");
+            setError("No se pudieron cargar las alertas ");
           }
         }
 
@@ -218,8 +223,10 @@ export default function Home() {
 
     const a =
       Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-      Math.cos(phi1) * Math.cos(phi2) *
-        Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      Math.cos(phi1) *
+        Math.cos(phi2) *
+        Math.sin(deltaLambda / 2) *
+        Math.sin(deltaLambda / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -231,8 +238,7 @@ export default function Home() {
 
   const criticalAlerts = alerts.filter(
     (a) =>
-      a.status === AlertStatus.ACTIVE &&
-      a.severity === AlertSeverity.CRITICA
+      a.status === AlertStatus.ACTIVE && a.severity === AlertSeverity.CRITICA
   );
 
   const baseDisplayAlerts = isFiltered ? filteredAlerts : activeAlerts;

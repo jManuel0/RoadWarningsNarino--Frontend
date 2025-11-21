@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as L from "leaflet";
+import "leaflet";
 
 declare module "leaflet" {
   namespace Routing {

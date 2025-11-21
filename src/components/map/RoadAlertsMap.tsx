@@ -27,7 +27,7 @@
  * @version 1.0.0
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -35,32 +35,32 @@ import {
   Popup,
   Polyline,
   useMapEvents,
-} from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 // Importaciones de servicios y utilidades
-import { useGeolocation } from '@/hooks/useGeolocation';
+import { useGeolocation } from "@/hooks/useGeolocation";
 import {
   calculateRoute,
   formatDistance,
   formatDuration,
-} from '@/services/osrmService';
+} from "@/services/osrmService";
 import {
   createAlertIcon,
   createUserLocationIcon,
   createWaypointIcon,
   injectMapIconStyles,
-} from '@/utils/mapIcons';
+} from "@/utils/mapIcons";
 import {
   PASTO_CENTER,
   NARINO_BOUNDS,
   calculateDistance,
   fitMapToPoints,
   toLatLngExpression,
-} from '@/utils/mapHelpers';
+} from "@/utils/mapHelpers";
 
 // Importaciones de tipos (mapa)
 import {
@@ -70,7 +70,7 @@ import {
   AlertType,
   AlertSeverity,
   AlertStatus,
-} from '@/types/map.types';
+} from "@/types/map.types";
 
 // Tipos del backend
 import {
@@ -78,10 +78,10 @@ import {
   AlertType as BackendAlertType,
   AlertSeverity as BackendAlertSeverity,
   AlertStatus as BackendAlertStatus,
-} from '@/types/Alert';
+} from "@/types/Alert";
 
 // API del backend
-import { alertApi } from '@/api/alertApi';
+import { alertApi } from "@/api/alertApi";
 
 // ============================================================================
 // TIPOS E INTERFACES
@@ -201,7 +201,7 @@ const toRoadAlert = (alert: BackendAlert): RoadAlert => ({
   municipality: alert.municipality,
   severity: mapBackendSeverityToMapSeverity(alert.severity),
   status: mapBackendStatusToMapStatus(alert.status),
-  username: alert.username ?? 'Anónimo',
+  username: alert.username ?? "Anónimo",
   userId: alert.userId ?? 0,
   imageUrl: alert.imageUrl,
   upvotes: alert.upvotes ?? 0,
@@ -216,7 +216,7 @@ const toRoadAlert = (alert: BackendAlert): RoadAlert => ({
 // ============================================================================
 
 export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
-  height = '100vh',
+  height = "100vh",
   showControls = true,
   enableClustering = false,
   updateInterval = 10000, // 10 segundos
@@ -247,9 +247,9 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
     stopTracking,
     isSupported: isGeoSupported,
   } = useGeolocation({
-    onPosition: (pos) => console.log('📍 Ubicación actualizada:', pos),
+    onPosition: (pos) => console.log("📍 Ubicación actualizada:", pos),
     onError: (err) =>
-      console.error('⚠️ Error de geolocalización:', err.message),
+      console.error("⚠️ Error de geolocalización:", err.message),
   });
 
   // Referencias
@@ -298,6 +298,7 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
         clearInterval(updateTimerRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateInterval]);
 
   // =========================================================================
@@ -329,11 +330,11 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
 
       console.log(`✅ ${roadAlerts.length} alertas cargadas`);
     } catch (error) {
-      console.error('Error cargando alertas:', error);
+      console.error("Error cargando alertas:", error);
       setMapState((prev) => ({
         ...prev,
         isLoadingAlerts: false,
-        error: 'No se pudieron cargar las alertas',
+        error: "No se pudieron cargar las alertas",
       }));
     }
   }, []);
@@ -346,7 +347,7 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
       try {
         setMapState((prev) => ({ ...prev, isLoadingRoute: true, error: null }));
 
-        console.log('🧭 Calculando ruta...');
+        console.log("🧭 Calculando ruta...");
 
         const route = await calculateRoute(origin, destination);
 
@@ -369,19 +370,17 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
 
         onRouteCalculated?.(route);
 
-        console.log('✅ Ruta calculada:', {
+        console.log("✅ Ruta calculada:", {
           distance: formatDistance(route.distance),
           duration: formatDuration(route.duration),
         });
       } catch (error) {
-        console.error('Error calculando ruta:', error);
+        console.error("Error calculando ruta:", error);
         setMapState((prev) => ({
           ...prev,
           isLoadingRoute: false,
           error:
-            error instanceof Error
-              ? error.message
-              : 'Error calculando ruta',
+            error instanceof Error ? error.message : "Error calculando ruta",
         }));
       }
     },
@@ -394,7 +393,7 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
   const handleNavigateToAlert = useCallback(
     (roadAlert: RoadAlert) => {
       if (!userPosition) {
-        window.alert('Por favor, habilita tu ubicación para navegar');
+        window.alert("Por favor, habilita tu ubicación para navegar");
         return;
       }
 
@@ -483,9 +482,9 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
         center={toLatLngExpression(PASTO_CENTER)}
         zoom={13}
         maxBounds={NARINO_BOUNDS}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: "100%", height: "100%" }}
         zoomControl={true}
-        data-enable-clustering={enableClustering ? 'true' : 'false'}
+        data-enable-clustering={enableClustering ? "true" : "false"}
         ref={(map) => {
           if (map) mapRef.current = map;
         }}
@@ -495,8 +494,8 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url={
             darkMode
-              ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-              : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           }
           maxZoom={19}
           detectRetina={true}
@@ -548,14 +547,14 @@ export const RoadAlertsMap: React.FC<RoadAlertsMapProps> = ({
         {mapState.routeOrigin && (
           <Marker
             position={toLatLngExpression(mapState.routeOrigin)}
-            icon={createWaypointIcon('origin')}
+            icon={createWaypointIcon("origin")}
           />
         )}
 
         {mapState.routeDestination && (
           <Marker
             position={toLatLngExpression(mapState.routeDestination)}
-            icon={createWaypointIcon('destination')}
+            icon={createWaypointIcon("destination")}
           />
         )}
 
@@ -657,10 +656,10 @@ const MapControls: React.FC<{
       onClick={onToggleTracking}
       className={`p-3 rounded-lg shadow-lg ${
         isTracking
-          ? 'bg-blue-600 text-white'
-          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+          ? "bg-blue-600 text-white"
+          : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
       } hover:opacity-90 transition-opacity`}
-      title={isTracking ? 'Detener seguimiento' : 'Seguir mi ubicación'}
+      title={isTracking ? "Detener seguimiento" : "Seguir mi ubicación"}
     >
       📍
     </button>
@@ -719,16 +718,16 @@ const AlertPopupContent: React.FC<{
           <strong>Tipo:</strong> {alert.type}
         </div>
         <div>
-          <strong>Severidad:</strong>{' '}
+          <strong>Severidad:</strong>{" "}
           <span
             className={`font-semibold ${
-              alert.severity === 'CRITICAL'
-                ? 'text-red-600'
-                : alert.severity === 'HIGH'
-                ? 'text-orange-600'
-                : alert.severity === 'MEDIUM'
-                ? 'text-yellow-600'
-                : 'text-green-600'
+              alert.severity === "CRITICAL"
+                ? "text-red-600"
+                : alert.severity === "HIGH"
+                  ? "text-orange-600"
+                  : alert.severity === "MEDIUM"
+                    ? "text-yellow-600"
+                    : "text-green-600"
             }`}
           >
             {alert.severity}
@@ -762,10 +761,10 @@ const AlertPopupContent: React.FC<{
 const MapEventHandler: React.FC = () => {
   const map = useMapEvents({
     click: (e) => {
-      console.log('Clic en mapa:', e.latlng);
+      console.log("Clic en mapa:", e.latlng);
     },
     zoomend: () => {
-      console.log('Zoom actual:', map.getZoom());
+      console.log("Zoom actual:", map.getZoom());
     },
   });
 

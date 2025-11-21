@@ -1,23 +1,24 @@
 // WebSocket service for real-time notifications
-import { Alert } from '@/types/Alert';
+import { Alert } from "@/types/Alert";
 
 type WebSocketEventType =
-  | 'ALERT_CREATED'
-  | 'ALERT_UPDATED'
-  | 'ALERT_DELETED'
-  | 'ALERT_COMMENTED'
-  | 'ALERT_VOTED';
+  | "ALERT_CREATED"
+  | "ALERT_UPDATED"
+  | "ALERT_DELETED"
+  | "ALERT_COMMENTED"
+  | "ALERT_VOTED";
 
 interface WebSocketMessage {
   type: WebSocketEventType;
-  data: any;
+  data: unknown;
 }
 
-type EventListener = (data: any) => void;
+type EventListener = (data: unknown) => void;
 
 class WebSocketService {
   private ws: WebSocket | null = null;
-  private readonly listeners: Map<WebSocketEventType, Set<EventListener>> = new Map();
+  private readonly listeners: Map<WebSocketEventType, Set<EventListener>> =
+    new Map();
   private reconnectAttempts = 0;
   private readonly maxReconnectAttempts = 5;
   private readonly reconnectDelay = 3000;
@@ -27,9 +28,10 @@ class WebSocketService {
 
   constructor() {
     // Use wss:// in production, ws:// in development
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host =  import.meta.env.VITE_API_URL?.replace(/^https?:\/\//, '') ||
-                 'localhost:8080';
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const host =
+      import.meta.env.VITE_API_URL?.replace(/^https?:\/\//, "") ||
+      "localhost:8080";
     this.url = `${protocol}//${host}/ws`;
   }
 
@@ -46,7 +48,7 @@ class WebSocketService {
         this.ws = new WebSocket(this.url);
 
         this.ws.onopen = () => {
-          console.log('✅ WebSocket connected');
+          console.log("✅ WebSocket connected");
           this.isConnecting = false;
           this.reconnectAttempts = 0;
           this.startHeartbeat();
@@ -58,18 +60,18 @@ class WebSocketService {
             const message: WebSocketMessage = JSON.parse(event.data);
             this.handleMessage(message);
           } catch (error) {
-            console.error('Error parsing WebSocket message:', error);
+            console.error("Error parsing WebSocket message:", error);
           }
         };
 
         this.ws.onerror = (error) => {
-          console.error('❌ WebSocket error:', error);
+          console.error("❌ WebSocket error:", error);
           this.isConnecting = false;
-          reject(new Error('Network timeout'));
+          reject(new Error("Network timeout"));
         };
 
         this.ws.onclose = () => {
-          console.log('🔌 WebSocket closed');
+          console.log("🔌 WebSocket closed");
           this.isConnecting = false;
           this.stopHeartbeat();
           this.attemptReconnect();
@@ -92,7 +94,7 @@ class WebSocketService {
   private startHeartbeat(): void {
     this.heartbeatInterval = window.setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'PING' }));
+        this.ws.send(JSON.stringify({ type: "PING" }));
       }
     }, 30000); // Every 30 seconds
   }
@@ -106,14 +108,16 @@ class WebSocketService {
 
   private attemptReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('❌ Max reconnection attempts reached');
+      console.error("❌ Max reconnection attempts reached");
       return;
     }
 
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * this.reconnectAttempts;
 
-    console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    console.log(
+      `🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+    );
 
     setTimeout(() => {
       this.connect().catch(console.error);
@@ -123,14 +127,14 @@ class WebSocketService {
   private handleMessage(message: WebSocketMessage): void {
     const listeners = this.listeners.get(message.type);
     if (listeners) {
-      listeners.forEach(listener => listener(message.data));
+      listeners.forEach((listener) => listener(message.data));
     }
 
-    // Also trigger 'ALL' listeners for all events
-    const allListeners = this.listeners.get('ALERT_CREATED' as any);
-    if (allListeners && message.type !== 'ALERT_CREATED') {
-      // This is a hack, we need a proper 'ALL' event type
-    }
+    // Also trigger 'ALL' listeners for all events (future enhancement)
+    // const allListeners = this.listeners.get('ALL' as WebSocketEventType);
+    // if (allListeners) {
+    //   allListeners.forEach(listener => listener(message.data));
+    // }
   }
 
   on(event: WebSocketEventType, listener: EventListener): void {
@@ -149,28 +153,43 @@ class WebSocketService {
 
   // Convenience methods for specific events
   onAlertCreated(callback: (alert: Alert) => void): () => void {
-    this.on('ALERT_CREATED', callback);
-    return () => this.off('ALERT_CREATED', callback);
+    const wrappedCallback = (data: unknown) => callback(data as Alert);
+    this.on("ALERT_CREATED", wrappedCallback);
+    return () => this.off("ALERT_CREATED", wrappedCallback);
   }
 
   onAlertUpdated(callback: (alert: Alert) => void): () => void {
-    this.on('ALERT_UPDATED', callback);
-    return () => this.off('ALERT_UPDATED', callback);
+    const wrappedCallback = (data: unknown) => callback(data as Alert);
+    this.on("ALERT_UPDATED", wrappedCallback);
+    return () => this.off("ALERT_UPDATED", wrappedCallback);
   }
 
   onAlertDeleted(callback: (alertId: number) => void): () => void {
-    this.on('ALERT_DELETED', callback);
-    return () => this.off('ALERT_DELETED', callback);
+    const wrappedCallback = (data: unknown) => callback(data as number);
+    this.on("ALERT_DELETED", wrappedCallback);
+    return () => this.off("ALERT_DELETED", wrappedCallback);
   }
 
-  onAlertCommented(callback: (data: { alertId: number; comment: any }) => void): () => void {
-    this.on('ALERT_COMMENTED', callback);
-    return () => this.off('ALERT_COMMENTED', callback);
+  onAlertCommented(
+    callback: (data: { alertId: number; comment: unknown }) => void
+  ): () => void {
+    const wrappedCallback = (data: unknown) =>
+      callback(data as { alertId: number; comment: unknown });
+    this.on("ALERT_COMMENTED", wrappedCallback);
+    return () => this.off("ALERT_COMMENTED", wrappedCallback);
   }
 
-  onAlertVoted(callback: (data: { alertId: number; upvotes: number; downvotes: number }) => void): () => void {
-    this.on('ALERT_VOTED', callback);
-    return () => this.off('ALERT_VOTED', callback);
+  onAlertVoted(
+    callback: (data: {
+      alertId: number;
+      upvotes: number;
+      downvotes: number;
+    }) => void
+  ): () => void {
+    const wrappedCallback = (data: unknown) =>
+      callback(data as { alertId: number; upvotes: number; downvotes: number });
+    this.on("ALERT_VOTED", wrappedCallback);
+    return () => this.off("ALERT_VOTED", wrappedCallback);
   }
 
   isConnected(): boolean {
@@ -182,6 +201,6 @@ class WebSocketService {
 export const websocketService = new WebSocketService();
 
 // Auto-connect on first import (can be disabled if needed)
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   websocketService.connect().catch(console.error);
 }

@@ -6,7 +6,7 @@
  * Documentación: http://project-osrm.org/docs/v5.24.0/api/
  */
 
-import { LatLngExpression } from 'leaflet';
+import { LatLngExpression } from "leaflet";
 import {
   Coordinates,
   Route,
@@ -14,7 +14,7 @@ import {
   OSRMResponse,
   RouteStep,
   RouteLeg,
-} from '@/types/map.types';
+} from "@/types/map.types";
 
 // ============================================================================
 // CONFIGURACIÓN
@@ -24,7 +24,7 @@ import {
  * URL base del servidor OSRM público
  * Nota: En producción, considera usar tu propio servidor OSRM
  */
-const OSRM_BASE_URL = 'https://router.project-osrm.org';
+const OSRM_BASE_URL = "https://router.project-osrm.org";
 
 /**
  * Timeout para las peticiones HTTP (en milisegundos)
@@ -37,8 +37,8 @@ const REQUEST_TIMEOUT = 10000; // 10 segundos
 const DEFAULT_ROUTE_OPTIONS: Partial<RouteOptions> = {
   alternatives: false,
   steps: true,
-  geometries: 'geojson',
-  overview: 'full',
+  geometries: "geojson",
+  overview: "full",
   annotations: false,
 };
 
@@ -67,7 +67,7 @@ export async function calculateRoute(
     // Construir URL de OSRM
     const url = buildOSRMUrl(origin, destination, options);
 
-    console.log('🗺️ Calculando ruta OSRM:', { origin, destination, url });
+    console.log("🗺️ Calculando ruta OSRM:", { origin, destination, url });
 
     // Hacer petición con timeout
     const response = await fetchWithTimeout(url, REQUEST_TIMEOUT);
@@ -79,30 +79,30 @@ export async function calculateRoute(
     const data: OSRMResponse = await response.json();
 
     // Validar respuesta de OSRM
-    if (data.code !== 'Ok') {
+    if (data.code !== "Ok") {
       throw new Error(
         data.message || `OSRM devolvió código de error: ${data.code}`
       );
     }
 
     if (!data.routes || data.routes.length === 0) {
-      throw new Error('OSRM no encontró ninguna ruta');
+      throw new Error("OSRM no encontró ninguna ruta");
     }
 
     // Procesar la ruta
     const route = processOSRMRoute(data.routes[0]);
 
-    console.log('✅ Ruta calculada exitosamente:', {
+    console.log("✅ Ruta calculada exitosamente:", {
       distance: `${(route.distance / 1000).toFixed(2)} km`,
       duration: `${Math.round(route.duration / 60)} min`,
     });
 
     return route;
   } catch (error) {
-    console.error('❌ Error calculando ruta:', error);
+    console.error("❌ Error calculando ruta:", error);
     throw new Error(
       `No se pudo calcular la ruta: ${
-        error instanceof Error ? error.message : 'Error desconocido'
+        error instanceof Error ? error.message : "Error desconocido"
       }`
     );
   }
@@ -124,15 +124,15 @@ export async function calculateAlternativeRoutes(
     const url = buildOSRMUrl(origin, destination, {
       alternatives: true,
       steps: true,
-      geometries: 'geojson',
-      overview: 'full',
+      geometries: "geojson",
+      overview: "full",
     });
 
     const response = await fetchWithTimeout(url, REQUEST_TIMEOUT);
     const data: OSRMResponse = await response.json();
 
-    if (data.code !== 'Ok' || !data.routes) {
-      throw new Error('No se pudieron calcular rutas alternativas');
+    if (data.code !== "Ok" || !data.routes) {
+      throw new Error("No se pudieron calcular rutas alternativas");
     }
 
     // Procesar todas las rutas (limitado por maxAlternatives)
@@ -140,7 +140,7 @@ export async function calculateAlternativeRoutes(
       .slice(0, maxAlternatives + 1)
       .map((route) => processOSRMRoute(route));
   } catch (error) {
-    console.error('Error calculando rutas alternativas:', error);
+    console.error("Error calculando rutas alternativas:", error);
     // En caso de error, intentar calcular al menos la ruta principal
     const mainRoute = await calculateRoute(origin, destination);
     return [mainRoute];
@@ -156,27 +156,25 @@ export async function calculateMultiWaypointRoute(
   waypoints: Coordinates[]
 ): Promise<Route> {
   if (waypoints.length < 2) {
-    throw new Error('Se requieren al menos 2 waypoints');
+    throw new Error("Se requieren al menos 2 waypoints");
   }
 
   // Construir coordenadas para OSRM
-  const coordinates = waypoints
-    .map((wp) => `${wp.lng},${wp.lat}`)
-    .join(';');
+  const coordinates = waypoints.map((wp) => `${wp.lng},${wp.lat}`).join(";");
 
   const url = `${OSRM_BASE_URL}/route/v1/driving/${coordinates}?${new URLSearchParams(
     {
-      steps: 'true',
-      geometries: 'geojson',
-      overview: 'full',
+      steps: "true",
+      geometries: "geojson",
+      overview: "full",
     }
   )}`;
 
   const response = await fetchWithTimeout(url, REQUEST_TIMEOUT);
   const data: OSRMResponse = await response.json();
 
-  if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
-    throw new Error('No se pudo calcular la ruta con waypoints');
+  if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
+    throw new Error("No se pudo calcular la ruta con waypoints");
   }
 
   return processOSRMRoute(data.routes[0]);
@@ -186,25 +184,26 @@ export async function calculateMultiWaypointRoute(
 // FUNCIONES DE PROCESAMIENTO
 // ============================================================================
 
+type OSRMRouteData = OSRMResponse["routes"][0];
+type OSRMStep = NonNullable<OSRMRouteData["legs"][0]["steps"]>[0];
+
 /**
  * Procesa una ruta de OSRM al formato interno
  * @param osrmRoute - Ruta en formato OSRM
  * @returns Ruta en formato interno
  */
-function processOSRMRoute(osrmRoute: any): Route {
+function processOSRMRoute(osrmRoute: OSRMRouteData): Route {
   // Extraer geometría (coordenadas de la polilínea)
   const geometry: LatLngExpression[] = osrmRoute.geometry.coordinates.map(
     (coord: [number, number]) => [coord[1], coord[0]] as LatLngExpression // OSRM usa [lng, lat], Leaflet usa [lat, lng]
   );
 
   // Procesar legs (segmentos de la ruta)
-  const legs: RouteLeg[] = osrmRoute.legs.map((leg: any) => ({
+  const legs: RouteLeg[] = osrmRoute.legs.map((leg) => ({
     distance: leg.distance,
     duration: leg.duration,
-    summary: leg.summary || '',
-    steps: leg.steps
-      ? leg.steps.map((step: any) => processRouteStep(step))
-      : [],
+    summary: leg.summary || "",
+    steps: leg.steps ? leg.steps.map((step) => processRouteStep(step)) : [],
   }));
 
   return {
@@ -213,7 +212,7 @@ function processOSRMRoute(osrmRoute: any): Route {
     geometry,
     legs,
     weight: osrmRoute.weight || osrmRoute.duration,
-    weightName: osrmRoute.weight_name || 'duration',
+    weightName: osrmRoute.weight_name || "duration",
   };
 }
 
@@ -222,13 +221,13 @@ function processOSRMRoute(osrmRoute: any): Route {
  * @param osrmStep - Paso en formato OSRM
  * @returns Paso en formato interno
  */
-function processRouteStep(osrmStep: any): RouteStep {
+function processRouteStep(osrmStep: OSRMStep): RouteStep {
   return {
     distance: osrmStep.distance,
     duration: osrmStep.duration,
     instruction: generateInstruction(osrmStep),
-    name: osrmStep.name || 'Vía sin nombre',
-    mode: 'driving',
+    name: osrmStep.name || "Vía sin nombre",
+    mode: "driving",
     maneuver: osrmStep.maneuver
       ? {
           type: osrmStep.maneuver.type,
@@ -247,52 +246,52 @@ function processRouteStep(osrmStep: any): RouteStep {
  * @param step - Paso de OSRM
  * @returns Instrucción legible
  */
-function generateInstruction(step: any): string {
+function generateInstruction(step: OSRMStep): string {
   const { maneuver, name } = step;
 
-  if (!maneuver) return `Continuar por ${name || 'la vía'}`;
+  if (!maneuver) return `Continuar por ${name || "la vía"}`;
 
-  const roadName = name || 'la vía';
+  const roadName = name || "la vía";
 
   // Mapeo de tipos de maniobra a español
   const maneuverTypes: Record<string, string> = {
-    depart: 'Salir',
-    arrive: 'Llegar a',
-    turn: 'Girar',
-    'new name': 'Continuar por',
-    continue: 'Continuar',
-    merge: 'Incorporarse a',
-    'on ramp': 'Tomar la rampa',
-    'off ramp': 'Salir por la rampa',
-    fork: 'Tomar el desvío',
-    'end of road': 'Al final de la vía',
-    roundabout: 'En la rotonda',
+    depart: "Salir",
+    arrive: "Llegar a",
+    turn: "Girar",
+    "new name": "Continuar por",
+    continue: "Continuar",
+    merge: "Incorporarse a",
+    "on ramp": "Tomar la rampa",
+    "off ramp": "Salir por la rampa",
+    fork: "Tomar el desvío",
+    "end of road": "Al final de la vía",
+    roundabout: "En la rotonda",
   };
 
   // Mapeo de modificadores a español
   const modifiers: Record<string, string> = {
-    left: 'a la izquierda',
-    right: 'a la derecha',
-    'sharp left': 'cerrado a la izquierda',
-    'sharp right': 'cerrado a la derecha',
-    'slight left': 'ligeramente a la izquierda',
-    'slight right': 'ligeramente a la derecha',
-    straight: 'recto',
-    uturn: 'en U',
+    left: "a la izquierda",
+    right: "a la derecha",
+    "sharp left": "cerrado a la izquierda",
+    "sharp right": "cerrado a la derecha",
+    "slight left": "ligeramente a la izquierda",
+    "slight right": "ligeramente a la derecha",
+    straight: "recto",
+    uturn: "en U",
   };
 
-  const type = maneuverTypes[maneuver.type] || 'Continuar';
-  const modifier = maneuver.modifier ? modifiers[maneuver.modifier] || '' : '';
+  const type = maneuverTypes[maneuver.type] || "Continuar";
+  const modifier = maneuver.modifier ? modifiers[maneuver.modifier] || "" : "";
 
-  if (maneuver.type === 'depart') {
+  if (maneuver.type === "depart") {
     return `Salir hacia ${roadName}`;
   }
 
-  if (maneuver.type === 'arrive') {
+  if (maneuver.type === "arrive") {
     return `Llegada a ${roadName}`;
   }
 
-  if (maneuver.type === 'roundabout') {
+  if (maneuver.type === "roundabout") {
     const exit = maneuver.exit || 1;
     return `En la rotonda, tomar la ${exit}ª salida hacia ${roadName}`;
   }
@@ -332,7 +331,7 @@ function buildOSRMUrl(
   });
 
   if (mergedOptions.annotations) {
-    params.append('annotations', 'true');
+    params.append("annotations", "true");
   }
 
   return `${OSRM_BASE_URL}/route/v1/driving/${coordinates}?${params}`;
@@ -344,16 +343,24 @@ function buildOSRMUrl(
  * @throws Error si las coordenadas no son válidas
  */
 function validateCoordinates(coords: Coordinates): void {
-  if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
-    throw new Error('Coordenadas inválidas');
+  if (
+    !coords ||
+    typeof coords.lat !== "number" ||
+    typeof coords.lng !== "number"
+  ) {
+    throw new Error("Coordenadas inválidas");
   }
 
   if (coords.lat < -90 || coords.lat > 90) {
-    throw new Error(`Latitud inválida: ${coords.lat} (debe estar entre -90 y 90)`);
+    throw new Error(
+      `Latitud inválida: ${coords.lat} (debe estar entre -90 y 90)`
+    );
   }
 
   if (coords.lng < -180 || coords.lng > 180) {
-    throw new Error(`Longitud inválida: ${coords.lng} (debe estar entre -180 y 180)`);
+    throw new Error(
+      `Longitud inválida: ${coords.lng} (debe estar entre -180 y 180)`
+    );
   }
 }
 
@@ -376,8 +383,8 @@ async function fetchWithTimeout(
     return response;
   } catch (error) {
     clearTimeout(timeoutId);
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Timeout: La solicitud tardó demasiado');
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Timeout: La solicitud tardó demasiado");
     }
     throw error;
   }
@@ -428,9 +435,9 @@ export function calculateETA(durationSeconds: number): string {
   const now = new Date();
   const eta = new Date(now.getTime() + durationSeconds * 1000);
 
-  return eta.toLocaleTimeString('es-CO', {
-    hour: '2-digit',
-    minute: '2-digit',
+  return eta.toLocaleTimeString("es-CO", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 

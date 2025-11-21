@@ -1,11 +1,11 @@
-import { Alert } from '@/types/Alert';
+import { Alert } from "@/types/Alert";
 
 type WebSocketCallback = (alert: Alert) => void;
-type StatusCallback = (status: 'connected' | 'disconnected' | 'error') => void;
+type StatusCallback = (status: "connected" | "disconnected" | "error") => void;
 
 class WebSocketService {
-  onAlertCreated(_arg0: (alert: any) => void) {
-    throw new Error("Method not implemented.");
+  onAlertCreated(callback: WebSocketCallback) {
+    return this.subscribe(callback);
   }
   private socket: WebSocket | null = null;
   private callbacks: WebSocketCallback[] = [];
@@ -20,45 +20,45 @@ class WebSocketService {
   }
 
   connect() {
-    const WS_URL = import.meta.env.VITE_API_UR || 'ws://localhost:4000/ws';
-    
+    const WS_URL = import.meta.env.VITE_API_UR || "ws://localhost:4000/ws";
+
     try {
       this.socket = new WebSocket(WS_URL);
-      
+
       this.socket.onopen = () => {
-        console.log('✅ WebSocket conectado');
+        console.log("✅ WebSocket conectado");
         this.reconnectAttempts = 0;
-        this.notifyStatus('connected');
+        this.notifyStatus("connected");
       };
 
       this.socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          
-          if (data.type === 'alert' && data.payload) {
+
+          if (data.type === "alert" && data.payload) {
             const alert: Alert = {
               ...data.payload,
-              timestamp: new Date(data.payload.timestamp)
+              timestamp: new Date(data.payload.timestamp),
             };
             this.notifyCallbacks(alert);
           }
         } catch (error) {
-          console.error('Error al procesar mensaje WebSocket:', error);
+          console.error("Error al procesar mensaje WebSocket:", error);
         }
       };
 
       this.socket.onerror = (error) => {
-        console.error('❌ Error en WebSocket:', error);
-        this.notifyStatus('error');
+        console.error("❌ Error en WebSocket:", error);
+        this.notifyStatus("error");
       };
 
       this.socket.onclose = () => {
-        console.log('🔌 WebSocket desconectado');
-        this.notifyStatus('disconnected');
+        console.log("🔌 WebSocket desconectado");
+        this.notifyStatus("disconnected");
         this.handleReconnect();
       };
     } catch (error) {
-      console.error('Error al conectar WebSocket:', error);
+      console.error("Error al conectar WebSocket:", error);
       this.handleReconnect();
     }
   }
@@ -66,27 +66,31 @@ class WebSocketService {
   private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`🔄 Reintentando conexión (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-      
+      console.log(
+        `🔄 Reintentando conexión (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
+      );
+
       this.reconnectTimer = setTimeout(() => {
         this.connect();
       }, this.reconnectDelay * this.reconnectAttempts);
     } else {
-      console.error('❌ Máximo de reintentos alcanzado');
+      console.error("❌ Máximo de reintentos alcanzado");
     }
   }
 
   subscribe(callback: WebSocketCallback) {
     this.callbacks.push(callback);
     return () => {
-      this.callbacks = this.callbacks.filter(cb => cb !== callback);
+      this.callbacks = this.callbacks.filter((cb) => cb !== callback);
     };
   }
 
   onStatusChange(callback: StatusCallback) {
     this.statusCallbacks.push(callback);
     return () => {
-      this.statusCallbacks = this.statusCallbacks.filter(cb => cb !== callback);
+      this.statusCallbacks = this.statusCallbacks.filter(
+        (cb) => cb !== callback
+      );
     };
   }
 
@@ -95,17 +99,17 @@ class WebSocketService {
       try {
         callback(alert);
       } catch (error) {
-        console.error('Error en callback de WebSocket:', error);
+        console.error("Error en callback de WebSocket:", error);
       }
     }
   }
 
-  private notifyStatus(status: 'connected' | 'disconnected' | 'error') {
+  private notifyStatus(status: "connected" | "disconnected" | "error") {
     for (const callback of this.statusCallbacks) {
       try {
         callback(status);
       } catch (error) {
-        console.error('Error en callback de estado:', error);
+        console.error("Error en callback de estado:", error);
       }
     }
   }
@@ -124,20 +128,20 @@ class WebSocketService {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(data));
     } else {
-      console.warn('⚠️ WebSocket no está conectado');
+      console.warn("⚠️ WebSocket no está conectado");
     }
   }
 
-  getStatus(): 'connected' | 'disconnected' | 'connecting' {
-    if (!this.socket) return 'disconnected';
-    
+  getStatus(): "connected" | "disconnected" | "connecting" {
+    if (!this.socket) return "disconnected";
+
     switch (this.socket.readyState) {
       case WebSocket.OPEN:
-        return 'connected';
+        return "connected";
       case WebSocket.CONNECTING:
-        return 'connecting';
+        return "connecting";
       default:
-        return 'disconnected';
+        return "disconnected";
     }
   }
 }

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Navigation, Route, Zap, TrendingUp } from 'lucide-react';
-import { Alert, AlertSeverity } from '@/types/Alert';
+import { useState, useEffect } from "react";
+import { Navigation, Route, Zap, TrendingUp } from "lucide-react";
+import { Alert, AlertSeverity } from "@/types/Alert";
 
 interface SmartRoutingProps {
   start: { lat: number; lng: number };
@@ -30,6 +30,7 @@ export default function SmartRouting({
 
   useEffect(() => {
     calculateRoutes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [start, end, alerts]);
 
   const calculateRoutes = async () => {
@@ -45,16 +46,18 @@ export default function SmartRouting({
       setRoutes(allRoutes);
 
       // Select safest route by default
-      const safestIndex = allRoutes.reduce((minIdx, route, idx, arr) =>
-        route.riskScore < arr[minIdx].riskScore ? idx : minIdx
-      , 0);
+      const safestIndex = allRoutes.reduce(
+        (minIdx, route, idx, arr) =>
+          route.riskScore < arr[minIdx].riskScore ? idx : minIdx,
+        0
+      );
       setSelectedRoute(safestIndex);
 
       if (onRouteCalculated) {
         onRouteCalculated(allRoutes[safestIndex]);
       }
     } catch (error) {
-      console.error('Error calculating routes:', error);
+      console.error("Error calculating routes:", error);
     } finally {
       setCalculating(false);
     }
@@ -65,7 +68,10 @@ export default function SmartRouting({
     end: { lat: number; lng: number }
   ): RouteInfo => {
     // Simple straight line (in production, use routing API like OSRM)
-    const coordinates: [number, number][] = [[start.lat, start.lng], [end.lat, end.lng]];
+    const coordinates: [number, number][] = [
+      [start.lat, start.lng],
+      [end.lat, end.lng],
+    ];
     const distance = calculateDistance(start.lat, start.lng, end.lat, end.lng);
     const alertsOnRoute = countAlertsNearRoute(coordinates, alerts);
     const riskScore = calculateRiskScore(coordinates, alerts);
@@ -90,9 +96,15 @@ export default function SmartRouting({
     // Calculate 2 alternative routes with different strategies
 
     // Alternative 1: Route avoiding critical alerts
-    const criticalAlerts = alerts.filter(a => a.severity === AlertSeverity.CRITICA);
+    const criticalAlerts = alerts.filter(
+      (a) => a.severity === AlertSeverity.CRITICA
+    );
     if (criticalAlerts.length > 0) {
-      const avoidRoute = calculateRouteAvoidingPoints(start, end, criticalAlerts);
+      const avoidRoute = calculateRouteAvoidingPoints(
+        start,
+        end,
+        criticalAlerts
+      );
       if (avoidRoute) {
         alternatives.push({
           ...avoidRoute,
@@ -125,8 +137,8 @@ export default function SmartRouting({
     // Offset midpoint perpendicular to direct route
     const latDiff = end.lat - start.lat;
     const lngDiff = end.lng - start.lng;
-    const perpLat = midLat + (lngDiff * 0.1);
-    const perpLng = midLng - (latDiff * 0.1);
+    const perpLat = midLat + lngDiff * 0.1;
+    const perpLng = midLng - latDiff * 0.1;
 
     const coordinates: [number, number][] = [
       [start.lat, start.lng],
@@ -190,48 +202,66 @@ export default function SmartRouting({
     };
   };
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number => {
     const R = 6371; // Earth radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) *
-        Math.cos(lat2 * Math.PI / 180) *
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
-  const countAlertsNearRoute = (route: [number, number][], alerts: Alert[]): number => {
+  const countAlertsNearRoute = (
+    route: [number, number][],
+    alerts: Alert[]
+  ): number => {
     const threshold = 0.5; // 500 meters
-    return alerts.filter(alert =>
-      route.some(point =>
-        calculateDistance(point[0], point[1], alert.latitude, alert.longitude) < threshold
+    return alerts.filter((alert) =>
+      route.some(
+        (point) =>
+          calculateDistance(
+            point[0],
+            point[1],
+            alert.latitude,
+            alert.longitude
+          ) < threshold
       )
     ).length;
   };
 
-  const calculateRiskScore = (route: [number, number][], alerts: Alert[]): number => {
+  const calculateRiskScore = (
+    route: [number, number][],
+    alerts: Alert[]
+  ): number => {
     let score = 0;
     const threshold = 1; // 1 km
 
-    alerts.forEach(alert => {
+    alerts.forEach((alert) => {
       const closestDistance = Math.min(
-        ...route.map(point =>
+        ...route.map((point) =>
           calculateDistance(point[0], point[1], alert.latitude, alert.longitude)
         )
       );
 
       if (closestDistance < threshold) {
-        const proximity = 1 - (closestDistance / threshold);
-        const severityWeight = {
-          [AlertSeverity.CRITICA]: 10,
-          [AlertSeverity.ALTA]: 6,
-          [AlertSeverity.MEDIA]: 3,
-          [AlertSeverity.BAJA]: 1,
-        }[alert.severity] || 1;
+        const proximity = 1 - closestDistance / threshold;
+        const severityWeight =
+          {
+            [AlertSeverity.CRITICA]: 10,
+            [AlertSeverity.ALTA]: 6,
+            [AlertSeverity.MEDIA]: 3,
+            [AlertSeverity.BAJA]: 1,
+          }[alert.severity] || 1;
 
         score += proximity * severityWeight;
       }
@@ -241,17 +271,19 @@ export default function SmartRouting({
   };
 
   const getRouteColor = (riskScore: number): string => {
-    if (riskScore >= 20) return '#dc2626'; // Red
-    if (riskScore >= 10) return '#ea580c'; // Orange
-    if (riskScore >= 5) return '#facc15';  // Yellow
-    return '#10b981'; // Green
+    if (riskScore >= 20) return "#dc2626"; // Red
+    if (riskScore >= 10) return "#ea580c"; // Orange
+    if (riskScore >= 5) return "#facc15"; // Yellow
+    return "#10b981"; // Green
   };
 
   if (calculating) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-        <span className="ml-3 text-gray-600 dark:text-gray-400">Calculando rutas...</span>
+        <span className="ml-3 text-gray-600 dark:text-gray-400">
+          Calculando rutas...
+        </span>
       </div>
     );
   }
@@ -266,15 +298,19 @@ export default function SmartRouting({
             onClick={() => setSelectedRoute(idx)}
             className={`p-4 rounded-lg border-2 transition-all ${
               selectedRoute === idx
-                ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                ? "border-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
             }`}
           >
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
-                {route.alternative ? <Route size={20} /> : <Navigation size={20} />}
+                {route.alternative ? (
+                  <Route size={20} />
+                ) : (
+                  <Navigation size={20} />
+                )}
                 <span className="font-semibold text-gray-900 dark:text-white">
-                  {route.alternative ? `Alternativa ${idx}` : 'Ruta Directa'}
+                  {route.alternative ? `Alternativa ${idx}` : "Ruta Directa"}
                 </span>
               </div>
               {route.riskScore < routes[0].riskScore && (
@@ -287,27 +323,37 @@ export default function SmartRouting({
 
             <div className="space-y-1 text-sm text-left">
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Distancia:</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Distancia:
+                </span>
                 <span className="font-medium text-gray-900 dark:text-white">
                   {route.distance.toFixed(1)} km
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Tiempo:</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Tiempo:
+                </span>
                 <span className="font-medium text-gray-900 dark:text-white">
                   {Math.round(route.estimatedTime)} min
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Alertas:</span>
-                <span className={`font-medium ${
-                  route.alertsOnRoute > 3 ? 'text-red-600' : 'text-green-600'
-                }`}>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Alertas:
+                </span>
+                <span
+                  className={`font-medium ${
+                    route.alertsOnRoute > 3 ? "text-red-600" : "text-green-600"
+                  }`}
+                >
                   {route.alertsOnRoute}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Riesgo:</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Riesgo:
+                </span>
                 <div className="flex items-center gap-1">
                   <div
                     className="w-16 h-2 rounded-full"
@@ -335,14 +381,28 @@ export default function SmartRouting({
                 Análisis de Ruta Inteligente
               </h3>
               <p className="text-sm text-gray-700 dark:text-gray-300">
-                Esta ruta tiene un nivel de riesgo{' '}
-                <span className="font-bold" style={{ color: getRouteColor(routes[selectedRoute].riskScore) }}>
-                  {routes[selectedRoute].riskScore < 5 ? 'BAJO' :
-                   routes[selectedRoute].riskScore < 10 ? 'MEDIO' :
-                   routes[selectedRoute].riskScore < 20 ? 'ALTO' : 'MUY ALTO'}
-                </span>.
+                Esta ruta tiene un nivel de riesgo{" "}
+                <span
+                  className="font-bold"
+                  style={{
+                    color: getRouteColor(routes[selectedRoute].riskScore),
+                  }}
+                >
+                  {routes[selectedRoute].riskScore < 5
+                    ? "BAJO"
+                    : routes[selectedRoute].riskScore < 10
+                      ? "MEDIO"
+                      : routes[selectedRoute].riskScore < 20
+                        ? "ALTO"
+                        : "MUY ALTO"}
+                </span>
+                .
                 {routes[selectedRoute].alertsOnRoute > 0 && (
-                  <> Pasarás cerca de {routes[selectedRoute].alertsOnRoute} alerta(s) activa(s).</>
+                  <>
+                    {" "}
+                    Pasarás cerca de {routes[selectedRoute].alertsOnRoute}{" "}
+                    alerta(s) activa(s).
+                  </>
                 )}
                 {routes[selectedRoute].riskScore > 15 && (
                   <span className="block mt-2 text-orange-700 dark:text-orange-400 font-medium">

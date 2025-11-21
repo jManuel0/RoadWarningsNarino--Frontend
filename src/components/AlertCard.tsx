@@ -1,6 +1,12 @@
 // src/components/AlertCard.tsx
 import { Alert, AlertStatus, AlertSeverity } from "@/types/Alert";
-import { XCircle, CheckCircle2, AlertTriangle, Trash2, MessageCircle } from "lucide-react";
+import {
+  XCircle,
+  CheckCircle2,
+  AlertTriangle,
+  Trash2,
+  MessageCircle,
+} from "lucide-react";
 import VotingButtons from "./VotingButtons";
 import ShareButtons from "./ShareButtons";
 import CommentSection from "./CommentSection";
@@ -19,7 +25,7 @@ const statusLabel: Record<AlertStatus, string> = {
   [AlertStatus.ACTIVE]: "Activa",
   [AlertStatus.IN_PROGRESS]: "En progreso",
   [AlertStatus.RESOLVED]: "Resuelta",
-  [AlertStatus.EXPIRED]: ""
+  [AlertStatus.EXPIRED]: "",
 };
 
 const severityColor: Record<AlertSeverity, string> = {
@@ -46,7 +52,8 @@ export default function AlertCard({
     if (showComments && comments.length === 0) {
       loadComments();
     }
-  }, [showComments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showComments, comments.length]);
 
   const loadComments = async () => {
     setLoadingComments(true);
@@ -55,7 +62,7 @@ export default function AlertCard({
       setComments(data);
       setCommentCount(data.length);
     } catch (error) {
-      console.error('Error loading comments:', error);
+      console.error("Error loading comments:", error);
     } finally {
       setLoadingComments(false);
     }
@@ -72,13 +79,13 @@ export default function AlertCard({
 
   const handleDeleteComment = async (commentId: number) => {
     await commentApi.deleteComment(commentId);
-    setComments(comments.filter(c => c.id !== commentId));
+    setComments(comments.filter((c) => c.id !== commentId));
     setCommentCount(commentCount - 1);
   };
 
   const handleLikeComment = async (commentId: number) => {
     const updated = await commentApi.markHelpful(commentId);
-    setComments(comments.map(c => c.id === commentId ? updated : c));
+    setComments(comments.map((c) => (c.id === commentId ? updated : c)));
   };
 
   const handleReportComment = async (commentId: number) => {
@@ -147,8 +154,7 @@ export default function AlertCard({
 
       <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
         <div>
-          Lat: {alert.latitude?.toFixed(5)} | Lng:{" "}
-          {alert.longitude?.toFixed(5)}
+          Lat: {alert.latitude?.toFixed(5)} | Lng: {alert.longitude?.toFixed(5)}
         </div>
         <div>{statusLabel[alert.status]}</div>
       </div>
@@ -197,9 +203,7 @@ export default function AlertCard({
       <div className="flex gap-2">
         {alert.status !== AlertStatus.ACTIVE && (
           <button
-            onClick={() =>
-              onStatusChange(alert.id, AlertStatus.ACTIVE)
-            }
+            onClick={() => onStatusChange(alert.id, AlertStatus.ACTIVE)}
             className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border rounded text-xs hover:bg-gray-50"
           >
             <AlertTriangle size={14} />
@@ -208,9 +212,7 @@ export default function AlertCard({
         )}
         {alert.status !== AlertStatus.IN_PROGRESS && (
           <button
-            onClick={() =>
-              onStatusChange(alert.id, AlertStatus.IN_PROGRESS)
-            }
+            onClick={() => onStatusChange(alert.id, AlertStatus.IN_PROGRESS)}
             className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border rounded text-xs hover:bg-gray-50"
           >
             <CheckCircle2 size={14} />
@@ -219,9 +221,7 @@ export default function AlertCard({
         )}
         {alert.status !== AlertStatus.RESOLVED && (
           <button
-            onClick={() =>
-              onStatusChange(alert.id, AlertStatus.RESOLVED)
-            }
+            onClick={() => onStatusChange(alert.id, AlertStatus.RESOLVED)}
             className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border rounded text-xs hover:bg-gray-50"
           >
             <XCircle size={14} />

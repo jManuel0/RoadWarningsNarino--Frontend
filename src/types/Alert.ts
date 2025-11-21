@@ -6,6 +6,8 @@ export enum AlertType {
   INUNDACION = "INUNDACION",
   CIERRE_VIAL = "CIERRE_VIAL",
   MANTENIMIENTO = "MANTENIMIENTO",
+  Protests = "Protests",
+  Protestas = "Protestas",
 }
 
 export enum AlertSeverity {
@@ -107,12 +109,14 @@ export interface AlertWithLocationObject
   };
 
   // Alias opcionales
-  timestamp?: string;       // Alias para createdAt
+  timestamp?: string; // Alias para createdAt
   priority?: AlertSeverity; // Alias para severity
 }
 
 // Función helper para convertir Alert a AlertWithLocationObject
-export function toAlertWithLocationObject(alert: Alert): AlertWithLocationObject {
+export function toAlertWithLocationObject(
+  alert: Alert
+): AlertWithLocationObject {
   return {
     ...alert,
     location: {

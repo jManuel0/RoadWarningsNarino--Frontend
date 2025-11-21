@@ -66,7 +66,7 @@ const MarkerPin = ({
   );
 };
 
-interface MapContentProps extends MapViewProps {}
+type MapContentProps = MapViewProps;
 
 const MapContent = ({
   alerts,
@@ -156,8 +156,9 @@ const MapView = ({ alerts, selectedAlertId, onSelectAlert }: MapViewProps) => {
   if (!apiKey) {
     return (
       <div className="flex h-[500px] w-full items-center justify-center rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-        Agrega la variable <code className="font-semibold">VITE_GOOGLE_MAPS_API_KEY</code>{" "}
-        para visualizar el mapa.
+        Agrega la variable{" "}
+        <code className="font-semibold">VITE_GOOGLE_MAPS_API_KEY</code> para
+        visualizar el mapa.
       </div>
     );
   }

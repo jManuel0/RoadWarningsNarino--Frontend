@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Filter, X, Calendar } from 'lucide-react';
-import { Alert, AlertType, AlertSeverity, AlertStatus } from '@/types/Alert';
-import { useFilterStore } from '@/stores/filterStore';
+import { useState, useEffect } from "react";
+import { Filter, X, Calendar } from "lucide-react";
+import { Alert, AlertType, AlertSeverity, AlertStatus } from "@/types/Alert";
+import { useFilterStore } from "@/stores/filterStore";
 
 interface AdvancedFiltersProps {
   alerts: Alert[];
@@ -15,11 +15,19 @@ export default function AdvancedFilters({
   onReset,
 }: Readonly<AdvancedFiltersProps>) {
   const [isOpen, setIsOpen] = useState(false);
-  const { filters, setFilters, clearFilters, toggleType, toggleSeverity, toggleStatus } = useFilterStore();
+  const {
+    filters,
+    setFilters,
+    clearFilters,
+    toggleType,
+    toggleSeverity,
+    toggleStatus,
+  } = useFilterStore();
 
   // Auto-aplicar filtros cuando cambian
   useEffect(() => {
     applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const handleTypeToggle = (type: AlertType) => {
@@ -78,9 +86,10 @@ export default function AdvancedFilters({
     // Filtrar por municipio
     if (filters.municipality.trim()) {
       const searchTerm = filters.municipality.toLowerCase();
-      filtered = filtered.filter((alert) =>
-        alert.municipality?.toLowerCase().includes(searchTerm) ||
-        alert.location.toLowerCase().includes(searchTerm)
+      filtered = filtered.filter(
+        (alert) =>
+          alert.municipality?.toLowerCase().includes(searchTerm) ||
+          alert.location.toLowerCase().includes(searchTerm)
       );
     }
 
@@ -110,8 +119,8 @@ export default function AdvancedFilters({
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
           hasActiveFilters
-            ? 'bg-blue-600 text-white hover:bg-blue-700'
-            : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+            ? "bg-blue-600 text-white hover:bg-blue-700"
+            : "bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
         }`}
       >
         <Filter size={20} />
@@ -159,7 +168,10 @@ export default function AdvancedFilters({
                 </label>
                 <div className="space-y-2">
                   {Object.values(AlertType).map((type) => (
-                    <label key={type} className="flex items-center gap-2 cursor-pointer">
+                    <label
+                      key={type}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
                       <input
                         type="checkbox"
                         checked={filters.types.includes(type)}
@@ -167,7 +179,7 @@ export default function AdvancedFilters({
                         className="rounded text-blue-600"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {type.replace('_', ' ')}
+                        {type.replace("_", " ")}
                       </span>
                     </label>
                   ))}
@@ -181,7 +193,10 @@ export default function AdvancedFilters({
                 </label>
                 <div className="space-y-2">
                   {Object.values(AlertSeverity).map((severity) => (
-                    <label key={severity} className="flex items-center gap-2 cursor-pointer">
+                    <label
+                      key={severity}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
                       <input
                         type="checkbox"
                         checked={filters.severities.includes(severity)}
@@ -203,7 +218,10 @@ export default function AdvancedFilters({
                 </label>
                 <div className="space-y-2">
                   {Object.values(AlertStatus).map((status) => (
-                    <label key={status} className="flex items-center gap-2 cursor-pointer">
+                    <label
+                      key={status}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
                       <input
                         type="checkbox"
                         checked={filters.statuses.includes(status)}
@@ -211,7 +229,7 @@ export default function AdvancedFilters({
                         className="rounded text-blue-600"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {status.replace('_', ' ')}
+                        {status.replace("_", " ")}
                       </span>
                     </label>
                   ))}

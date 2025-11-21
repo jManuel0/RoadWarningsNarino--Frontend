@@ -32,8 +32,9 @@ export default function Alerts() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<AlertStatus | "ALL">("ALL");
-  const [filterSeverity, setFilterSeverity] =
-    useState<AlertSeverity | "ALL">("ALL");
+  const [filterSeverity, setFilterSeverity] = useState<AlertSeverity | "ALL">(
+    "ALL"
+  );
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
@@ -114,10 +115,7 @@ export default function Alerts() {
     if (filteredAlerts.length === 0) {
       return (
         <div className="bg-white rounded-lg shadow p-12 text-center">
-          <Filter
-            size={48}
-            className="mx-auto text-gray-400 mb-4"
-          />
+          <Filter size={48} className="mx-auto text-gray-400 mb-4" />
           <p className="text-gray-600">
             No se encontraron alertas con los filtros seleccionados
           </p>
@@ -291,15 +289,16 @@ interface CreateAlertModalProps {
   onSubmit: (data: CreateAlertDTO) => Promise<void>;
 }
 
-function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>) {
+function CreateAlertModal({
+  onClose,
+  onSubmit,
+}: Readonly<CreateAlertModalProps>) {
   const [type, setType] = useState<AlertType>(AlertType.ACCIDENTE);
-  const [severity, setSeverity] = useState<AlertSeverity>(
-    AlertSeverity.ALTA
-  );
+  const [severity, setSeverity] = useState<AlertSeverity>(AlertSeverity.ALTA);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [municipality, setMunicipality] = useState("Pasto");
+  const [municipality] = useState("Pasto");
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [estimatedDuration, setEstimatedDuration] = useState<
@@ -311,7 +310,6 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
     setLongitude(lng);
   };
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -320,15 +318,7 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
       return;
     }
 
-    if (false && !location.trim()) {
-      alert("La dirección es obligatoria.");
-      return;
-    }
-
-    if (false && !municipality.trim()) {
-      alert("El municipio es obligatorio.");
-      return;
-    }
+    // Location and municipality are optional inputs at the moment.
 
     if (latitude == null || longitude == null) {
       alert("Por favor selecciona la ubicación en el mapa.");
@@ -351,30 +341,47 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
   };
 
   const handleDictateDescription = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+    interface ISpeechRecognition extends EventTarget {
+      continuous: boolean;
+      interimResults: boolean;
+      lang: string;
+      maxAlternatives: number;
+      start(): void;
+      stop(): void;
+      onstart: (() => void) | null;
+      onresult: ((event: SpeechRecognitionEvent) => void) | null;
+      onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+      onend: (() => void) | null;
+    }
 
-    if (!SpeechRecognition) {
+    interface SpeechRecognitionWindow extends Window {
+      SpeechRecognition?: new () => ISpeechRecognition;
+      webkitSpeechRecognition?: new () => ISpeechRecognition;
+    }
+
+    const speechRecognitionWindow = window as SpeechRecognitionWindow;
+
+    const speechRecognitionConstructor =
+      speechRecognitionWindow.SpeechRecognition ??
+      speechRecognitionWindow.webkitSpeechRecognition;
+
+    if (!speechRecognitionConstructor) {
       alert("Tu navegador no soporta reconocimiento de voz.");
       return;
     }
 
-    const recognition = new SpeechRecognition();
+    const recognition = new speechRecognitionConstructor();
     recognition.lang = "es-ES";
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    recognition.onresult = (event: any) => {
-      const transcript =
-        event.results?.[0]?.[0]?.transcript ?? "";
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results?.[0]?.[0]?.transcript ?? "";
       if (!transcript) return;
-      setDescription((prev) =>
-        prev ? `${prev} ${transcript}` : transcript
-      );
+      setDescription((prev) => (prev ? `${prev} ${transcript}` : transcript));
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error("Error de reconocimiento de voz:", event.error);
     };
 
@@ -427,9 +434,7 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
               <select
                 value={severity}
                 onChange={(e) =>
-                  setSeverity(
-                    e.target.value as unknown as AlertSeverity
-                  )
+                  setSeverity(e.target.value as unknown as AlertSeverity)
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
@@ -454,30 +459,29 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
               />
             </div>
 
-           {/* Descripción */}
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-medium text-gray-700">
-          Descripción *
-        </label>
-        <button
-          type="button"
-          onClick={handleDictateDescription}
-          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
-        >
-          <Mic size={14} />
-          Dictar
-        </button>
-      </div>
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        rows={3}
-        placeholder="Describe la situación..."
-      />
-    </div>
-
+            {/* Descripción */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Descripción *
+                </label>
+                <button
+                  type="button"
+                  onClick={handleDictateDescription}
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                >
+                  <Mic size={14} />
+                  Dictar
+                </button>
+              </div>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                rows={3}
+                placeholder="Describe la situación..."
+              />
+            </div>
 
             {/* Dirección */}
             <div>
@@ -491,22 +495,6 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Ej: Calle 18 con Carrera 25"
               />
-            </div>
-
-            {/* Municipio (opcional) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Municipio (opcional)
-              </label>
-              <select
-                value={municipality}
-                onChange={(e) => setMunicipality(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="Pasto">Pasto</option>
-                <option value="Ipiales">Ipiales</option>
-                <option value="Tumaco">Tumaco</option>
-              </select>
             </div>
 
             {/* Mapa */}
@@ -532,9 +520,7 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
                   value={latitude ?? ""}
                   onChange={(e) =>
                     setLatitude(
-                      e.target.value
-                        ? parseFloat(e.target.value)
-                        : null
+                      e.target.value ? parseFloat(e.target.value) : null
                     )
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -549,9 +535,7 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
                   value={longitude ?? ""}
                   onChange={(e) =>
                     setLongitude(
-                      e.target.value
-                        ? parseFloat(e.target.value)
-                        : null
+                      e.target.value ? parseFloat(e.target.value) : null
                     )
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -569,9 +553,7 @@ function CreateAlertModal({ onClose, onSubmit }: Readonly<CreateAlertModalProps>
                 value={estimatedDuration ?? ""}
                 onChange={(e) =>
                   setEstimatedDuration(
-                    e.target.value
-                      ? parseInt(e.target.value, 10)
-                      : undefined
+                    e.target.value ? parseInt(e.target.value, 10) : undefined
                   )
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

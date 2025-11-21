@@ -23,7 +23,11 @@ import {
   Construction,
   Waves,
 } from "lucide-react";
-import { useNavigationStore, Route, RoutePoint } from "@/stores/navigationStore";
+import {
+  useNavigationStore,
+  Route,
+  RoutePoint,
+} from "@/stores/navigationStore";
 import { useAlertStore } from "@/stores/alertStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { Alert, AlertSeverity, AlertType } from "@/types/Alert";
@@ -40,6 +44,13 @@ type PlaceResult = {
   address: string;
   lat: number;
   lng: number;
+};
+
+type NominatimSearchResult = {
+  place_id?: number | string;
+  display_name?: string;
+  lat?: string;
+  lon?: string;
 };
 
 function MapClickHandler({
@@ -218,7 +229,10 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
     }
   };
 
-  const calculateDistance = (point1: RoutePoint, point2: RoutePoint): number => {
+  const calculateDistance = (
+    point1: RoutePoint,
+    point2: RoutePoint
+  ): number => {
     const R = 6371; // km
     const dLat = ((point2.lat - point1.lat) * Math.PI) / 180;
     const dLng = ((point2.lng - point1.lng) * Math.PI) / 180;
@@ -257,7 +271,8 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
             [AlertSeverity.BAJA]: 1,
           };
           risk +=
-            severityWeight[alert.severity] * (1 - distance / ALERT_INFLUENCE_RADIUS);
+            severityWeight[alert.severity] *
+            (1 - distance / ALERT_INFLUENCE_RADIUS);
         }
       });
     });
@@ -374,8 +389,7 @@ export default function WazeNavigation() {
         // Calcular velocidad aproximada en km/h a partir de la ubicación previa
         const now = Date.now();
         if (lastLocationRef.current) {
-          const dtSeconds =
-            (now - lastLocationRef.current.time) / 1000;
+          const dtSeconds = (now - lastLocationRef.current.time) / 1000;
           if (dtSeconds > 0) {
             const distKm = calculateDistance(
               lastLocationRef.current.point,
@@ -472,7 +486,10 @@ export default function WazeNavigation() {
     stopNavigation,
   ]);
 
-  const calculateDistance = (point1: RoutePoint, point2: RoutePoint): number => {
+  const calculateDistance = (
+    point1: RoutePoint,
+    point2: RoutePoint
+  ): number => {
     const R = 6371;
     const dLat = ((point2.lat - point1.lat) * Math.PI) / 180;
     const dLng = ((point2.lng - point1.lng) * Math.PI) / 180;
@@ -560,7 +577,7 @@ export default function WazeNavigation() {
         throw new Error("Error al buscar destino");
       }
 
-      const results: any[] = await response.json();
+      const results = (await response.json()) as NominatimSearchResult[];
 
       if (!results.length) {
         alert("No se encontró el lugar. Intenta con otra dirección.");
@@ -568,12 +585,12 @@ export default function WazeNavigation() {
         return;
       }
 
-      const mapped: PlaceResult[] = results.map((r: any, index: number) => ({
+      const mapped: PlaceResult[] = results.map((r, index: number) => ({
         id: r.place_id ? String(r.place_id) : String(index),
         name: r.display_name ? String(r.display_name).split(",")[0] : query,
         address: r.display_name ?? "",
-        lat: parseFloat(r.lat),
-        lng: parseFloat(r.lon),
+        lat: parseFloat(r.lat ?? "0"),
+        lng: parseFloat(r.lon ?? "0"),
       }));
 
       setPlaceResults(mapped);
@@ -738,6 +755,8 @@ export default function WazeNavigation() {
               [AlertType.INUNDACION]: "🌊",
               [AlertType.CIERRE_VIAL]: "🚧",
               [AlertType.MANTENIMIENTO]: "🔧",
+              [AlertType.Protests]: "",
+              [AlertType.Protestas]: "",
             };
 
             const icon = L.divIcon({
@@ -914,44 +933,43 @@ export default function WazeNavigation() {
       </div>
 
       {/* Panel de instrucciones de navegación */}
-      {isNavigating &&
-        selectedRoute?.steps[currentStepIndex] && (
-          <div className="absolute top-20 left-4 right-4 z-[1000]">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-blue-600 p-3 rounded-full">
-                  <NavigationIcon size={24} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">
-                    {selectedRoute.steps[currentStepIndex].instruction}
-                  </p>
-                  <div className="flex gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <RouteIcon size={16} />
-                      {selectedRoute.steps[
-                        currentStepIndex
-                      ].distance.toFixed(1)}{" "}
-                      km
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={16} />
-                      {formatDuration(
-                        selectedRoute.steps[currentStepIndex].duration
-                      )}
-                    </span>
-                    {currentSpeedKmh !== null && (
-                      <span className="flex items-center gap-1">
-                        <Gauge size={16} />
-                        {Math.round(currentSpeedKmh)} km/h
-                      </span>
+      {isNavigating && selectedRoute?.steps[currentStepIndex] && (
+        <div className="absolute top-20 left-4 right-4 z-[1000]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-blue-600 p-3 rounded-full">
+                <NavigationIcon size={24} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {selectedRoute.steps[currentStepIndex].instruction}
+                </p>
+                <div className="flex gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <RouteIcon size={16} />
+                    {selectedRoute.steps[currentStepIndex].distance.toFixed(
+                      1
+                    )}{" "}
+                    km
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock size={16} />
+                    {formatDuration(
+                      selectedRoute.steps[currentStepIndex].duration
                     )}
-                  </div>
+                  </span>
+                  {currentSpeedKmh !== null && (
+                    <span className="flex items-center gap-1">
+                      <Gauge size={16} />
+                      {Math.round(currentSpeedKmh)} km/h
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
       {/* Banner de nueva alerta cercana a la ruta */}
       {isNavigating && nearbyAlertBanner && (
@@ -1029,8 +1047,8 @@ export default function WazeNavigation() {
                           route.riskScore < 5
                             ? "text-green-600"
                             : route.riskScore < 15
-                            ? "text-amber-600"
-                            : "text-red-600"
+                              ? "text-amber-600"
+                              : "text-red-600"
                         }
                       />
                     </div>

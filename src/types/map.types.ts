@@ -3,7 +3,7 @@
  * Incluye definiciones para rutas, alertas, marcadores y configuración del mapa
  */
 
-import { LatLngExpression } from 'leaflet';
+import { LatLngExpression } from "leaflet";
 
 // ============================================================================
 // TIPOS DE COORDENADAS Y UBICACIÓN
@@ -47,7 +47,7 @@ export interface RouteStep {
   duration: number; // Duración en segundos
   instruction: string; // Instrucción textual
   name: string; // Nombre de la vía
-  mode: 'driving' | 'walking' | 'cycling';
+  mode: "driving" | "walking" | "cycling";
   maneuver?: {
     type: string; // 'turn', 'new name', 'depart', 'arrive', etc.
     modifier?: string; // 'left', 'right', 'straight', etc.
@@ -78,11 +78,35 @@ export interface Route {
 }
 
 /**
- * Respuesta de la API de OSRM
+ * Respuesta cruda de la API de OSRM (antes de procesar)
  */
 export interface OSRMResponse {
-  code: 'Ok' | 'NoRoute' | 'NoSegment' | 'Error';
-  routes: Route[];
+  code: "Ok" | "NoRoute" | "NoSegment" | "Error";
+  routes: Array<{
+    geometry: {
+      coordinates: [number, number][];
+    };
+    legs: Array<{
+      distance: number;
+      duration: number;
+      summary?: string;
+      steps?: Array<{
+        distance: number;
+        duration: number;
+        name?: string;
+        maneuver?: {
+          type: string;
+          modifier?: string;
+          location: [number, number];
+          exit?: number;
+        };
+      }>;
+    }>;
+    distance: number;
+    duration: number;
+    weight?: number;
+    weight_name?: string;
+  }>;
   waypoints: Array<{
     hint: string;
     distance: number;
@@ -101,8 +125,8 @@ export interface RouteOptions {
   waypoints?: Coordinates[]; // Puntos intermedios
   alternatives?: boolean; // Calcular rutas alternativas
   steps?: boolean; // Incluir pasos detallados
-  geometries?: 'polyline' | 'polyline6' | 'geojson'; // Formato de geometría
-  overview?: 'full' | 'simplified' | 'false'; // Nivel de detalle
+  geometries?: "polyline" | "polyline6" | "geojson"; // Formato de geometría
+  overview?: "full" | "simplified" | "false"; // Nivel de detalle
   annotations?: boolean; // Incluir anotaciones (velocidad, duración, etc.)
 }
 
@@ -114,40 +138,40 @@ export interface RouteOptions {
  * Tipos de alertas viales disponibles
  */
 export enum AlertType {
-  ACCIDENTE = 'ACCIDENTE',
-  DERRUMBE = 'DERRUMBE',
-  INUNDACION = 'INUNDACION',
-  VIA_CERRADA = 'VIA_CERRADA',
-  OBRAS_VIALES = 'OBRAS_VIALES',
-  NEBLINA = 'NEBLINA',
-  TRAFICO_PESADO = 'TRAFICO_PESADO',
-  VEHICULO_VARADO = 'VEHICULO_VARADO',
-  POLICIA = 'POLICIA',
-  PROTESTA = 'PROTESTA',
-  ANIMALES_EN_VIA = 'ANIMALES_EN_VIA',
-  SEMAFORO_DANADO = 'SEMAFORO_DANADO',
-  OTROS = 'OTROS',
+  ACCIDENTE = "ACCIDENTE",
+  DERRUMBE = "DERRUMBE",
+  INUNDACION = "INUNDACION",
+  VIA_CERRADA = "VIA_CERRADA",
+  OBRAS_VIALES = "OBRAS_VIALES",
+  NEBLINA = "NEBLINA",
+  TRAFICO_PESADO = "TRAFICO_PESADO",
+  VEHICULO_VARADO = "VEHICULO_VARADO",
+  POLICIA = "POLICIA",
+  PROTESTA = "PROTESTA",
+  ANIMALES_EN_VIA = "ANIMALES_EN_VIA",
+  SEMAFORO_DANADO = "SEMAFORO_DANADO",
+  OTROS = "OTROS",
 }
 
 /**
  * Severidad de la alerta
  */
 export enum AlertSeverity {
-  BAJA = 'LOW',
-  MEDIA = 'MEDIUM',
-  ALTA = 'HIGH',
-  CRITICA = 'CRITICAL',
+  BAJA = "LOW",
+  MEDIA = "MEDIUM",
+  ALTA = "HIGH",
+  CRITICA = "CRITICAL",
 }
 
 /**
  * Estado de la alerta
  */
 export enum AlertStatus {
-  ACTIVA = 'ACTIVE',
-  RESUELTA = 'RESOLVED',
-  EXPIRADA = 'EXPIRED',
-  EN_REVISION = 'UNDER_REVIEW',
-  RECHAZADA = 'REJECTED',
+  ACTIVA = "ACTIVE",
+  RESUELTA = "RESOLVED",
+  EXPIRADA = "EXPIRED",
+  EN_REVISION = "UNDER_REVIEW",
+  RECHAZADA = "REJECTED",
 }
 
 /**
@@ -182,12 +206,12 @@ export interface RoadAlert {
  * Tipo de marcador en el mapa
  */
 export enum MarkerType {
-  USER_LOCATION = 'USER_LOCATION',
-  ALERT = 'ALERT',
-  ORIGIN = 'ORIGIN',
-  DESTINATION = 'DESTINATION',
-  WAYPOINT = 'WAYPOINT',
-  GAS_STATION = 'GAS_STATION',
+  USER_LOCATION = "USER_LOCATION",
+  ALERT = "ALERT",
+  ORIGIN = "ORIGIN",
+  DESTINATION = "DESTINATION",
+  WAYPOINT = "WAYPOINT",
+  GAS_STATION = "GAS_STATION",
 }
 
 /**
@@ -203,7 +227,7 @@ export interface MapMarker {
   popup?: string | React.ReactNode;
   draggable?: boolean;
   onClick?: () => void;
-  data?: any; // Datos adicionales asociados al marcador
+  data?: unknown; // Datos adicionales asociados al marcador
 }
 
 // ============================================================================
@@ -244,8 +268,8 @@ export interface RouteStyle {
   weight: number;
   opacity: number;
   dashArray?: string;
-  lineCap?: 'butt' | 'round' | 'square';
-  lineJoin?: 'miter' | 'round' | 'bevel';
+  lineCap?: "butt" | "round" | "square";
+  lineJoin?: "miter" | "round" | "bevel";
 }
 
 // ============================================================================
@@ -339,6 +363,7 @@ export interface ClusterConfig {
   spiderfyOnMaxZoom: boolean;
   showCoverageOnHover: boolean;
   zoomToBoundsOnClick: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   iconCreateFunction?: (cluster: any) => L.DivIcon;
 }
 
@@ -358,9 +383,9 @@ export interface TileLayerConfig {
  * Proveedor de tiles para el mapa
  */
 export enum TileProvider {
-  OPENSTREETMAP = 'OPENSTREETMAP',
-  OPENSTREETMAP_HOT = 'OPENSTREETMAP_HOT',
-  CARTO_LIGHT = 'CARTO_LIGHT',
-  CARTO_DARK = 'CARTO_DARK',
-  ESRI_WORLD_IMAGERY = 'ESRI_WORLD_IMAGERY',
+  OPENSTREETMAP = "OPENSTREETMAP",
+  OPENSTREETMAP_HOT = "OPENSTREETMAP_HOT",
+  CARTO_LIGHT = "CARTO_LIGHT",
+  CARTO_DARK = "CARTO_DARK",
+  ESRI_WORLD_IMAGERY = "ESRI_WORLD_IMAGERY",
 }

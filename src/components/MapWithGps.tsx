@@ -1,5 +1,5 @@
 // src/components/MapWithGps.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine";
@@ -11,12 +11,25 @@ interface MapWithGpsProps {
   alerts?: Alert[];
 }
 
+interface GeocoderEvent {
+  geocode: {
+    center: L.LatLng;
+    name: string;
+  };
+}
+
+interface RoutingWaypoint {
+  latLng: L.LatLng;
+}
+
 const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
   const mapRef = useRef<L.Map | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
-  const routingControlRef = useRef<any | null>(null);
+  const routingControlRef = useRef<L.Control | null>(null);
   const alertMarkersRef = useRef<L.Marker[]>([]);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
 
   // estado del buscador manual
@@ -35,6 +48,38 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
     iconAnchor: [17, 35],
   });
 
+  // Trazar ruta
+  const handleNavigate = useCallback(
+    (destination: [number, number]) => {
+      if (!mapRef.current || !userLocation) {
+        alert("Activa tu GPS primero.");
+        return;
+      }
+      if (routingControlRef.current) {
+        routingControlRef.current.remove();
+        routingControlRef.current = null;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      routingControlRef.current = (L.Routing as any)
+        .control({
+          waypoints: [
+            L.latLng(userLocation[0], userLocation[1]),
+            L.latLng(destination[0], destination[1]),
+          ],
+          lineOptions: { styles: [{ color: "blue", weight: 5, opacity: 0.7 }] },
+          createMarker: (i: number, wp: RoutingWaypoint) =>
+            L.marker(wp.latLng, { icon: i === 0 ? userIcon : alertIcon }),
+          addWaypoints: false,
+          draggableWaypoints: false,
+          routeWhileDragging: false,
+          show: false,
+          language: "es",
+        })
+        .addTo(mapRef.current);
+    },
+    [userLocation, userIcon, alertIcon]
+  );
+
   // Inicializar mapa + geocoder control
   useEffect(() => {
     if (!mapRef.current) {
@@ -45,19 +90,20 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
       mapRef.current = map;
 
       // Control de búsqueda (clic en resultado = trazar ruta)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const Geocoder = (L.Control as any).geocoder;
-      Geocoder({ defaultMarkGeocode: false })
-        .on("markgeocode", (e: any) => {
-          const dest: L.LatLng = e.geocode.center;
-          L.marker(dest, { icon: alertIcon })
-            .addTo(map)
-            .bindPopup(e.geocode.name)
-            .openPopup();
-          handleNavigate([dest.lat, dest.lng]);
-        })
-        .addTo(map);
+      const geocoderControl = Geocoder({ defaultMarkGeocode: false });
+      geocoderControl.on("markgeocode", (e: GeocoderEvent) => {
+        const dest: L.LatLng = e.geocode.center;
+        L.marker(dest, { icon: alertIcon })
+          .addTo(map)
+          .bindPopup(e.geocode.name)
+          .openPopup();
+        handleNavigate([dest.lat, dest.lng]);
+      });
+      geocoderControl.addTo(map);
     }
-  }, []);
+  }, [alertIcon, handleNavigate]);
 
   // Geolocalización en tiempo real
   useEffect(() => {
@@ -90,7 +136,7 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
       { enableHighAccuracy: true, maximumAge: 0 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+  }, [userIcon]);
 
   // Pintar alertas
   useEffect(() => {
@@ -99,7 +145,9 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
     alertMarkersRef.current = [];
     alerts.forEach((a) => {
       if (a.latitude == null || a.longitude == null) return;
-      const marker = L.marker([a.latitude, a.longitude], { icon: alertIcon }).addTo(mapRef.current!);
+      const marker = L.marker([a.latitude, a.longitude], {
+        icon: alertIcon,
+      }).addTo(mapRef.current!);
       marker.bindPopup(`
         <b>${a.title ?? "Alerta"}</b><br/>
         ${a.description ?? ""}<br/>
@@ -110,37 +158,13 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
       `);
       marker.on("popupopen", () => {
         const btn = document.getElementById(`go-${a.id}`);
-        btn?.addEventListener("click", () => handleNavigate([a.latitude, a.longitude]));
+        btn?.addEventListener("click", () =>
+          handleNavigate([a.latitude, a.longitude])
+        );
       });
       alertMarkersRef.current.push(marker);
     });
-  }, [alerts]);
-
-  // Trazar ruta
-  const handleNavigate = (destination: [number, number]) => {
-    if (!mapRef.current || !userLocation) {
-      alert("Activa tu GPS primero.");
-      return;
-    }
-    if (routingControlRef.current) {
-      routingControlRef.current.remove();
-      routingControlRef.current = null;
-    }
-    routingControlRef.current = (L as any).Routing.control({
-      waypoints: [
-        L.latLng(userLocation[0], userLocation[1]),
-        L.latLng(destination[0], destination[1]),
-      ],
-      lineOptions: { styles: [{ color: "blue", weight: 5, opacity: 0.7 }] },
-      createMarker: (i: number, wp: any) =>
-        L.marker(wp.latLng, { icon: i === 0 ? userIcon : alertIcon }),
-      addWaypoints: false,
-      draggableWaypoints: false,
-      routeWhileDragging: false,
-      show: false,
-      language: "es",
-    }).addTo(mapRef.current);
-  };
+  }, [alerts, alertIcon, handleNavigate]);
 
   const handleCenterMap = () => {
     if (mapRef.current && userLocation) mapRef.current.flyTo(userLocation, 15);
@@ -163,7 +187,8 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
       const res = await fetch(url.toString(), {
         headers: { "Accept-Language": "es" },
       });
-      const data: Array<{ lat: string; lon: string; display_name: string }> = await res.json();
+      const data: Array<{ lat: string; lon: string; display_name: string }> =
+        await res.json();
       if (!data.length) {
         alert("No se encontró ese lugar.");
         return;
@@ -172,7 +197,10 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
       const dest: [number, number] = [parseFloat(lat), parseFloat(lon)];
       // marker + ruta
       if (mapRef.current) {
-        L.marker(dest, { icon: alertIcon }).addTo(mapRef.current).bindPopup(display_name).openPopup();
+        L.marker(dest, { icon: alertIcon })
+          .addTo(mapRef.current)
+          .bindPopup(display_name)
+          .openPopup();
       }
       handleNavigate(dest);
     } catch (err) {
@@ -184,14 +212,19 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
   };
 
   const getSeverityClass = (severity: AlertSeverity) => {
-    if (severity === AlertSeverity.CRITICA || severity === AlertSeverity.ALTA) return "bg-red-100 hover:bg-red-200";
-    if (severity === AlertSeverity.MEDIA) return "bg-yellow-100 hover:bg-yellow-200";
+    if (severity === AlertSeverity.CRITICA || severity === AlertSeverity.ALTA)
+      return "bg-red-100 hover:bg-red-200";
+    if (severity === AlertSeverity.MEDIA)
+      return "bg-yellow-100 hover:bg-yellow-200";
     return "bg-green-100 hover:bg-green-200";
   };
 
   return (
     <div className="relative">
-      <div id="map-gps" style={{ height: "90vh", width: "100%", borderRadius: "10px" }} />
+      <div
+        id="map-gps"
+        style={{ height: "90vh", width: "100%", borderRadius: "10px" }}
+      />
 
       {/* Buscador manual arriba-izquierda */}
       <form
@@ -233,9 +266,15 @@ const MapWithGps: React.FC<MapWithGpsProps> = ({ alerts = [] }) => {
                 onClick={() => handleNavigate([a.latitude, a.longitude])}
                 className={`block w-full text-left px-3 py-2 mb-1 rounded-lg text-sm ${getSeverityClass(a.severity)}`}
               >
-                <div className="font-semibold truncate">{a.title || "Alerta sin título"}</div>
-                <div className="text-xs text-gray-700 truncate">{a.location || "Sin ubicación detallada"}</div>
-                <div className="text-[10px] text-gray-500">{a.severity} • {a.status}</div>
+                <div className="font-semibold truncate">
+                  {a.title || "Alerta sin título"}
+                </div>
+                <div className="text-xs text-gray-700 truncate">
+                  {a.location || "Sin ubicación detallada"}
+                </div>
+                <div className="text-[10px] text-gray-500">
+                  {a.severity} • {a.status}
+                </div>
               </button>
             );
           })

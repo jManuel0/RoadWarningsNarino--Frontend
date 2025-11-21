@@ -10,7 +10,9 @@ const CreateAlertPage: React.FC = () => {
   const [municipality, setMunicipality] = useState("Pasto");
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
-  const [estimatedDuration, setEstimatedDuration] = useState<number | undefined>();
+  const [estimatedDuration, setEstimatedDuration] = useState<
+    number | undefined
+  >();
 
   const handleMapSelect = (lat: number, lng: number) => {
     setLatitude(lat);
@@ -25,15 +27,16 @@ const CreateAlertPage: React.FC = () => {
       return;
     }
 
-    if (false && !location.trim()) {
-      alert("La dirección es obligatoria.");
-      return;
-    }
+    // Validaciones opcionales deshabilitadas
+    // if (!location.trim()) {
+    //   alert("La dirección es obligatoria.");
+    //   return;
+    // }
 
-    if (false && !municipality.trim()) {
-      alert("El municipio es obligatorio.");
-      return;
-    }
+    // if (!municipality.trim()) {
+    //   alert("El municipio es obligatorio.");
+    //   return;
+    // }
 
     if (latitude == null || longitude == null) {
       alert("Por favor selecciona la ubicación en el mapa.");
@@ -41,14 +44,14 @@ const CreateAlertPage: React.FC = () => {
     }
 
     const body = {
-      type,                         // AlertType (enum en backend)
+      type, // AlertType (enum en backend)
       title,
       description,
       latitude,
       longitude,
       location,
       municipality,
-      severity: priority as any,    // AlertSeverity (ALTA/MEDIA/BAJA)
+      severity: priority, // AlertSeverity (ALTA/MEDIA/BAJA)
       estimatedDuration,
       imageUrl: null,
     };
@@ -81,10 +84,7 @@ const CreateAlertPage: React.FC = () => {
         {/* Tipo */}
         <label>
           Tipo de alerta *
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-          >
+          <select value={type} onChange={(e) => setType(e.target.value)}>
             <option value="ACCIDENTE">Accidente</option>
             <option value="DERRUMBE">Derrumbe</option>
             <option value="INUNDACION">Inundación</option>

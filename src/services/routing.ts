@@ -12,10 +12,7 @@ export async function getOsrmRoutes(
   end: RoutePoint,
   profile: RoutingProfile = "driving"
 ): Promise<
-  Omit<
-    Route,
-    "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended"
-  >[]
+  Omit<Route, "id" | "name" | "riskScore" | "alertsOnRoute" | "isRecommended">[]
 > {
   const url = new URL(
     `https://router.project-osrm.org/route/v1/${profile}/${start.lng},${start.lat};${end.lng},${end.lat}`
@@ -41,7 +38,25 @@ export async function getOsrmRoutes(
     throw new Error("OSRM no devolvió rutas");
   }
 
-  return data.routes.map((osrmRoute: any) => {
+  interface OSRMRoute {
+    geometry: { coordinates: [number, number][] };
+    distance: number;
+    duration: number;
+    legs: Array<{
+      steps: Array<{
+        name?: string;
+        distance: number;
+        duration: number;
+        maneuver?: {
+          instruction?: string;
+          location?: [number, number];
+        };
+        geometry?: { coordinates: [number, number][] };
+      }>;
+    }>;
+  }
+
+  return (data.routes as OSRMRoute[]).map((osrmRoute) => {
     const points: RoutePoint[] = osrmRoute.geometry.coordinates.map(
       ([lng, lat]: [number, number]) => ({ lat, lng })
     );
@@ -51,17 +66,13 @@ export async function getOsrmRoutes(
 
     const steps: NavigationStep[] = [];
 
-    osrmRoute.legs.forEach((leg: any) => {
-      leg.steps.forEach((step: any) => {
+    osrmRoute.legs.forEach((leg) => {
+      leg.steps.forEach((step) => {
         const maneuver = step.maneuver ?? {};
         const instructionText: string =
-          (maneuver.instruction as string | undefined) ||
-          (step.name as string | undefined) ||
-          "Sigue la ruta indicada";
+          maneuver.instruction || step.name || "Sigue la ruta indicada";
 
-        const maneuverLocation = maneuver.location as
-          | [number, number]
-          | undefined;
+        const maneuverLocation = maneuver.location;
 
         const [mLng, mLat] =
           maneuverLocation ??
@@ -92,4 +103,3 @@ export async function getOsrmRoutes(
     return baseRoute;
   });
 }
-
