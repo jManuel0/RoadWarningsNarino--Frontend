@@ -1,8 +1,22 @@
-import { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
-import { Icon } from 'leaflet';
-import { Navigation, MapPin, X, AlertTriangle, Clock, TrendingUp, Zap } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
+import { useState, useEffect, useRef } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Polyline,
+  useMap,
+} from "react-leaflet";
+import { Icon } from "leaflet";
+import {
+  Navigation,
+  MapPin,
+  X,
+  AlertTriangle,
+  Clock,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+import "leaflet/dist/leaflet.css";
 
 interface GPSNavigationProps {
   destination: { lat: number; lng: number; name: string };
@@ -10,13 +24,19 @@ interface GPSNavigationProps {
 }
 
 // Auto-centrado del mapa siguiendo al usuario
-function AutoCenter({ center, zoom }: { center: [number, number]; zoom: number }) {
+function AutoCenter({
+  center,
+  zoom,
+}: {
+  center: [number, number];
+  zoom: number;
+}) {
   const map = useMap();
 
   useEffect(() => {
     map.setView(center, zoom, {
       animate: true,
-      duration: 0.5
+      duration: 0.5,
     });
   }, [center, zoom, map]);
 
@@ -30,62 +50,83 @@ function DarkModeLayer({ isDark }: { isDark: boolean }) {
   useEffect(() => {
     const mapContainer = map.getContainer();
     if (isDark) {
-      mapContainer.style.filter = 'invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.1)';
+      mapContainer.style.filter =
+        "invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.1)";
     } else {
-      mapContainer.style.filter = '';
+      mapContainer.style.filter = "";
     }
   }, [isDark, map]);
 
   return null;
 }
 
-export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavigationProps>) {
-  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+export default function GPSNavigation({
+  destination,
+  onClose,
+}: Readonly<GPSNavigationProps>) {
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(
+    null
+  );
   const [heading, setHeading] = useState<number>(0);
   const [speed, setSpeed] = useState<number>(0);
   const [distance, setDistance] = useState<number>(0);
-  const [eta, setEta] = useState<string>('Calculando...');
+  const [eta, setEta] = useState<string>("Calculando...");
   const [routePath, setRoutePath] = useState<[number, number][]>([]);
   const [isTracking, setIsTracking] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(
-    document.documentElement.classList.contains('dark')
+    document.documentElement.classList.contains("dark")
   );
   const watchIdRef = useRef<number | null>(null);
 
   // Detectar tema
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
     });
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ["class"],
     });
 
     return () => observer.disconnect();
   }, []);
 
   // Calcular distancia entre dos puntos (Haversine)
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const calculateDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number => {
     const R = 6371; // Radio de la Tierra en km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
 
   // Calcular bearing (dirección)
-  const calculateBearing = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
-    const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
-              Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
-    const bearing = Math.atan2(y, x) * 180 / Math.PI;
+  const calculateBearing = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number => {
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const y = Math.sin(dLon) * Math.cos((lat2 * Math.PI) / 180);
+    const x =
+      Math.cos((lat1 * Math.PI) / 180) * Math.sin((lat2 * Math.PI) / 180) -
+      Math.sin((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.cos(dLon);
+    const bearing = (Math.atan2(y, x) * 180) / Math.PI;
     return (bearing + 360) % 360;
   };
 
@@ -97,7 +138,12 @@ export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavi
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
-        const { latitude, longitude, speed: gpsSpeed, heading: gpsHeading } = position.coords;
+        const {
+          latitude,
+          longitude,
+          speed: gpsSpeed,
+          heading: gpsHeading,
+        } = position.coords;
         const newPosition: [number, number] = [latitude, longitude];
 
         setUserPosition(newPosition);
@@ -129,16 +175,30 @@ export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavi
         if (gpsSpeed && gpsSpeed > 0) {
           const timeInHours = dist / (gpsSpeed * 3.6);
           const minutes = Math.round(timeInHours * 60);
-          setEta(minutes > 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes} min`);
+          setEta(
+            minutes > 60
+              ? `${Math.floor(minutes / 60)}h ${minutes % 60}m`
+              : `${minutes} min`
+          );
         } else {
-          setEta('En pausa');
+          setEta("Calculando...");
         }
 
-        // Agregar punto a la ruta
-        setRoutePath((prev) => [...prev, newPosition]);
+        // Agregar punto a la ruta (solo si se movió significativamente)
+        if (
+          routePath.length === 0 ||
+          calculateDistance(
+            routePath[routePath.length - 1][0],
+            routePath[routePath.length - 1][1],
+            latitude,
+            longitude
+          ) > 0.01
+        ) {
+          setRoutePath((prev) => [...prev, newPosition]);
+        }
       },
       (error) => {
-        console.error('GPS error:', error);
+        console.error("GPS error:", error);
       },
       {
         enableHighAccuracy: true,
@@ -152,7 +212,7 @@ export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavi
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
     };
-  }, [destination, userPosition]);
+  }, [destination, userPosition, routePath]);
 
   if (!userPosition) {
     return (
@@ -167,15 +227,19 @@ export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavi
   }
 
   const userIcon = new Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
   });
 
   const destIcon = new Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconUrl:
+      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
   });
@@ -237,10 +301,10 @@ export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavi
           center={userPosition}
           zoom={17}
           zoomControl={false}
-          style={{ height: '100%', width: '100%' }}
+          style={{ height: "100%", width: "100%" }}
         >
           <TileLayer
-            attribution='&copy; OpenStreetMap'
+            attribution="&copy; OpenStreetMap"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <DarkModeLayer isDark={isDarkMode} />
@@ -250,7 +314,10 @@ export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavi
           <Marker position={userPosition} icon={userIcon} />
 
           {/* Marcador del destino */}
-          <Marker position={[destination.lat, destination.lng]} icon={destIcon} />
+          <Marker
+            position={[destination.lat, destination.lng]}
+            icon={destIcon}
+          />
 
           {/* Línea de ruta recorrida */}
           {routePath.length > 1 && (
@@ -279,7 +346,10 @@ export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavi
               className="absolute inset-0 flex items-center justify-center"
               style={{ transform: `rotate(${heading}deg)` }}
             >
-              <Navigation size={32} className="text-blue-600 dark:text-blue-400" />
+              <Navigation
+                size={32}
+                className="text-blue-600 dark:text-blue-400"
+              />
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-xs font-bold text-gray-600 dark:text-gray-300 mt-12">
@@ -295,10 +365,10 @@ export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavi
           onClick={() => setIsTracking(!isTracking)}
           className={`absolute bottom-24 right-4 p-4 rounded-full shadow-2xl transition-all ${
             isTracking
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ? "bg-blue-600 hover:bg-blue-700 text-white"
+              : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           }`}
-          title={isTracking ? 'Desactivar seguimiento' : 'Activar seguimiento'}
+          title={isTracking ? "Desactivar seguimiento" : "Activar seguimiento"}
         >
           <MapPin size={24} />
         </button>
@@ -315,11 +385,42 @@ export default function GPSNavigation({ destination, onClose }: Readonly<GPSNavi
         )}
       </div>
 
-      {/* Footer con instrucciones */}
-      <div className="bg-gray-800 dark:bg-black text-white p-4 text-center">
-        <p className="text-sm">
-          🧭 Siguiendo tu ubicación en tiempo real • {distance > 0.1 ? 'Conduciendo' : 'Has llegado!'}
-        </p>
+      {/* Footer con instrucciones de navegación */}
+      <div className="bg-gradient-to-r from-gray-800 via-gray-900 to-black dark:from-black dark:via-gray-900 dark:to-black text-white p-6 shadow-2xl">
+        {distance > 0.1 ? (
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-600 p-4 rounded-full">
+              <Navigation
+                size={32}
+                className="transform rotate-0"
+                style={{ transform: `rotate(${heading}deg)` }}
+              />
+            </div>
+            <div className="flex-1">
+              <p className="text-2xl font-bold mb-1">
+                {distance < 1
+                  ? `${(distance * 1000).toFixed(0)} metros`
+                  : `${distance.toFixed(1)} km`}
+              </p>
+              <p className="text-blue-300">
+                {distance < 0.5
+                  ? "Estás muy cerca del destino"
+                  : distance < 2
+                    ? "Continúa por esta vía"
+                    : "Sigue la línea azul en el mapa"}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-400">Llegada</p>
+              <p className="text-xl font-bold">{eta}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center">
+            <p className="text-3xl font-bold mb-2">🎉 ¡Has llegado!</p>
+            <p className="text-blue-300">Estás en el destino</p>
+          </div>
+        )}
       </div>
     </div>
   );
