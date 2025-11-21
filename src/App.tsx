@@ -26,6 +26,8 @@ const Welcome = lazy(() => import("./pages/Welcome"));
 const Profile = lazy(() => import("./pages/Profile"));
 const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const EnhancedMapPage = lazy(() => import("./pages/EnhancedMapPage"));
+const DebugPage = lazy(() => import("./pages/DebugPage"));
+const AdminAlertsPage = lazy(() => import("./pages/AdminAlertsPage"));
 
 function AppRoutes() {
   const isAuth = useAuthStore((s) => s.isAuthenticated());
@@ -60,6 +62,8 @@ function AppRoutes() {
             <Route path="/waze" element={<WazePage />} />
             <Route path="/map" element={<EnhancedMapPage />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/debug" element={<DebugPage />} />
+            <Route path="/admin/alerts" element={<AdminAlertsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/welcome" element={<Welcome />} />

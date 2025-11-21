@@ -61,6 +61,14 @@ export default function Navigation() {
             >
               Navegación
             </NavLink>
+
+            <NavLink
+              to="/admin/alerts"
+              icon={<AlertTriangle size={18} />}
+              active={isActive("/admin/alerts")}
+            >
+              Admin
+            </NavLink>
           </div>
 
           {/* Perfil y Logout */}
