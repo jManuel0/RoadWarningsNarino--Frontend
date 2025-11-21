@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Search, MapPin, Layers, X } from 'lucide-react';
-import { Alert, AlertType, AlertPriority } from '@/types/Alert';
+import { useState } from "react";
+import { Search, MapPin, Layers, X } from "lucide-react";
+import { Alert, AlertType, AlertPriority } from "@/types/Alert";
 
 interface MapSearchBarProps {
   alerts: Alert[];
@@ -13,20 +13,23 @@ export default function MapSearchBar({
   onSearch,
   onReset,
 }: Readonly<MapSearchBarProps>) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<AlertType | 'ALL'>('ALL');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState<AlertType | "ALL">("ALL");
   const [selectedPriority, setSelectedPriority] = useState<
-    AlertPriority | 'ALL'
-  >('ALL');
+    AlertPriority | "ALL"
+  >("ALL");
   const [radius, setRadius] = useState<number>(5000); // metros
-  const [centerPoint, setCenterPoint] = useState<{ lat: number; lng: number } | null>(null);
+  const [centerPoint, setCenterPoint] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   const getPriorityName = (priority: AlertPriority): string => {
-    if (priority === AlertPriority.CRITICA) return 'Crítica';
-    if (priority === AlertPriority.ALTA) return 'Alta';
-    if (priority === AlertPriority.MEDIA) return 'Media';
-    return 'Baja';
+    if (priority === AlertPriority.CRITICA) return "Crítica";
+    if (priority === AlertPriority.ALTA) return "Alta";
+    if (priority === AlertPriority.MEDIA) return "Media";
+    return "Baja";
   };
 
   const handleSearch = () => {
@@ -36,22 +39,24 @@ export default function MapSearchBar({
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
 
-      filtered = filtered.filter((alert) =>
-        alert.description.toLowerCase().includes(term) ||
-        alert.location.toLowerCase().includes(term) ||
-        (alert.affectedRoads?.some((road) =>
-          road.toLowerCase().includes(term)
-        ) ?? false)
+      filtered = filtered.filter(
+        (alert) =>
+          alert.description.toLowerCase().includes(term) ||
+          alert.location.toLowerCase().includes(term) ||
+          (alert.affectedRoads?.some((road) =>
+            road.toLowerCase().includes(term)
+          ) ??
+            false)
       );
     }
 
     // Filtro por tipo
-    if (selectedType !== 'ALL') {
+    if (selectedType !== "ALL") {
       filtered = filtered.filter((alert) => alert.type === selectedType);
     }
 
     // Filtro por prioridad
-    if (selectedPriority !== 'ALL') {
+    if (selectedPriority !== "ALL") {
       filtered = filtered.filter(
         (alert) => alert.priority === selectedPriority
       );
@@ -74,9 +79,9 @@ export default function MapSearchBar({
   };
 
   const handleReset = () => {
-    setSearchTerm('');
-    setSelectedType('ALL');
-    setSelectedPriority('ALL');
+    setSearchTerm("");
+    setSelectedType("ALL");
+    setSelectedPriority("ALL");
     setRadius(5000);
     setCenterPoint(null);
     onReset();
@@ -93,64 +98,64 @@ export default function MapSearchBar({
           handleSearch();
         },
         (error) => {
-          console.error('Error obteniendo ubicación:', error);
+          console.error("Error obteniendo ubicación:", error);
         }
       );
     }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 space-y-4">
-      {/* Barra de búsqueda principal */}
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 space-y-3">
+      {/* Barra de búsqueda principal - MÁS COMPACTA */}
       <div className="flex gap-2">
         <div className="flex-1 relative">
           <Search
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={20}
+            className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={16}
           />
           <input
             type="text"
-            placeholder="Buscar por ubicación, descripción o vía..."
+            placeholder="Buscar por ubicación..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 handleSearch();
               }
             }}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
           />
         </div>
 
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`px-4 py-2 rounded-lg transition-colors ${
+          className={`px-3 py-1.5 rounded-md transition-colors ${
             showFilters
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
           }`}
           title="Filtros avanzados"
         >
-          <Layers size={20} />
+          <Layers size={16} />
         </button>
 
         <button
           onClick={handleSearch}
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+          className="px-4 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors font-medium"
         >
           Buscar
         </button>
 
         {(searchTerm ||
-          selectedType !== 'ALL' ||
-          selectedPriority !== 'ALL' ||
+          selectedType !== "ALL" ||
+          selectedPriority !== "ALL" ||
           centerPoint) && (
           <button
             onClick={handleReset}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
             title="Limpiar filtros"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
         )}
       </div>
@@ -170,7 +175,7 @@ export default function MapSearchBar({
               id="filter-type"
               value={selectedType}
               onChange={(e) =>
-                setSelectedType(e.target.value as AlertType | 'ALL')
+                setSelectedType(e.target.value as AlertType | "ALL")
               }
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
@@ -196,8 +201,8 @@ export default function MapSearchBar({
               value={selectedPriority}
               onChange={(e) =>
                 setSelectedPriority(
-                  e.target.value === 'ALL'
-                    ? 'ALL'
+                  e.target.value === "ALL"
+                    ? "ALL"
                     : (e.target.value as AlertPriority)
                 )
               }
@@ -243,7 +248,7 @@ export default function MapSearchBar({
               className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               <MapPin size={16} />
-              {centerPoint ? 'Ubicación Activa' : 'Mi Ubicación'}
+              {centerPoint ? "Ubicación Activa" : "Mi Ubicación"}
             </button>
           </div>
         </div>
@@ -251,8 +256,8 @@ export default function MapSearchBar({
 
       {/* Indicadores de filtros activos */}
       {(searchTerm ||
-        selectedType !== 'ALL' ||
-        selectedPriority !== 'ALL' ||
+        selectedType !== "ALL" ||
+        selectedPriority !== "ALL" ||
         centerPoint) && (
         <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
           {searchTerm && (
@@ -260,12 +265,12 @@ export default function MapSearchBar({
               Texto: {searchTerm}
             </span>
           )}
-          {selectedType !== 'ALL' && (
+          {selectedType !== "ALL" && (
             <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm">
               Tipo: {selectedType}
             </span>
           )}
-          {selectedPriority !== 'ALL' && (
+          {selectedPriority !== "ALL" && (
             <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 rounded-full text-sm">
               Prioridad: {getPriorityName(selectedPriority)}
             </span>

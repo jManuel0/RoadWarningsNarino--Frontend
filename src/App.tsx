@@ -6,7 +6,6 @@ import { Toaster } from "sonner";
 import ThemeToggle from "./components/ThemeToggle";
 import Navigation from "./components/Navigation";
 import InstallPWA from "./components/InstallPWA";
-import OfflineIndicator from "./components/OfflineIndicator";
 import FloatingClearFilters from "./components/FloatingClearFilters";
 import LoadingSpinner from "./components/LoadingSpinner";
 import SkipLink from "./components/SkipLink";
@@ -17,7 +16,6 @@ import { useServiceWorker } from "./hooks/useServiceWorker";
 // Lazy load pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
 const Alerts = lazy(() => import("./pages/Alerts"));
-const Statistics = lazy(() => import("./pages/Statistics"));
 const GpsPage = lazy(() => import("./pages/GpsPage"));
 const WazePage = lazy(() => import("./pages/WazePage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
@@ -54,7 +52,6 @@ function AppRoutes() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/alerts" element={<Alerts />} />
-            <Route path="/statistics" element={<Statistics />} />
             <Route path="/gps" element={<GpsPage />} />
             <Route path="/waze" element={<WazePage />} />
             <Route path="/profile" element={<Profile />} />
@@ -82,7 +79,6 @@ function App() {
           <div className="absolute top-4 right-4 z-50">
             <ThemeToggle />
           </div>
-          <OfflineIndicator />
           <InstallPWA />
           <FloatingClearFilters />
           <AppRoutes />

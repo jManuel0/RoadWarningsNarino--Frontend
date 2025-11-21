@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAlertStore } from "@/stores/alertStore";
 import { alertApi } from "@/api/alertApi";
-import MapView from "@/components/MapView";
+import { RoadAlertsMap } from "@/components/map/RoadAlertsMap";
 import NotificationBell from "@/components/NotificationBell";
 import AlertCard from "@/components/AlertCard";
 import MapSearchBar from "@/components/MapSearchBar";
@@ -12,6 +12,7 @@ import { MapPin, AlertTriangle, RefreshCw, X } from "lucide-react";
 import { notificationService } from "@/utils/notifications";
 import WebSocketStatus from "@/components/WebSocketStatus";
 import { useRealtimeAlerts } from "@/hooks/useWebSocket";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 export default function Home() {
   const {
@@ -26,6 +27,7 @@ export default function Home() {
     setError,
   } = useAlertStore();
 
+  const { theme } = useSettingsStore();
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([]);
@@ -419,11 +421,15 @@ export default function Home() {
                   {error}
                 </div>
               ) : (
-                <MapView
-                  alerts={displayAlerts}
-                  selectedAlertId={selectedAlert?.id ?? null}
-                  onSelectAlert={handleSelectAlert}
-                />
+                <div className="h-[500px] rounded-lg overflow-hidden">
+                  <RoadAlertsMap
+                    height="500px"
+                    showControls={true}
+                    enableClustering={true}
+                    updateInterval={30000}
+                    darkMode={theme === "dark"}
+                  />
+                </div>
               )}
             </div>
           </div>

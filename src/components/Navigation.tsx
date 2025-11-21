@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router-dom";
 import {
   Home,
   AlertTriangle,
-  BarChart3,
   Compass,
   Navigation as NavigationIcon,
   LogOut,
@@ -37,14 +36,6 @@ export default function Navigation() {
               active={isActive("/alerts")}
             >
               Alertas
-            </NavLink>
-
-            <NavLink
-              to="/statistics"
-              icon={<BarChart3 size={18} />}
-              active={isActive("/statistics")}
-            >
-              Estadísticas
             </NavLink>
 
             <NavLink
