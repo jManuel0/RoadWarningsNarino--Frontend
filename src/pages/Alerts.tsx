@@ -61,8 +61,26 @@ export default function Alerts() {
     try {
       await alertApi.updateAlertStatus(id, status);
       updateAlert(id, { status });
+
+      // Recargar la lista para asegurar que se actualice
+      await loadAlerts();
+
+      // Mostrar mensaje de éxito
+      const statusText =
+        status === AlertStatus.ACTIVE
+          ? "activa"
+          : status === AlertStatus.IN_PROGRESS
+            ? "en progreso"
+            : status === AlertStatus.RESOLVED
+              ? "resuelta"
+              : "actualizada";
+
+      alert(`Alerta marcada como ${statusText}`);
     } catch (err) {
       console.error("Error al actualizar alerta:", err);
+      alert(
+        "No se pudo actualizar el estado de la alerta. Verifica la consola para más detalles."
+      );
     }
   };
 

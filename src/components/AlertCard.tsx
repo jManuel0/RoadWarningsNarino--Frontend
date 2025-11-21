@@ -204,7 +204,8 @@ export default function AlertCard({
         {alert.status !== AlertStatus.ACTIVE && (
           <button
             onClick={() => onStatusChange(alert.id, AlertStatus.ACTIVE)}
-            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border rounded text-xs hover:bg-gray-50"
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+            title="Marcar como activa"
           >
             <AlertTriangle size={14} />
             Activar
@@ -213,7 +214,8 @@ export default function AlertCard({
         {alert.status !== AlertStatus.IN_PROGRESS && (
           <button
             onClick={() => onStatusChange(alert.id, AlertStatus.IN_PROGRESS)}
-            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border rounded text-xs hover:bg-gray-50"
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+            title="Marcar como en progreso"
           >
             <CheckCircle2 size={14} />
             En progreso
@@ -222,7 +224,8 @@ export default function AlertCard({
         {alert.status !== AlertStatus.RESOLVED && (
           <button
             onClick={() => onStatusChange(alert.id, AlertStatus.RESOLVED)}
-            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border rounded text-xs hover:bg-gray-50"
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+            title="Marcar como resuelta"
           >
             <XCircle size={14} />
             Resuelta
@@ -230,7 +233,8 @@ export default function AlertCard({
         )}
         <button
           onClick={() => onDelete(alert.id)}
-          className="flex items-center justify-center px-2 py-1 text-red-600 hover:bg-red-50 rounded text-xs"
+          className="flex items-center justify-center px-2 py-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-xs transition-colors"
+          title="Eliminar alerta"
         >
           <Trash2 size={14} />
         </button>
