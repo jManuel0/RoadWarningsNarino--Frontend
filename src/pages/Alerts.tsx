@@ -273,9 +273,17 @@ export default function Alerts() {
               const newAlert = await alertApi.createAlert(alertData);
               addAlert(newAlert);
               setShowCreateModal(false);
+
+              // Recargar la lista de alertas para asegurar que aparezca
+              await loadAlerts();
+
+              // Mostrar mensaje de éxito
+              alert("¡Alerta creada exitosamente!");
             } catch (err) {
               console.error("Error al crear alerta:", err);
-              alert("No se pudo crear la alerta");
+              alert(
+                "No se pudo crear la alerta. Revisa la consola para más detalles."
+              );
             }
           }}
         />
