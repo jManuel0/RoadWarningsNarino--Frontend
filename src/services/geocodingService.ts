@@ -173,12 +173,23 @@ class GeocodingService {
   private readonly requestDelay = 1000; // 1 segundo entre requests (rate limit de Nominatim)
   private lastRequestTime = 0;
 
+  // Coordenadas de Pasto, Nariño (centro de referencia)
+  private readonly PASTO_CENTER = {
+    lat: 1.2136,
+    lng: -77.2811,
+  };
+
+  // Bounding box para el Departamento de Nariño
+  // Formato: [min_lon, min_lat, max_lon, max_lat]
+  private readonly NARINO_BBOX = "-79.0,-0.5,-76.5,2.5";
+
   // Cache de búsquedas
   private searchCache = new Map<string, PlaceResult[]>();
   private cacheExpiry = 5 * 60 * 1000; // 5 minutos
 
   /**
    * Buscar lugares por texto (autocompletado)
+   * OPTIMIZADO PARA PASTO, NARIÑO
    */
   async searchPlaces(
     query: string,
@@ -195,17 +206,32 @@ class GeocodingService {
 
     try {
       const url = new URL(`${this.nominatimBaseUrl}/search`);
-      url.searchParams.set("q", query);
+
+      // Si el usuario no especificó una ciudad, agregar "Pasto" automáticamente
+      const searchQuery =
+        query.toLowerCase().includes("pasto") ||
+        query.toLowerCase().includes("nariño") ||
+        query.toLowerCase().includes("narino")
+          ? query
+          : `${query}, Pasto, Nariño`;
+
+      url.searchParams.set("q", searchQuery);
       url.searchParams.set("format", "json");
       url.searchParams.set("addressdetails", "1");
       url.searchParams.set("limit", String(limit));
       url.searchParams.set("countrycodes", "co"); // Restringir a Colombia
 
-      // Si hay ubicación del usuario, buscar cerca de ella
-      if (userLocation) {
-        url.searchParams.set("lat", String(userLocation.lat));
-        url.searchParams.set("lon", String(userLocation.lng));
-      }
+      // BIAS GEOGRÁFICO: Priorizar resultados cerca de Pasto, Nariño
+      // Si hay ubicación del usuario, usar esa; si no, usar Pasto como referencia
+      const searchLat = userLocation?.lat ?? this.PASTO_CENTER.lat;
+      const searchLng = userLocation?.lng ?? this.PASTO_CENTER.lng;
+
+      url.searchParams.set("lat", String(searchLat));
+      url.searchParams.set("lon", String(searchLng));
+
+      // Bounding box para Nariño (limita búsquedas al departamento)
+      url.searchParams.set("bounded", "1"); // Activar búsqueda limitada
+      url.searchParams.set("viewbox", this.NARINO_BBOX);
 
       const response = await fetch(url.toString(), {
         headers: {
@@ -219,7 +245,7 @@ class GeocodingService {
 
       const data: NominatimResult[] = await response.json();
       const results = data.map((item) =>
-        this.parseNominatimResult(item, userLocation)
+        this.parseNominatimResult(item, userLocation ?? this.PASTO_CENTER)
       );
 
       // Cachear resultados
@@ -235,14 +261,16 @@ class GeocodingService {
 
   /**
    * Buscar lugares cercanos por categoría (como Google Maps)
+   * OPTIMIZADO PARA PASTO, NARIÑO
    */
   async searchNearbyPlaces(
     center: { lat: number; lng: number },
     category: PlaceCategory,
-    radiusKm = 5
+    radiusKm = 10 // Aumentado de 5 a 10 km para cubrir mejor Pasto
   ): Promise<PlaceResult[]> {
     try {
       // Construir query de Overpass API
+      // Buscar dentro del radio especificado centrado en la ubicación dada
       const query = `
         [out:json][timeout:25];
         (
@@ -269,7 +297,7 @@ class GeocodingService {
         .map((el) => this.parseOverpassElement(el, center, category))
         .filter((place): place is PlaceResult => place !== null)
         .sort((a, b) => (a.distance || 0) - (b.distance || 0))
-        .slice(0, 20); // Limitar a 20 resultados
+        .slice(0, 30); // Aumentado de 20 a 30 resultados para mejor cobertura
     } catch (error) {
       console.error("Error buscando lugares cercanos:", error);
       return [];
