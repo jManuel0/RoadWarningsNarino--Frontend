@@ -37,21 +37,8 @@ import { alertApi } from "@/api/alertApi";
 import QuickAlertModal from "./QuickAlertModal";
 import { getOsrmRoutes } from "@/services/routing";
 import { websocketService } from "@/services/websocketService";
-
-type PlaceResult = {
-  id: string;
-  name: string;
-  address: string;
-  lat: number;
-  lng: number;
-};
-
-type NominatimSearchResult = {
-  place_id?: number | string;
-  display_name?: string;
-  lat?: string;
-  lon?: string;
-};
+import AdvancedSearchBar from "./AdvancedSearchBar";
+import { PlaceResult } from "@/services/geocodingService";
 
 function MapClickHandler({
   onSelectDestination,
@@ -127,13 +114,30 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
   const { avoidCriticalAlerts, autoReroute, routePreference } =
     useSettingsStore();
   const [calculating, setCalculating] = useState(false);
+  const calculationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   useEffect(() => {
     if (!currentLocation || !destination) return;
 
-    calculateRoutes();
+    // Clear any pending calculation
+    if (calculationTimeoutRef.current) {
+      clearTimeout(calculationTimeoutRef.current);
+    }
+
+    // Debounce route calculation (wait 500ms before recalculating)
+    calculationTimeoutRef.current = setTimeout(() => {
+      calculateRoutes();
+    }, 500);
+
+    return () => {
+      if (calculationTimeoutRef.current) {
+        clearTimeout(calculationTimeoutRef.current);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLocation, destination, alerts, avoidCriticalAlerts]);
+  }, [currentLocation, destination, alerts.length, avoidCriticalAlerts]);
 
   const calculateRoutes = async () => {
     if (!currentLocation || !destination) return;
@@ -158,8 +162,17 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
         const CRITICAL_AVOID_RADIUS_KM = 0.3; // 300 m
 
         if (criticalAlerts.length > 0) {
-          const safeRoutes = baseRoutes.filter((route) =>
-            route.points.every((point) =>
+          const safeRoutes = baseRoutes.filter((route) => {
+            // Optimize: Sample points for faster critical alert checking
+            const sampleRate = Math.max(
+              1,
+              Math.floor(route.points.length / 30)
+            );
+            const sampledPoints = route.points.filter(
+              (_, index) => index % sampleRate === 0
+            );
+
+            return sampledPoints.every((point) =>
               criticalAlerts.every((alert) => {
                 const distanceToAlert = calculateDistance(point, {
                   lat: alert.latitude,
@@ -167,8 +180,8 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
                 });
                 return distanceToAlert >= CRITICAL_AVOID_RADIUS_KM;
               })
-            )
-          );
+            );
+          });
 
           if (safeRoutes.length > 0) {
             candidateRoutes = safeRoutes;
@@ -256,7 +269,14 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
     let risk = 0;
     const ALERT_INFLUENCE_RADIUS = 0.5; // km
 
-    route.points.forEach((point) => {
+    // Optimize: Sample route points instead of checking every single point
+    // For long routes with hundreds of points, this significantly reduces computation
+    const sampleRate = Math.max(1, Math.floor(route.points.length / 50)); // Max 50 samples
+    const sampledPoints = route.points.filter(
+      (_, index) => index % sampleRate === 0
+    );
+
+    sampledPoints.forEach((point) => {
       alerts.forEach((alert) => {
         const distance = calculateDistance(point, {
           lat: alert.latitude,
@@ -288,19 +308,27 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
     alerts: Alert[]
   ): Alert[] => {
     const ALERT_PROXIMITY_THRESHOLD = 0.5; // km
+    const nearbyAlertsSet = new Set<number>();
     const nearbyAlerts: Alert[] = [];
 
-    route.points.forEach((point) => {
+    // Optimize: Sample route points for faster checking
+    const sampleRate = Math.max(1, Math.floor(route.points.length / 50));
+    const sampledPoints = route.points.filter(
+      (_, index) => index % sampleRate === 0
+    );
+
+    // Use Set for O(1) duplicate checking instead of array.some()
+    sampledPoints.forEach((point) => {
       alerts.forEach((alert) => {
+        if (nearbyAlertsSet.has(alert.id)) return; // Skip if already found
+
         const distance = calculateDistance(point, {
           lat: alert.latitude,
           lng: alert.longitude,
         });
 
-        if (
-          distance < ALERT_PROXIMITY_THRESHOLD &&
-          !nearbyAlerts.some((a) => a.id === alert.id)
-        ) {
+        if (distance < ALERT_PROXIMITY_THRESHOLD) {
+          nearbyAlertsSet.add(alert.id);
           nearbyAlerts.push(alert);
         }
       });
@@ -321,15 +349,9 @@ function RouteCalculator({ destination }: { destination: RoutePoint }) {
 // Componente principal
 export default function WazeNavigation() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [searchDestination, setSearchDestination] = useState("");
-  const [isSearchingDestination, setIsSearchingDestination] = useState(false);
-  const [placeResults, setPlaceResults] = useState<PlaceResult[]>([]);
-  const [showPlaceResults, setShowPlaceResults] = useState(false);
-  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [showRouteSelector, setShowRouteSelector] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [showQuickReports, setShowQuickReports] = useState(false);
-  const [, setLastSearchedQuery] = useState<string | null>(null);
 
   // Para evitar repetir avisos de voz por cada paso
   const lastSpokenStep300Ref = useRef<number | null>(null);
@@ -554,65 +576,14 @@ export default function WazeNavigation() {
     return false;
   };
 
-  const handleSearchDestination = async () => {
-    const query = searchDestination.trim();
-    if (!query) {
-      alert("Escribe una dirección o lugar para buscar.");
-      return;
-    }
-
-    if (isSearchingDestination) return;
-
-    setIsSearchingDestination(true);
-    setShowPlaceResults(false);
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          query
-        )}&limit=5`
-      );
-
-      if (!response.ok) {
-        throw new Error("Error al buscar destino");
-      }
-
-      const results = (await response.json()) as NominatimSearchResult[];
-
-      if (!results.length) {
-        alert("No se encontró el lugar. Intenta con otra dirección.");
-        setPlaceResults([]);
-        return;
-      }
-
-      const mapped: PlaceResult[] = results.map((r, index: number) => ({
-        id: r.place_id ? String(r.place_id) : String(index),
-        name: r.display_name ? String(r.display_name).split(",")[0] : query,
-        address: r.display_name ?? "",
-        lat: parseFloat(r.lat ?? "0"),
-        lng: parseFloat(r.lon ?? "0"),
-      }));
-
-      setPlaceResults(mapped);
-      setShowPlaceResults(true);
-      setLastSearchedQuery(query);
-
-      if (mapped[0]) {
-        const destPoint: RoutePoint = {
-          lat: mapped[0].lat,
-          lng: mapped[0].lng,
-        };
-        setDestination(destPoint);
-        setSelectedPlaceId(mapped[0].id);
-        addRecentDestination(mapped[0].name, destPoint);
-      }
-    } catch (error) {
-      console.error("Error buscando destino:", error);
-      alert("No se pudo buscar el destino. Intenta de nuevo.");
-      setPlaceResults([]);
-    } finally {
-      setIsSearchingDestination(false);
-    }
+  // Handler para cuando se selecciona un lugar del nuevo buscador
+  const handlePlaceSelected = (place: PlaceResult) => {
+    const destPoint: RoutePoint = {
+      lat: place.lat,
+      lng: place.lng,
+    };
+    setDestination(destPoint);
+    addRecentDestination(place.displayName, destPoint);
   };
 
   const handleStartNavigation = () => {
@@ -652,7 +623,6 @@ export default function WazeNavigation() {
     const destPoint: RoutePoint = { lat, lng };
     setDestination(destPoint);
     setShowRouteSelector(false);
-    setSearchDestination(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
     addRecentDestination(`${lat.toFixed(5)}, ${lng.toFixed(5)}`, destPoint);
   };
 
@@ -821,19 +791,15 @@ export default function WazeNavigation() {
       {/* Panel de controles superior */}
       <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-2">
         <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="¿A dónde quieres ir? (escribe y presiona Enter)"
-            value={searchDestination}
-            onChange={(e) => setSearchDestination(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSearchDestination();
-              }
-            }}
-            className="flex-1 px-4 py-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg border-0 focus:ring-2 focus:ring-blue-500"
-          />
+          {/* Nuevo buscador avanzado tipo Google Maps */}
+          <div className="flex-1">
+            <AdvancedSearchBar
+              onPlaceSelected={handlePlaceSelected}
+              userLocation={currentLocation || undefined}
+              placeholder="¿A dónde quieres ir? Busca lugares, restaurantes, hoteles..."
+            />
+          </div>
+
           <select
             value={routePreference}
             onChange={(e) =>
@@ -858,11 +824,11 @@ export default function WazeNavigation() {
           ) : (
             <button
               onClick={handleStartNavigation}
-              disabled={!destination || isSearchingDestination}
+              disabled={!destination}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium flex items-center gap-2"
             >
               <NavigationIcon size={20} />
-              {isSearchingDestination ? "Buscando..." : "Iniciar"}
+              Iniciar
             </button>
           )}
         </div>
@@ -875,7 +841,6 @@ export default function WazeNavigation() {
                 type="button"
                 onClick={() => {
                   setDestination(dest.location);
-                  setSearchDestination(dest.name);
                 }}
                 className="px-3 py-1 rounded-full bg-white/90 dark:bg-gray-800/90 shadow text-xs flex items-center gap-2"
               >
@@ -893,42 +858,6 @@ export default function WazeNavigation() {
               </button>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Lista de sugerencias de lugares */}
-      <div className="absolute top-16 left-4 right-4 z-[1100]">
-        {showPlaceResults && placeResults.length > 0 && (
-          <ul className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700">
-            {placeResults.map((place) => (
-              <li
-                key={place.id}
-                onClick={() => {
-                  const destPoint: RoutePoint = {
-                    lat: place.lat,
-                    lng: place.lng,
-                  };
-                  setDestination(destPoint);
-                  setSearchDestination(place.name);
-                  setSelectedPlaceId(place.id);
-                  setShowPlaceResults(false);
-                  addRecentDestination(place.name, destPoint);
-                }}
-                className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  selectedPlaceId === place.id
-                    ? "bg-gray-100 dark:bg-gray-700"
-                    : ""
-                }`}
-              >
-                <div className="font-medium text-gray-900 dark:text-gray-100">
-                  {place.name}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {place.address}
-                </div>
-              </li>
-            ))}
-          </ul>
         )}
       </div>
 

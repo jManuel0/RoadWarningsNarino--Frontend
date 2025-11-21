@@ -1,12 +1,18 @@
-import { useEffect, useState, useCallback } from 'react';
-import { User, Calendar, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
-import { userApi, UserProfile, UserStats } from '@/api/userApi';
-import { Alert, AlertStatus } from '@/types/Alert';
-import { useAuthStore } from '@/stores/authStore';
-import AlertCard from '@/components/AlertCard';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { notificationService } from '@/utils/notifications';
-import { alertApi } from '@/api/alertApi';
+import { useEffect, useState, useCallback } from "react";
+import {
+  User,
+  Calendar,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
+import { userApi, UserProfile, UserStats } from "@/api/userApi";
+import { Alert, AlertStatus } from "@/types/Alert";
+import { useAuthStore } from "@/stores/authStore";
+import AlertCard from "@/components/AlertCard";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { notificationService } from "@/utils/notifications";
+import { alertApi } from "@/api/alertApi";
 
 export default function Profile() {
   const username = useAuthStore((s) => s.username);
@@ -15,25 +21,63 @@ export default function Profile() {
   const [userAlerts, setUserAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'resolved'>('all');
+  const [activeTab, setActiveTab] = useState<"all" | "active" | "resolved">(
+    "all"
+  );
 
   const loadUserData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [profileData, statsData, alertsData] = await Promise.all([
-        userApi.getProfile(),
-        userApi.getUserStats(),
-        userApi.getUserAlerts(),
-      ]);
+      // Cargar datos de forma independiente con mejor manejo de errores
+      const [profileResult, statsResult, alertsResult] =
+        await Promise.allSettled([
+          userApi.getProfile().catch((err) => {
+            console.error("❌ Error al cargar perfil:", err);
+            throw err;
+          }),
+          userApi.getUserStats().catch((err) => {
+            console.error("❌ Error al cargar estadísticas:", err);
+            // No fallar si las estadísticas no están disponibles
+            return {
+              totalAlerts: 0,
+              activeAlerts: 0,
+              resolvedAlerts: 0,
+              criticalAlerts: 0,
+              mostCommonType: "N/A",
+            } as UserStats;
+          }),
+          userApi.getUserAlerts().catch((err) => {
+            console.error("❌ Error al cargar alertas del usuario:", err);
+            // No fallar si las alertas no están disponibles
+            return [] as Alert[];
+          }),
+        ]);
 
-      setProfile(profileData);
-      setStats(statsData);
-      setUserAlerts(alertsData);
+      // Extraer datos de los resultados
+      if (profileResult.status === "fulfilled") {
+        setProfile(profileResult.value);
+      } else {
+        throw new Error("No se pudo cargar el perfil del usuario");
+      }
+
+      if (statsResult.status === "fulfilled") {
+        setStats(statsResult.value);
+      }
+
+      if (alertsResult.status === "fulfilled") {
+        setUserAlerts(alertsResult.value);
+      }
     } catch (err) {
-      console.error('Error loading user data:', err);
-      setError('No se pudo cargar la información del perfil');
+      console.error("Error loading user data:", err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(
+          "No se pudo cargar la información del perfil. Verifica tu conexión e intenta de nuevo."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -49,32 +93,32 @@ export default function Profile() {
       setUserAlerts(
         userAlerts.map((a) => (a.id === id ? { ...a, status } : a))
       );
-      notificationService.success('Estado actualizado');
+      notificationService.success("Estado actualizado");
       loadUserData(); // Reload stats
     } catch (err) {
-      console.error('Error updating status:', err);
-      notificationService.error('No se pudo actualizar el estado');
+      console.error("Error updating status:", err);
+      notificationService.error("No se pudo actualizar el estado");
     }
   };
 
   const handleDelete = async (id: number) => {
-    const ok = window.confirm('¿Estás seguro de eliminar esta alerta?');
+    const ok = window.confirm("¿Estás seguro de eliminar esta alerta?");
     if (!ok) return;
 
     try {
       await alertApi.deleteAlert(id);
       setUserAlerts(userAlerts.filter((a) => a.id !== id));
-      notificationService.success('Alerta eliminada');
+      notificationService.success("Alerta eliminada");
       loadUserData(); // Reload stats
     } catch (err) {
-      console.error('Error deleting alert:', err);
-      notificationService.error('No se pudo eliminar la alerta');
+      console.error("Error deleting alert:", err);
+      notificationService.error("No se pudo eliminar la alerta");
     }
   };
 
   const filteredAlerts = userAlerts.filter((alert) => {
-    if (activeTab === 'active') return alert.status === AlertStatus.ACTIVE;
-    if (activeTab === 'resolved') return alert.status === AlertStatus.RESOLVED;
+    if (activeTab === "active") return alert.status === AlertStatus.ACTIVE;
+    if (activeTab === "resolved") return alert.status === AlertStatus.RESOLVED;
     return true;
   });
 
@@ -89,8 +133,43 @@ export default function Profile() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-red-700 dark:text-red-400">
-          {error}
+        <div className="max-w-md w-full">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle
+                className="text-red-600 dark:text-red-400"
+                size={24}
+              />
+              <h3 className="text-lg font-semibold text-red-700 dark:text-red-400">
+                Error al cargar el perfil
+              </h3>
+            </div>
+            <p className="text-red-700 dark:text-red-400 mb-4">{error}</p>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={loadUserData}
+                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+              >
+                Reintentar
+              </button>
+              <button
+                type="button"
+                onClick={() => (window.location.href = "/")}
+                className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg transition-colors"
+              >
+                Volver al inicio
+              </button>
+            </div>
+            <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm text-yellow-800 dark:text-yellow-400">
+              <strong>Posibles causas:</strong>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Backend no está disponible</li>
+                <li>Token de sesión expirado</li>
+                <li>Problemas de conexión</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -110,7 +189,10 @@ export default function Profile() {
                 {username || profile?.username}
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Miembro desde {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
+                Miembro desde{" "}
+                {profile?.createdAt
+                  ? new Date(profile.createdAt).toLocaleDateString()
+                  : "N/A"}
               </p>
             </div>
           </div>
@@ -124,13 +206,18 @@ export default function Profile() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Alertas</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Total Alertas
+                </p>
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">
                   {stats?.totalAlerts || 0}
                 </p>
               </div>
               <div className="bg-purple-100 dark:bg-purple-900 p-3 rounded-full">
-                <AlertCircle className="text-purple-600 dark:text-purple-400" size={24} />
+                <AlertCircle
+                  className="text-purple-600 dark:text-purple-400"
+                  size={24}
+                />
               </div>
             </div>
           </div>
@@ -139,13 +226,18 @@ export default function Profile() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Activas</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Activas
+                </p>
                 <p className="text-3xl font-bold text-blue-600 dark:text-blue-500">
                   {stats?.activeAlerts || 0}
                 </p>
               </div>
               <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
-                <TrendingUp className="text-blue-600 dark:text-blue-400" size={24} />
+                <TrendingUp
+                  className="text-blue-600 dark:text-blue-400"
+                  size={24}
+                />
               </div>
             </div>
           </div>
@@ -154,13 +246,18 @@ export default function Profile() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Resueltas</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Resueltas
+                </p>
                 <p className="text-3xl font-bold text-green-600 dark:text-green-500">
                   {stats?.resolvedAlerts || 0}
                 </p>
               </div>
               <div className="bg-green-100 dark:bg-green-900 p-3 rounded-full">
-                <CheckCircle className="text-green-600 dark:text-green-400" size={24} />
+                <CheckCircle
+                  className="text-green-600 dark:text-green-400"
+                  size={24}
+                />
               </div>
             </div>
           </div>
@@ -169,13 +266,18 @@ export default function Profile() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Críticas</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Críticas
+                </p>
                 <p className="text-3xl font-bold text-red-600 dark:text-red-500">
                   {stats?.criticalAlerts || 0}
                 </p>
               </div>
               <div className="bg-red-100 dark:bg-red-900 p-3 rounded-full">
-                <Calendar className="text-red-600 dark:text-red-400" size={24} />
+                <Calendar
+                  className="text-red-600 dark:text-red-400"
+                  size={24}
+                />
               </div>
             </div>
           </div>
@@ -193,36 +295,43 @@ export default function Profile() {
           <div className="flex gap-2 mb-6 border-b dark:border-gray-700">
             <button
               type="button"
-              onClick={() => setActiveTab('all')}
+              onClick={() => setActiveTab("all")}
               className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'all'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                activeTab === "all"
+                  ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               Todas ({userAlerts.length})
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('active')}
+              onClick={() => setActiveTab("active")}
               className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'active'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                activeTab === "active"
+                  ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
-              Activas ({userAlerts.filter((a) => a.status === AlertStatus.ACTIVE).length})
+              Activas (
+              {userAlerts.filter((a) => a.status === AlertStatus.ACTIVE).length}
+              )
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('resolved')}
+              onClick={() => setActiveTab("resolved")}
               className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'resolved'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                activeTab === "resolved"
+                  ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
-              Resueltas ({userAlerts.filter((a) => a.status === AlertStatus.RESOLVED).length})
+              Resueltas (
+              {
+                userAlerts.filter((a) => a.status === AlertStatus.RESOLVED)
+                  .length
+              }
+              )
             </button>
           </div>
 
